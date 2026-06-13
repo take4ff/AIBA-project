@@ -81,7 +81,8 @@ AIBA-project/
 ├── db/schema.sql               # Supabase スキーマ（テーブル/ビュー/RLS）
 ├── backend/                    # Phase 1: 収集・スコア計算・DB投入
 │   ├── aiba/{config,technical,sentiment,score,db,pipeline}.py
-│   └── run_daily.py            #   日次バッチのエントリポイント
+│   ├── run_daily.py            #   日次バッチのエントリポイント
+│   └── backfill.py             #   過去数ヶ月分のバックフィル
 ├── frontend/                   # Phase 3: Next.js ダッシュボード
 └── .github/workflows/daily.yml # Phase 1: 日次自動実行
 ```

@@ -53,6 +53,18 @@ python run_daily.py        # 全ドメインのAIBAスコアを算出しSupabase
 ```
 > Supabase未設定なら `backend/output/` にJSONを書き出す（動作確認用）。
 
+### 補足: 過去データのバックフィル
+グラフを充実させるため、過去数ヶ月分を遡って投入できる。テクニカルは日次で
+完全再構築、センチメントは負荷を抑えて一定間隔で算出し日次に前方補完する。
+```bash
+cd backend && source .venv/bin/activate
+python backfill.py --months 6                      # 全ドメイン・過去6ヶ月
+python backfill.py --months 3 --only quantum_computing
+python backfill.py --months 6 --sentiment-every-days 14  # 隔週でセンチメント取得
+python backfill.py --months 6 --no-sentiment       # テクニカルのみ高速
+```
+> センチメント取得はAPI負荷が高いため、6ヶ月・月次刻みで全ドメイン約15〜20分。
+
 ### 4. 自動化（GitHub Actions）
 リポジトリの Secrets に `SUPABASE_URL` / `SUPABASE_KEY`(service_role) を登録。
 `.github/workflows/daily.yml` が平日 22:00 UTC（≒米市場閉場後）に日次実行する。
