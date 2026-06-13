@@ -18,3 +18,6 @@ node_modules/
 .next/
 out/
 .DS_Store
+
+# Claude Code ローカル作業ファイル
+.claude/
