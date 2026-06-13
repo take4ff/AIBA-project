@@ -1,0 +1,38 @@
+name: AIBA Daily Batch
+
+on:
+  schedule:
+    # 米国市場の閉場後（夏時間16:00 ET = 20:00 UTC、冬時間21:00 UTC）を見込み、
+    # 余裕をもって日本時間早朝に実行（22:00 UTC = JST 翌07:00）。
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch: {}  # 手動実行を許可
+
+concurrency:
+  group: aiba-daily
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run daily pipeline
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          # ActionsのGITHUB_TOKENでSearch APIのレート制限を緩和
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python run_daily.py

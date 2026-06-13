@@ -1,0 +1,70 @@
+# =============================================================================
+# AIBA 監視ターゲット定義
+# -----------------------------------------------------------------------------
+# 3層（フェーズ）ごとに、テクニカル測定用のティッカーと
+# センチメント測定用のキーワード（GitHub / arXiv 検索語）を定義する。
+#
+# layer: 1=現在のブーム / 2=次なる波 / 3=未来の開拓地
+# ticker: yfinance で取得するシンボル（ETF推奨。無ければ代表銘柄）
+# github_keywords / arxiv_keywords: センチメント測定に使う検索語
+# =============================================================================
+
+domains:
+  # ---------------- 第1層：現在のブーム (Current Trend) ----------------
+  - id: advanced_semiconductor
+    name: 先端半導体（GPU）
+    layer: 1
+    ticker: SMH            # VanEck Semiconductor ETF
+    github_keywords: ["cuda", "gpu kernel", "tensorrt"]
+    arxiv_keywords: ["GPU accelerator", "AI chip"]
+
+  - id: generative_ai
+    name: 生成AI基盤
+    layer: 1
+    ticker: BOTZ           # Global X Robotics & AI ETF（代替）
+    github_keywords: ["llm", "transformer", "diffusion model"]
+    arxiv_keywords: ["large language model", "generative model"]
+
+  - id: cloud_infra
+    name: クラウドインフラ
+    layer: 1
+    ticker: SKYY           # First Trust Cloud Computing ETF
+    github_keywords: ["kubernetes", "serverless", "terraform"]
+    arxiv_keywords: ["cloud computing", "datacenter scheduling"]
+
+  # ---------------- 第2層：次なる波 (Next Wave) ----------------
+  - id: cooling_power_infra
+    name: 冷却・電力インフラ
+    layer: 2
+    ticker: GRID           # First Trust Clean Edge Smart Grid Infrastructure
+    github_keywords: ["liquid cooling", "power management", "smart grid"]
+    arxiv_keywords: ["data center cooling", "power grid optimization"]
+
+  - id: edge_ai_robotics
+    name: エッジAI・ロボティクス
+    layer: 2
+    ticker: ROBO           # ROBO Global Robotics & Automation ETF
+    github_keywords: ["edge ai", "ros2", "tinyml"]
+    arxiv_keywords: ["edge inference", "robot learning"]
+
+  - id: bioinformatics
+    name: バイオインフォマティクス
+    layer: 2
+    ticker: ARKG           # ARK Genomic Revolution ETF
+    github_keywords: ["bioinformatics", "genomics", "protein folding"]
+    arxiv_keywords: ["computational biology", "protein structure prediction"]
+
+  # ---------------- 第3層：未来の開拓地 (Future Frontier) ----------------
+  - id: quantum_computing
+    name: 量子コンピューティング
+    layer: 3
+    ticker: QTUM           # Defiance Quantum ETF
+    github_keywords: ["qiskit", "quantum circuit", "qubit"]
+    arxiv_keywords: ["quantum computing", "quantum error correction"]
+
+  - id: space_infra
+    name: 宇宙インフラ・通信網
+    layer: 3
+    ticker: UFO            # Procure Space ETF
+    github_keywords: ["satellite", "gnss", "orbital mechanics"]
+    arxiv_keywords: ["satellite communication", "low earth orbit"]
