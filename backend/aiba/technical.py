@@ -50,6 +50,52 @@ def compute_ma_deviation(close: pd.Series, period: int = MA_PERIOD) -> pd.Series
     return (close - ma) / ma * 100.0
 
 
+def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
+    """価格DataFrameから日次のテクニカルスナップショット列を生成する。"""
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    close = df["Close"].dropna()
+    if len(close) < max(RSI_PERIOD, MA_PERIOD) + 1:
+        return []
+
+    rsi = compute_rsi(close)
+    dev = compute_ma_deviation(close)
+
+    snaps: list[TechnicalSnapshot] = []
+    for idx in close.index:
+        r, d = rsi.loc[idx], dev.loc[idx]
+        if pd.isna(r) or pd.isna(d):
+            continue  # 指標算出に必要な履歴が足りない序盤はスキップ
+        snaps.append(
+            TechnicalSnapshot(
+                trade_date=idx.date(),
+                close_price=float(close.loc[idx]),
+                volume=int(df["Volume"].loc[idx]),
+                rsi_14=round(float(r), 2),
+                ma_deviation=round(float(d), 4),
+            )
+        )
+    return snaps
+
+
+def fetch_technical_history(ticker: str, months: int) -> list[TechnicalSnapshot]:
+    """過去 months ヶ月分の日次テクニカルスナップショットを返す。
+
+    RSI/移動平均の算出に必要なウォームアップ期間を上乗せして取得し、
+    指標が確定した日のみを返す。
+    """
+    # 指標のウォームアップ(約2ヶ月)を上乗せ
+    period_days = months * 31 + 70
+    df = yf.download(
+        ticker, period=f"{period_days}d", interval="1d",
+        auto_adjust=True, progress=False,
+    )
+    if df is None or df.empty:
+        return []
+    return _snapshots_from_df(df)
+
+
 def fetch_technical(ticker: str) -> TechnicalSnapshot | None:
     """ティッカーの最新テクニカルスナップショットを取得する。
 

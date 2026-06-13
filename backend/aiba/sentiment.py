@@ -1,11 +1,12 @@
 """センチメント指標の取得・算出（先行データ）。
 
-「水面下の研究開発の熱量」を、直近30日と前30日の活動量の比（増加率）で捉える。
+「水面下の研究開発の熱量」を、ある基準日(as_of)を終点とする直近30日と
+その前30日の活動量の比（増加率）で捉える。
   - GitHub: キーワードに合致する新規リポジトリ数の増加率
-  - arXiv : キーワードに合致する新規論文数の増加率
+  - arXiv : キーワードに合致する新規論文数の増加率（submittedDate範囲）
 
-外部API障害やトークン未設定時は中立値(50)へフォールバックし、
-パイプライン全体が落ちないようにする。
+as_of を指定すれば過去日付のセンチメントも再構築できる（バックフィル用）。
+外部API障害やトークン未設定時は中立値(50)へフォールバックする。
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ GITHUB_SEARCH_URL = "https://api.github.com/search/repositories"
 ARXIV_API_URL = "http://export.arxiv.org/api/query"
 REQUEST_TIMEOUT = 20
 NEUTRAL = 50.0
+_OS_NS = "{http://a9.com/-/spec/opensearch/1.1/}"
 
 
 @dataclass
@@ -39,26 +41,29 @@ def _growth_to_score(recent: int, prior: int) -> float:
     比 1.0（横ばい）→ 50、増加で 50超、減少で 50未満。
     log比をロジスティック関数に通して滑らかに正規化する。
     """
-    # ゼロ割回避のため両者に1を加える（ラプラススムージング）
-    ratio = (recent + 1) / (prior + 1)
+    ratio = (recent + 1) / (prior + 1)  # ラプラススムージングでゼロ割回避
     x = math.log(ratio)
-    # 係数1.5: 比が約e^(0.7)≈2倍で約75点になる感度
-    score = 100.0 / (1.0 + math.exp(-1.5 * x))
+    score = 100.0 / (1.0 + math.exp(-1.5 * x))  # 比≈2倍で約75点
     return round(score, 4)
 
 
-def _date_str(days_ago: int) -> str:
-    d = datetime.now(timezone.utc) - timedelta(days=days_ago)
-    return d.strftime("%Y-%m-%d")
+def _windows(as_of: datetime | None) -> tuple[datetime, datetime, datetime]:
+    """(2期前の開始, 期の境界, 基準日) を返す。"""
+    base = as_of or datetime.now(timezone.utc)
+    if base.tzinfo is None:
+        base = base.replace(tzinfo=timezone.utc)
+    mid = base - timedelta(days=WINDOW_DAYS)
+    start = base - timedelta(days=WINDOW_DAYS * 2)
+    return start, mid, base
 
 
-def _github_count(keyword: str, since: str, until: str) -> int | None:
-    """指定期間に作成されたリポジトリ件数を返す。失敗時 None。"""
+# ----------------------------- GitHub -----------------------------
+def _github_count(keyword: str, since: datetime, until: datetime) -> int | None:
     headers = {"Accept": "application/vnd.github+json"}
     if settings.github_token:
         headers["Authorization"] = f"Bearer {settings.github_token}"
 
-    query = f'{keyword} created:{since}..{until}'
+    query = f'{keyword} created:{since:%Y-%m-%d}..{until:%Y-%m-%d}'
     try:
         resp = requests.get(
             GITHUB_SEARCH_URL,
@@ -73,95 +78,82 @@ def _github_count(keyword: str, since: str, until: str) -> int | None:
         return None
 
 
-def fetch_github_score(keywords: list[str]) -> float:
-    """キーワード群のGitHub熱量（新規リポジトリ増加率）を算出する。"""
+def fetch_github_score(keywords: list[str], as_of: datetime | None = None) -> float:
     if not keywords:
         return NEUTRAL
+    start, mid, base = _windows(as_of)
 
-    now = _date_str(0)
-    mid = _date_str(WINDOW_DAYS)
-    start = _date_str(WINDOW_DAYS * 2)
-
-    recent_total = 0
-    prior_total = 0
+    recent_total = prior_total = 0
     ok = False
     for kw in keywords:
-        recent = _github_count(kw, mid, now)
+        recent = _github_count(kw, mid, base)
         prior = _github_count(kw, start, mid)
-        # GitHub Search APIのレート制限(未認証10req/min)に配慮
-        time.sleep(2 if not settings.github_token else 0.5)
+        time.sleep(0.5 if settings.github_token else 2)
         if recent is None or prior is None:
             continue
         recent_total += recent
         prior_total += prior
         ok = True
 
-    if not ok:
-        return NEUTRAL
-    return _growth_to_score(recent_total, prior_total)
+    return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
 
 
-def _arxiv_recent_dates(keyword: str, max_results: int = 100) -> list[datetime]:
-    """キーワードに合致する最新論文の投稿日リストを返す。失敗時 空リスト。"""
-    query = f'all:"{keyword}"'
-    params = {
-        "search_query": query,
-        "sortBy": "submittedDate",
-        "sortOrder": "descending",
-        "start": 0,
-        "max_results": max_results,
-    }
+# ----------------------------- arXiv -----------------------------
+def _arxiv_total(keyword: str, since: datetime, until: datetime) -> int | None:
+    """submittedDate範囲に合致する論文総数を totalResults から取得する。"""
+    query = (
+        f'all:"{keyword}" AND '
+        f'submittedDate:[{since:%Y%m%d%H%M} TO {until:%Y%m%d%H%M}]'
+    )
     try:
-        resp = requests.get(ARXIV_API_URL, params=params, timeout=REQUEST_TIMEOUT)
+        resp = requests.get(
+            ARXIV_API_URL,
+            params={"search_query": query, "start": 0, "max_results": 1},
+            timeout=REQUEST_TIMEOUT,
+        )
         if resp.status_code != 200:
-            return []
+            return None
         root = ET.fromstring(resp.text)
     except (requests.RequestException, ET.ParseError):
-        return []
+        return None
 
-    ns = {"atom": "http://www.w3.org/2005/Atom"}
-    dates: list[datetime] = []
-    for entry in root.findall("atom:entry", ns):
-        pub = entry.find("atom:published", ns)
-        if pub is None or not pub.text:
-            continue
-        try:
-            dates.append(datetime.fromisoformat(pub.text.replace("Z", "+00:00")))
-        except ValueError:
-            continue
-    return dates
+    node = root.find(f"{_OS_NS}totalResults")
+    if node is None or not node.text:
+        return None
+    try:
+        return int(node.text)
+    except ValueError:
+        return None
 
 
-def fetch_arxiv_score(keywords: list[str]) -> float:
-    """キーワード群のarXiv熱量（新規論文増加率）を算出する。"""
+def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> float:
     if not keywords:
         return NEUTRAL
+    start, mid, base = _windows(as_of)
 
-    now = datetime.now(timezone.utc)
-    mid = now - timedelta(days=WINDOW_DAYS)
-    start = now - timedelta(days=WINDOW_DAYS * 2)
-
-    recent_total = 0
-    prior_total = 0
+    recent_total = prior_total = 0
     ok = False
     for kw in keywords:
-        dates = _arxiv_recent_dates(kw)
+        recent = _arxiv_total(kw, mid, base)
         time.sleep(3)  # arXiv API は3秒間隔のアクセスを推奨
-        if not dates:
+        prior = _arxiv_total(kw, start, mid)
+        time.sleep(3)
+        if recent is None or prior is None:
             continue
-        recent_total += sum(1 for d in dates if d >= mid)
-        prior_total += sum(1 for d in dates if start <= d < mid)
+        recent_total += recent
+        prior_total += prior
         ok = True
 
-    if not ok:
-        return NEUTRAL
-    return _growth_to_score(recent_total, prior_total)
+    return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
 
 
-def fetch_sentiment(github_keywords: list[str], arxiv_keywords: list[str]) -> SentimentSnapshot:
+def fetch_sentiment(
+    github_keywords: list[str],
+    arxiv_keywords: list[str],
+    as_of: datetime | None = None,
+) -> SentimentSnapshot:
     """GitHub・arXivの熱量を統合したセンチメントスナップショットを返す。"""
-    gh = fetch_github_score(github_keywords)
-    ax = fetch_arxiv_score(arxiv_keywords)
-    # 統合は単純平均（重み付けは score.py の層別ロジックで吸収）
+    gh = fetch_github_score(github_keywords, as_of)
+    ax = fetch_arxiv_score(arxiv_keywords, as_of)
     combined = round((gh + ax) / 2.0, 2)
     return SentimentSnapshot(github_score=gh, arxiv_score=ax, sentiment_score=combined)
