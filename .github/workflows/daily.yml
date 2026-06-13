@@ -33,6 +33,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          # ActionsのGITHUB_TOKENでSearch APIのレート制限を緩和
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Search APIのレート制限緩和用に、発行したPAT(GH_PAT)を使う。
+          # Actions既定の GITHUB_TOKEN は Search API に使えないため別Secretを参照。
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: python run_daily.py
