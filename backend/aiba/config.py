@@ -19,12 +19,19 @@ DEFAULT_TARGETS_PATH = ROOT_DIR / "config" / "targets.yaml"
 load_dotenv(ROOT_DIR / ".env")
 
 
+# 対応地域（表示順）
+REGIONS = ["global", "us", "jp"]
+REGION_NAMES = {"global": "Global", "us": "米国", "jp": "日本"}
+
+
 @dataclass(frozen=True)
 class Domain:
-    """監視対象ドメイン1件。"""
+    """監視対象ドメイン1件（テーマ×地域）。"""
 
-    id: str
-    name: str
+    id: str            # 例: advanced_semiconductor_us
+    theme_id: str      # 例: advanced_semiconductor
+    name: str          # 例: 先端半導体（GPU）
+    region: str        # global | us | jp
     layer: int
     ticker: str
     github_keywords: list[str] = field(default_factory=list)
@@ -45,23 +52,40 @@ class Settings:
 
 
 def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
-    """targets.yaml を読み込み Domain のリストを返す。"""
+    """targets.yaml を読み込み、テーマ×地域に展開した Domain のリストを返す。"""
     with open(path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
     domains: list[Domain] = []
     for d in raw.get("domains", []):
-        domains.append(
-            Domain(
-                id=d["id"],
-                name=d["name"],
-                layer=int(d["layer"]),
-                ticker=d["ticker"],
-                github_keywords=list(d.get("github_keywords", [])),
-                arxiv_keywords=list(d.get("arxiv_keywords", [])),
+        gh = list(d.get("github_keywords", []))
+        ax = list(d.get("arxiv_keywords", []))
+        tickers: dict[str, str] = d.get("tickers", {})
+        for region in REGIONS:
+            ticker = tickers.get(region)
+            if not ticker:
+                continue  # その地域に対象が無いテーマはスキップ
+            domains.append(
+                Domain(
+                    id=f"{d['id']}_{region}",
+                    theme_id=d["id"],
+                    name=d["name"],
+                    region=region,
+                    layer=int(d["layer"]),
+                    ticker=str(ticker),
+                    github_keywords=gh,
+                    arxiv_keywords=ax,
+                )
             )
-        )
     return domains
+
+
+def group_by_theme(domains: list[Domain]) -> dict[str, list[Domain]]:
+    """テーマIDごとに Domain をまとめる（センチメント共有のため）。"""
+    groups: dict[str, list[Domain]] = {}
+    for d in domains:
+        groups.setdefault(d.theme_id, []).append(d)
+    return groups
 
 
 settings = Settings()

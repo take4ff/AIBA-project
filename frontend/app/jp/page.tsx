@@ -2,6 +2,6 @@ import RegionDashboard from "@/components/RegionDashboard";
 
 export const revalidate = 0;
 
-export default function Home() {
-  return <RegionDashboard region="global" />;
+export default function JpPage() {
+  return <RegionDashboard region="jp" />;
 }

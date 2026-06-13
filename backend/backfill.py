@@ -2,14 +2,14 @@
 """過去データのバックフィル。
 
 テクニカル指標は yfinance の履歴から日次で完全に再構築する。
-センチメントは負荷を抑えるため一定間隔(既定30日)で各時点(as_of)を算出し、
-その間の日付には直近の値を前方補完する。
+センチメントはテーマ単位で一定間隔(既定30日)の各時点(as_of)を算出し、
+同テーマの全地域(global/us/jp)で共有しつつ、間の日付には前方補完する。
 
 使い方:
     python backfill.py --months 6                 # 全ドメイン・過去6ヶ月
-    python backfill.py --months 3 --only quantum_computing
-    python backfill.py --months 6 --sentiment-every-days 14   # 隔週でセンチメント取得
-    python backfill.py --months 6 --no-sentiment  # テクニカルのみ高速バックフィル
+    python backfill.py --months 3 --only quantum_computing   # テーマ指定
+    python backfill.py --months 6 --sentiment-every-days 14
+    python backfill.py --months 6 --no-sentiment  # テクニカルのみ高速
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
-from aiba.config import Domain, load_domains, settings
+from aiba.config import Domain, group_by_theme, load_domains, settings
 from aiba.db import _serialize, upsert_domains
 from aiba.pipeline import domains_master
 from aiba.score import compute_aiba_score
@@ -35,25 +35,25 @@ def _to_utc(d: date) -> datetime:
 
 
 def build_sentiment_timeline(
-    domain: Domain, dates: list[date], cadence_days: int, enabled: bool
+    theme_id: str, gh_kw: list[str], ax_kw: list[str],
+    start: date, end: date, cadence_days: int, enabled: bool,
 ) -> list[tuple[date, SentimentSnapshot]]:
-    """センチメントのアンカー時系列を作る（各アンカーで as_of 算出）。"""
-    if not enabled or not dates:
-        return [(dates[0], NEUTRAL_SENT)] if dates else []
+    """テーマのセンチメント・アンカー時系列を作る（各アンカーで as_of 算出）。"""
+    if not enabled:
+        return [(start, NEUTRAL_SENT)]
 
     anchors: list[date] = []
-    cur = dates[0]
-    while cur <= dates[-1]:
+    cur = start
+    while cur <= end:
         anchors.append(cur)
         cur += timedelta(days=cadence_days)
-    if anchors[-1] != dates[-1]:
-        anchors.append(dates[-1])
+    if anchors[-1] != end:
+        anchors.append(end)
 
     timeline: list[tuple[date, SentimentSnapshot]] = []
     for i, a in enumerate(anchors, 1):
-        log.info("  [%s] センチメント %d/%d (as_of=%s)", domain.id, i, len(anchors), a)
-        snap = fetch_sentiment(domain.github_keywords, domain.arxiv_keywords, as_of=_to_utc(a))
-        timeline.append((a, snap))
+        log.info("  [%s] センチメント %d/%d (as_of=%s)", theme_id, i, len(anchors), a)
+        timeline.append((a, fetch_sentiment(gh_kw, ax_kw, as_of=_to_utc(a))))
     return timeline
 
 
@@ -68,24 +68,21 @@ def sentiment_for(d: date, timeline: list[tuple[date, SentimentSnapshot]]) -> Se
     return chosen
 
 
-def backfill_domain(
-    domain: Domain, months: int, cadence_days: int, sentiment_enabled: bool
+def backfill_region(
+    domain: Domain, months: int, timeline: list[tuple[date, SentimentSnapshot]]
 ) -> list[dict[str, Any]]:
     snaps: list[TechnicalSnapshot] = fetch_technical_history(domain.ticker, months)
     if not snaps:
         log.warning("[%s] 価格履歴が取得できませんでした。スキップ。", domain.id)
         return []
 
-    # 直近 months ヶ月に絞る（ウォームアップ分を除外）
     cutoff = date.today() - timedelta(days=months * 31)
     snaps = [s for s in snaps if s.trade_date >= cutoff]
     if not snaps:
         return []
 
-    dates = [s.trade_date for s in snaps]
-    log.info("[%s] %d日分を再構築（%s〜%s）", domain.id, len(snaps), dates[0], dates[-1])
-
-    timeline = build_sentiment_timeline(domain, dates, cadence_days, sentiment_enabled)
+    log.info("[%s] %d日分を再構築（%s〜%s）",
+             domain.id, len(snaps), snaps[0].trade_date, snaps[-1].trade_date)
 
     records: list[dict[str, Any]] = []
     for s in snaps:
@@ -127,25 +124,31 @@ def main() -> int:
     ap.add_argument("--sentiment-every-days", type=int, default=30)
     ap.add_argument("--no-sentiment", action="store_true",
                     help="センチメントを取得せず中立(50)で埋める（高速）")
-    ap.add_argument("--only", type=str, default=None, help="特定ドメインIDのみ")
+    ap.add_argument("--only", type=str, default=None, help="特定テーマIDのみ")
     args = ap.parse_args()
 
     domains = load_domains()
     if args.only:
-        domains = [d for d in domains if d.id == args.only]
+        domains = [d for d in domains if d.theme_id == args.only]
         if not domains:
-            raise SystemExit(f"ドメインが見つかりません: {args.only}")
+            raise SystemExit(f"テーマが見つかりません: {args.only}")
 
     upsert_domains(domains_master(domains))
 
+    start = date.today() - timedelta(days=args.months * 31)
+    end = date.today()
     total = 0
-    for domain in domains:
-        records = backfill_domain(
-            domain, args.months, args.sentiment_every_days, not args.no_sentiment
+    for theme_id, group in group_by_theme(domains).items():
+        # センチメントはテーマで1回だけ算出し、全地域で共有
+        timeline = build_sentiment_timeline(
+            theme_id, group[0].github_keywords, group[0].arxiv_keywords,
+            start, end, args.sentiment_every_days, not args.no_sentiment,
         )
-        if records:
-            write_batched(records)
-            total += len(records)
+        for domain in group:
+            records = backfill_region(domain, args.months, timeline)
+            if records:
+                write_batched(records)
+                total += len(records)
     log.info("完了: 合計 %d 件をバックフィルしました。", total)
     return 0
 

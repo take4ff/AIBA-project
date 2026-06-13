@@ -1,7 +1,10 @@
 // Supabase の latest_ranking ビュー / daily_metrics に対応する型。
 
+import { Region } from "./regions";
+
 export interface RankingRow {
   layer: number;
+  region: Region;
   domain_id: string;
   domain_name: string;
   ticker: string;

@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { MetricHistoryRow } from "@/lib/types";
 import TrendChart from "@/components/TrendChart";
 import { fmt } from "@/lib/score-color";
+import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
 
 export const revalidate = 0;
 
@@ -36,14 +37,16 @@ export default async function DomainPage({ params }: { params: { id: string } })
 
   const { dom, history } = await getHistory(params.id);
   const latest = history[history.length - 1];
+  const { region } = parseDomainId(params.id);
 
   return (
     <main className="container">
-      <Link className="back-link" href="/">← ランキングへ戻る</Link>
+      <Link className="back-link" href={REGION_PATH[region]}>← {REGION_LABEL[region]}のランキングへ戻る</Link>
       <header className="header" style={{ marginTop: 12 }}>
         <h1>
           {dom?.name ?? params.id}
           <span className="ticker">{dom?.ticker}</span>
+          <span className="region-badge">{REGION_LABEL[region]}</span>
         </h1>
         {latest && (
           <p>
