@@ -7,6 +7,8 @@ venv/
 
 # 環境変数
 .env
+.env.local
+.env*.local
 
 # ローカル出力（Supabase未設定時のフォールバック）
 backend/output/
