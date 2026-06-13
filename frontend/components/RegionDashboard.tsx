@@ -25,6 +25,7 @@ export default async function RegionDashboard({ region }: { region: Region }) {
     <main className="container">
       <header className="header">
         <h1>📊 AIBA — 次世代技術投資分析</h1>
+        <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           テクニカル指標とセンチメント指標の乖離から「買い時」を定量化。
           <span className="region-badge">{REGION_LABEL[region]}</span>
