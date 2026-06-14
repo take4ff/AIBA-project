@@ -151,6 +151,7 @@ a { color: inherit; text-decoration: none; }
   text-align: left;
   font-size: 14px;
   border-bottom: 1px solid var(--border);
+  overflow: hidden;            /* 固定列幅を超える内容のはみ出しを防ぐ */
 }
 .table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
 .table tr:last-child td { border-bottom: none; }
@@ -161,7 +162,7 @@ a { color: inherit; text-decoration: none; }
 .domain-name { font-weight: 600; }
 .ticker { color: var(--muted); font-size: 12px; margin-left: 6px; }
 
-.score-cell { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+.score-cell { display: flex; align-items: center; gap: 8px; padding-right: 10px; }
 .score-bar-track {
   flex: 1;
   height: 8px;
