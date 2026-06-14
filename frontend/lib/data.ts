@@ -2,8 +2,8 @@ import { supabase } from "./supabase";
 import { RankingRow } from "./types";
 import { Region, Kind, parseDomainId } from "./regions";
 
-// 各市場の休場日を見込み、直近この日数から最新行を拾う
-const LOOKBACK_DAYS = 25;
+// 最新行＋センチメントの傾き算出のため、直近この日数を取得
+const LOOKBACK_DAYS = 45;
 
 function cutoffDate(): string {
   const d = new Date(Date.now() - LOOKBACK_DAYS * 86_400_000);
@@ -46,12 +46,17 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
     if (p.region === "global" && p.kind === "etf") themeName.set(p.theme, d.name);
   }
 
-  // ドメインごとに最新の trade_date の行を採用
+  // ドメインごとに最新行と、期間内で最古のセンチメント（傾き算出用）を採用
   const latest = new Map<string, any>();
+  const firstSent = new Map<string, { trade_date: string; sentiment_score: number | null }>();
   for (const m of metricsRes.data ?? []) {
     const cur = latest.get(m.domain_id);
     if (!cur || m.trade_date > cur.trade_date) latest.set(m.domain_id, m);
+    const f = firstSent.get(m.domain_id);
+    if (!f || m.trade_date < f.trade_date) firstSent.set(m.domain_id, m);
   }
+
+  const clamp = (x: number) => Math.max(0, Math.min(100, x));
 
   // 並び順を業界で揃える：その地域の業界ETFスコアを theme ごとに保持
   const etfScoreByTheme = new Map<string, number>();
@@ -69,8 +74,19 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
     if (!d) continue;
     const p = parseDomainId(id);
     if (p.region !== region || p.kind !== kind) continue;
+
+    // センチメントの傾き（期間内の最古→最新の変化）と「成長×割安」合成スコア
+    const sentNow = m.sentiment_score ?? 50;
+    const sentPast = firstSent.get(id)?.sentiment_score ?? sentNow;
+    const sentimentTrend = Math.round((sentNow - sentPast) * 10) / 10;
+    const sentMomentum = clamp(50 + sentimentTrend * 3); // 熱量上昇を0-100へ
+    const aiba = m.aiba_score ?? 0;
+    const comboScore = Math.round(0.5 * aiba + 0.5 * sentMomentum);
+
     rows.push({
       order_key: etfScoreByTheme.get(p.theme) ?? (m.aiba_score ?? 0),
+      sentiment_trend: sentimentTrend,
+      combo_score: comboScore,
       layer: d.layer,
       region: p.region,
       kind: p.kind,

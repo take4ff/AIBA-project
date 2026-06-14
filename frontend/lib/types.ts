@@ -20,6 +20,9 @@ export interface RankingRow {
   // 1ヶ月先予測
   buyzone_prob: number | null;   // 買い場(AIBA>=60)入り確率 (0-1)
   pred_aiba: number | null;      // HORIZON日後のAIBAスコア予測
+  // 成長シグナル
+  sentiment_trend: number;       // 直近のセンチメント変化（＋=熱量上昇）
+  combo_score: number;           // 成長×割安スコア(0-100)=割安(AIBA)と熱量上昇の合成
   // 並び順キー：その地域の業界ETFスコア（ETF/個別株で同じ業界順に揃えるため）
   order_key: number;
 }
