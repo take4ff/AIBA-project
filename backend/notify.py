@@ -92,19 +92,20 @@ def build_message(client) -> str | None:
             _, region, _ = _parse(did)
             lines.append(f"• {d.get('name','?')}（{REGION_JA.get(region,region)}）")
 
-    # ポートフォリオ売り検討
+    # 保有銘柄の売り検討（全ユーザーの保有ティッカーの過熱度）
     try:
-        pm = pd.DataFrame(_fetch_all(client, "portfolio_metrics", "holding_id,trade_date,overheat"))
-        ph = {h["id"]: h for h in _fetch_all(client, "portfolio_holdings", "id,name")}
-        if not pm.empty:
-            pm["overheat"] = pd.to_numeric(pm["overheat"], errors="coerce")
-            pl = pm.sort_values("trade_date").groupby("holding_id").tail(1)
-            sells = pl[pl["overheat"] >= SELL_LEVEL].sort_values("overheat", ascending=False)
-            if not sells.empty:
-                lines.append(f"\n*🔴 ポートフォリオ売り検討 (過熱度≥{SELL_LEVEL})*")
-                for _, r in sells.iterrows():
-                    nm = ph.get(r["holding_id"], {}).get("name", r["holding_id"])
-                    lines.append(f"• {nm} 過熱度 {r['overheat']:.0f}")
+        held = {h["ticker"]: h.get("name") or h["ticker"]
+                for h in _fetch_all(client, "user_holdings", "ticker,name")}
+        if held:
+            tm = pd.DataFrame(_fetch_all(client, "ticker_metrics", "ticker,trade_date,overheat"))
+            if not tm.empty:
+                tm["overheat"] = pd.to_numeric(tm["overheat"], errors="coerce")
+                tl = tm[tm["ticker"].isin(held)].sort_values("trade_date").groupby("ticker").tail(1)
+                sells = tl[tl["overheat"] >= SELL_LEVEL].sort_values("overheat", ascending=False)
+                if not sells.empty:
+                    lines.append(f"\n*🔴 保有銘柄の売り検討 (過熱度≥{SELL_LEVEL})*")
+                    for _, r in sells.iterrows():
+                        lines.append(f"• {held.get(r['ticker'], r['ticker'])} 過熱度 {r['overheat']:.0f}")
     except Exception:
         pass
 

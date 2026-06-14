@@ -75,11 +75,13 @@ def main() -> int:
     if not preds:
         errors.append("直近の predictions がありません。")
 
-    # 5. ポートフォリオ
-    pf = c.table("portfolio_metrics").select("id").gte(
-        "trade_date", _recent_iso(RECENT_WINDOW_DAYS)).limit(1).execute().data
-    if not pf:
-        warnings.append("直近の portfolio_metrics がありません。")
+    # 5. ポートフォリオ（ユーザー保有がある場合のみ）
+    holdings = c.table("user_holdings").select("ticker").limit(1).execute().data
+    if holdings:
+        tm = c.table("ticker_metrics").select("ticker").gte(
+            "trade_date", _recent_iso(RECENT_WINDOW_DAYS)).limit(1).execute().data
+        if not tm:
+            warnings.append("保有銘柄があるのに直近の ticker_metrics がありません。")
 
     for w in warnings:
         log.warning("⚠️ %s", w)

@@ -208,6 +208,11 @@ a { color: inherit; text-decoration: none; }
 .login-input { padding: 10px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; }
 .login-submit { padding: 10px 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
 .link-toggle { background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; text-align: left; padding: 4px 0; }
+
+/* ポートフォリオ追加フォーム */
+.pf-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; align-items: center; }
+.pf-add .login-input { width: auto; flex: 0 1 auto; }
+.pf-add .login-submit { width: auto; }
 .domain-name { font-weight: 600; }
 .ticker { color: var(--muted); font-size: 12px; margin-left: 6px; }
 .region-tag { margin-left: 6px; font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(91,140,255,0.12); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; }
