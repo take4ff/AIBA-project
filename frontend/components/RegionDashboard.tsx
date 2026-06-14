@@ -27,8 +27,9 @@ export default async function RegionDashboard({
   const effectiveKind: Kind = regionHasStocks(region) ? kind : "etf";
   const rows = await getRanking(region, effectiveKind);
   const tradeDate = rows.map((r) => r.trade_date).sort().at(-1);
+  // 並び順は「業界ETFスコア」基準（ETF/個別株を切り替えても業界の順番が揃う）
   const byLayer = (layer: number) =>
-    rows.filter((r) => r.layer === layer).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
+    rows.filter((r) => r.layer === layer).sort((a, b) => b.order_key - a.order_key);
 
   return (
     <main className="container">

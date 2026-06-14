@@ -17,6 +17,8 @@ export interface RankingRow {
   rsi_14: number | null;
   ma_deviation: number | null;
   close_price: number | null;
+  // 並び順キー：その地域の業界ETFスコア（ETF/個別株で同じ業界順に揃えるため）
+  order_key: number;
 }
 
 export interface MetricHistoryRow {

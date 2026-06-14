@@ -42,6 +42,15 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
     if (!cur || m.trade_date > cur.trade_date) latest.set(m.domain_id, m);
   }
 
+  // 並び順を業界で揃える：その地域の業界ETFスコアを theme ごとに保持
+  const etfScoreByTheme = new Map<string, number>();
+  for (const [id, m] of latest) {
+    const p = parseDomainId(id);
+    if (p.region === region && p.kind === "etf") {
+      etfScoreByTheme.set(p.theme, m.aiba_score ?? -1);
+    }
+  }
+
   const domMap = new Map(domainsData.map((d) => [d.id, d]));
   const rows: RankingRow[] = [];
   for (const [id, m] of latest) {
@@ -50,6 +59,7 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
     const p = parseDomainId(id);
     if (p.region !== region || p.kind !== kind) continue;
     rows.push({
+      order_key: etfScoreByTheme.get(p.theme) ?? (m.aiba_score ?? 0),
       layer: d.layer,
       region: p.region,
       kind: p.kind,
