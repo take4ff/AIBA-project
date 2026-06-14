@@ -1,12 +1,30 @@
 import Link from "next/link";
 import { RankingRow } from "@/lib/types";
 import { scoreColor, fmt } from "@/lib/score-color";
+import { parseDomainId } from "@/lib/regions";
 
 // センチメントの傾き（直近変化）を矢印で表す。±1未満は横ばい扱い。
 const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
 const trendArrow = (t: number) => (t > 1 ? "↑" : t < -1 ? "↓" : "→");
 
-export default function RankingTable({ rows, showTheme = false }: { rows: RankingRow[]; showTheme?: boolean }) {
+// linkMode "auto": ETFは業界ページ、個別株は銘柄詳細へ。"domain": 常に銘柄詳細。
+function rowHref(r: RankingRow, linkMode: "auto" | "domain"): string {
+  if (linkMode === "auto" && r.kind === "etf") {
+    const { theme, region } = parseDomainId(r.domain_id);
+    return `/theme/${theme}/${region}`;
+  }
+  return `/domain/${r.domain_id}`;
+}
+
+export default function RankingTable({
+  rows,
+  showTheme = false,
+  linkMode = "auto",
+}: {
+  rows: RankingRow[];
+  showTheme?: boolean;
+  linkMode?: "auto" | "domain";
+}) {
   return (
     <div className="table-scroll">
     <table className="table">
@@ -49,7 +67,7 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
             <tr key={r.domain_id}>
               <td className="rank">{i + 1}</td>
               <td>
-                <Link href={`/domain/${r.domain_id}`}>
+                <Link href={rowHref(r, linkMode)}>
                   <span className="domain-name">{r.domain_name}</span>
                   <span className="ticker">{r.ticker}</span>
                   {r.divergence && (

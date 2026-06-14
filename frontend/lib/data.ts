@@ -10,6 +10,20 @@ function cutoffDate(): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** 指定テーマ×地域の構成銘柄（業界ETF＋個別株）を返す。業界ページ用。 */
+export async function getIndustry(theme: string, region: Region): Promise<RankingRow[]> {
+  const all = [
+    ...(await getRanking(region, "etf")),
+    ...(await getRanking(region, "stock")),
+  ];
+  // 同テーマのみ。ETFを先頭、個別株はAIBA降順。
+  const rows = all.filter((r) => parseDomainId(r.domain_id).theme === theme);
+  return rows.sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === "etf" ? -1 : 1;
+    return (b.aiba_score ?? 0) - (a.aiba_score ?? 0);
+  });
+}
+
 /** 指定地域・種別の最新ランキング（ドメインごとの最新日を採用）を返す。 */
 export async function getRanking(region: Region, kind: Kind): Promise<RankingRow[]> {
   const [domainsRes, metricsRes, predRes] = await Promise.all([

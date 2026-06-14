@@ -27,10 +27,14 @@ export function regionHasStocks(region: Region): boolean {
   return region !== "global";
 }
 
-/** "advanced_semiconductor_jp_stock" → { theme, region, kind } */
+/**
+ * ID体系: ETF="<theme>_<region>_etf" / 個別株="<theme>_<region>_<slug>"
+ * 末尾が "etf" なら ETF、それ以外は個別株。region は末尾から2番目。
+ */
 export function parseDomainId(id: string): { theme: string; region: Region; kind: Kind } {
   const parts = id.split("_");
-  const kind = parts.pop() as Kind;
+  const last = parts.pop() as string;
+  const kind: Kind = last === "etf" ? "etf" : "stock";
   const region = parts.pop() as Region;
   return { theme: parts.join("_"), region, kind };
 }

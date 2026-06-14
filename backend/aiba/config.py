@@ -59,31 +59,41 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
     with open(path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
+    import re
+
+    def slug(ticker: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", ticker.lower())
+
     domains: list[Domain] = []
     for d in raw.get("domains", []):
         gh = list(d.get("github_keywords", []))
         ax = list(d.get("arxiv_keywords", []))
         theme_name = d["name"]
+        layer = int(d["layer"])
         instruments: dict = d.get("instruments", {})
         for region in REGIONS:
-            for kind in KINDS:
-                inst = instruments.get(region, {}).get(kind)
-                if not inst:
-                    continue  # その地域・種別に対象が無ければスキップ
-                domains.append(
-                    Domain(
-                        id=f"{d['id']}_{region}_{kind}",
-                        theme_id=d["id"],
-                        theme_name=theme_name,
-                        name=inst.get("name") or theme_name,
-                        region=region,
-                        kind=kind,
-                        layer=int(d["layer"]),
-                        ticker=str(inst["ticker"]),
-                        github_keywords=gh,
-                        arxiv_keywords=ax,
-                    )
-                )
+            reg = instruments.get(region, {})
+
+            etf = reg.get("etf")
+            if etf:
+                domains.append(Domain(
+                    id=f"{d['id']}_{region}_etf",
+                    theme_id=d["id"], theme_name=theme_name,
+                    name=etf.get("name") or theme_name,
+                    region=region, kind="etf", layer=layer,
+                    ticker=str(etf["ticker"]),
+                    github_keywords=gh, arxiv_keywords=ax,
+                ))
+
+            for stock in reg.get("stocks", []):
+                domains.append(Domain(
+                    id=f"{d['id']}_{region}_{slug(str(stock['ticker']))}",
+                    theme_id=d["id"], theme_name=theme_name,
+                    name=stock.get("name") or stock["ticker"],
+                    region=region, kind="stock", layer=layer,
+                    ticker=str(stock["ticker"]),
+                    github_keywords=gh, arxiv_keywords=ax,
+                ))
     return domains
 
 
