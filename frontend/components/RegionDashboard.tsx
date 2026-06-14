@@ -43,7 +43,7 @@ export default async function RegionDashboard({
       </header>
 
       <RegionTabs active={region} />
-      {regionHasStocks(region) && <KindToggle region={region} active={effectiveKind} />}
+      <KindToggle region={region} active={effectiveKind} />
 
       {rows.length === 0 ? (
         <div className="notice">
