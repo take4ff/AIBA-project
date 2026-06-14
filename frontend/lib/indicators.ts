@@ -58,6 +58,26 @@ export function macdState(closes: (number | null)[]): MacdState | null {
   return { hist: Math.round(last * 100) / 100, bullish: last > 0, cross };
 }
 
+export interface BuyGuide {
+  current: number | null;
+  fair: number | null;      // 妥当値 = 25日移動平均
+  pullback: number | null;  // 押し目買い目安 = MA − 1σ
+  support: number | null;   // 下値支持 = 直近60日安値
+}
+
+/** 株価の購入目安（妥当値・押し目・下値）を算出。 */
+export function buyGuide(closes: (number | null)[], maPeriod = 25): BuyGuide {
+  const vals = closes.filter((x): x is number => x != null);
+  const current = vals.length ? vals[vals.length - 1] : null;
+  if (vals.length < maPeriod) return { current, fair: null, pullback: null, support: null };
+  const recent = vals.slice(-maPeriod);
+  const ma = recent.reduce((a, b) => a + b, 0) / maPeriod;
+  const sd = Math.sqrt(recent.reduce((a, b) => a + (b - ma) ** 2, 0) / maPeriod);
+  const support = Math.min(...vals.slice(-60));
+  const r = (x: number) => Math.round(x * 100) / 100;
+  return { current, fair: r(ma), pullback: r(ma - sd), support: r(support) };
+}
+
 export function macdLabel(s: MacdState | null): string {
   if (!s) return "—（履歴不足）";
   const tone = s.bullish ? "強気" : "弱気";

@@ -55,10 +55,12 @@ export default function TrendChart({
   data,
   currency = "USD",
   etfCompare = false,
+  buyLevel = null,
 }: {
   data: MetricHistoryRow[];
   currency?: Currency;
   etfCompare?: boolean;
+  buyLevel?: number | null;
 }) {
   const [period, setPeriod] = useState<Period>("6M");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
@@ -91,6 +93,11 @@ export default function TrendChart({
           ))}
           <ReferenceLine yAxisId="score" y={BUY_THRESHOLD} stroke={C.buy} strokeDasharray="5 4" strokeOpacity={0.7}
             label={{ value: `買い閾値 ${BUY_THRESHOLD}`, position: "insideTopLeft", fill: C.buy, fontSize: 11 }} />
+
+          {buyLevel != null && (
+            <ReferenceLine yAxisId="price" y={buyLevel} stroke={C.aiba} strokeDasharray="6 3" strokeOpacity={0.8}
+              label={{ value: `押し目目安 ${priceFmt(buyLevel)}`, position: "insideBottomRight", fill: C.aiba, fontSize: 11 }} />
+          )}
 
           <Tooltip contentStyle={TOOLTIP}
             formatter={(value: number, name: string) => (name === "株価" ? priceFmt(value) : value?.toFixed(1))} />

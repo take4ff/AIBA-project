@@ -4,7 +4,8 @@ import { MetricHistoryRow } from "@/lib/types";
 import TrendChart from "@/components/TrendChart";
 import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
-import { bollinger, macdState, macdLabel } from "@/lib/indicators";
+import { bollinger, macdState, macdLabel, buyGuide } from "@/lib/indicators";
+import { money } from "@/lib/sell-signal";
 
 export const revalidate = 0;
 
@@ -76,6 +77,8 @@ export default async function DomainPage({ params }: { params: { id: string } })
     etf_aiba: compare?.aibaByDate[h.trade_date] ?? null,
   }));
   const macd = macdState(closes);
+  const guide = buyGuide(closes);
+  const cur = region === "jp" ? "JPY" : "USD";
 
   // 個別株 vs 業界ETF の比較
   const etfAiba = compare && latest ? compare.aibaByDate[latest.trade_date] ?? null : null;
@@ -116,13 +119,21 @@ export default async function DomainPage({ params }: { params: { id: string } })
           </span>
         </p>
       )}
+      {guide.fair != null && (
+        <p className="forecast-line">
+          🎯 購入目安：妥当値(25日MA) <span className="date">{money(guide.fair, cur)}</span>
+          {" / "}押し目買い目安 <span style={{ color: "#15a34a", fontWeight: 700 }}>{money(guide.pullback, cur)}</span>
+          {" / "}下値支持(60日安値) {money(guide.support, cur)}
+          <span className="forecast-note">（現在 {money(guide.current, cur)}）</span>
+        </p>
+      )}
       {history.length > 0 && (
         <p className="forecast-line" style={{ marginTop: 0 }}>📉 MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
       )}
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>
       ) : (
-        <TrendChart data={chartData} currency={region === "jp" ? "JPY" : "USD"} etfCompare={!!compare} />
+        <TrendChart data={chartData} currency={cur} etfCompare={!!compare} buyLevel={guide.pullback} />
       )}
     </main>
   );
