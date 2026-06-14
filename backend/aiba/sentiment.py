@@ -23,6 +23,7 @@ from .config import settings
 WINDOW_DAYS = 30
 GITHUB_SEARCH_URL = "https://api.github.com/search/repositories"
 ARXIV_API_URL = "http://export.arxiv.org/api/query"
+HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
 REQUEST_TIMEOUT = 20
 NEUTRAL = 50.0
 _OS_NS = "{http://a9.com/-/spec/opensearch/1.1/}"
@@ -33,6 +34,7 @@ class SentimentSnapshot:
     github_score: float   # 0-100（増加率ベース）
     arxiv_score: float    # 0-100（増加率ベース）
     sentiment_score: float  # 統合 0-100
+    hackernews_score: float = NEUTRAL  # 0-100（HNストーリー増加率）
 
 
 def _growth_to_score(recent: int, prior: int) -> float:
@@ -147,13 +149,58 @@ def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> flo
     return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
 
 
+# ----------------------------- Hacker News -----------------------------
+def _hn_count(keyword: str, since: datetime, until: datetime) -> int | None:
+    """期間内に投稿されたHNストーリー数を nbHits から取得する。"""
+    params = {
+        "query": keyword,
+        "tags": "story",
+        "numericFilters": f"created_at_i>{int(since.timestamp())},created_at_i<{int(until.timestamp())}",
+        "hitsPerPage": 0,
+    }
+    try:
+        resp = requests.get(HN_SEARCH_URL, params=params, timeout=REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            return None
+        return int(resp.json().get("nbHits", 0))
+    except (requests.RequestException, ValueError):
+        return None
+
+
+def fetch_hackernews_score(keywords: list[str], as_of: datetime | None = None) -> float:
+    """キーワード群のHacker News熱量（新規ストーリー増加率）を算出する。"""
+    if not keywords:
+        return NEUTRAL
+    start, mid, base = _windows(as_of)
+
+    recent_total = prior_total = 0
+    ok = False
+    for kw in keywords:
+        recent = _hn_count(kw, mid, base)
+        prior = _hn_count(kw, start, mid)
+        time.sleep(0.3)  # Algoliaは寛容だが礼儀として軽く待つ
+        if recent is None or prior is None:
+            continue
+        recent_total += recent
+        prior_total += prior
+        ok = True
+
+    return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
+
+
 def fetch_sentiment(
     github_keywords: list[str],
     arxiv_keywords: list[str],
     as_of: datetime | None = None,
 ) -> SentimentSnapshot:
-    """GitHub・arXivの熱量を統合したセンチメントスナップショットを返す。"""
+    """GitHub・arXiv・Hacker News の熱量を統合したスナップショットを返す。
+
+    HN はタイトルが自然文のため arxiv_keywords（自然言語）を流用する。
+    """
     gh = fetch_github_score(github_keywords, as_of)
     ax = fetch_arxiv_score(arxiv_keywords, as_of)
-    combined = round((gh + ax) / 2.0, 2)
-    return SentimentSnapshot(github_score=gh, arxiv_score=ax, sentiment_score=combined)
+    hn = fetch_hackernews_score(arxiv_keywords, as_of)
+    combined = round((gh + ax + hn) / 3.0, 2)
+    return SentimentSnapshot(
+        github_score=gh, arxiv_score=ax, sentiment_score=combined, hackernews_score=hn,
+    )
