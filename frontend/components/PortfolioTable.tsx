@@ -5,6 +5,7 @@ import { fmt } from "@/lib/score-color";
 
 export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
   return (
+    <div className="table-scroll">
     <table className="table">
       <colgroup>
         <col style={{ width: "20%" }} />
@@ -71,5 +72,6 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }

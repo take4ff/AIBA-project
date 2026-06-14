@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ReferenceArea, ReferenceLine, ResponsiveContainer,
 } from "recharts";
 import { MetricHistoryRow } from "@/lib/types";
+import PeriodFilter, { PERIODS, Period } from "@/components/PeriodFilter";
 
 // AIBAスコアがこの値以上の期間を「買い場」としてハイライトする
 const BUY_THRESHOLD = 60;
@@ -37,13 +39,16 @@ export default function TrendChart({
   data: MetricHistoryRow[];
   currency?: Currency;
 }) {
-  const bands = buyBands(data);
+  const [period, setPeriod] = useState<Period>("6M");
+  const view = data.slice(-PERIODS[period]);
+  const bands = buyBands(view);
   const priceFmt = makePriceFmt(currency);
 
   return (
     <div className="chart-wrap">
+      <PeriodFilter value={period} onChange={setPeriod} />
       <ResponsiveContainer width="100%" height={420}>
-        <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <ComposedChart data={view} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#e6ebf5" stopOpacity={0.18} />

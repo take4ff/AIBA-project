@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ReferenceArea, ReferenceLine, ResponsiveContainer,
 } from "recharts";
 import { SellMetricRow } from "@/lib/portfolio";
+import PeriodFilter, { PERIODS, Period } from "@/components/PeriodFilter";
 
 const SELL_THRESHOLD = 70; // 過熱度がこれ以上＝売り検討ゾーン
 
@@ -15,6 +17,8 @@ export default function SellChart({
   data: SellMetricRow[];
   currency?: "JPY" | "USD";
 }) {
+  const [period, setPeriod] = useState<Period>("6M");
+  const view = data.slice(-PERIODS[period]);
   const sym = currency === "JPY" ? "¥" : "$";
   const priceFmt = (v: number) =>
     `${sym}${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -22,17 +26,18 @@ export default function SellChart({
   // 過熱度が閾値以上の連続区間（売り場）を赤帯で示す
   const bands: { x1: string; x2: string }[] = [];
   let start: string | null = null;
-  for (let i = 0; i < data.length; i++) {
-    const hot = (data[i].overheat ?? -1) >= SELL_THRESHOLD;
-    if (hot && start === null) start = data[i].trade_date;
-    if (!hot && start !== null) { bands.push({ x1: start, x2: data[i - 1].trade_date }); start = null; }
+  for (let i = 0; i < view.length; i++) {
+    const hot = (view[i].overheat ?? -1) >= SELL_THRESHOLD;
+    if (hot && start === null) start = view[i].trade_date;
+    if (!hot && start !== null) { bands.push({ x1: start, x2: view[i - 1].trade_date }); start = null; }
   }
-  if (start !== null) bands.push({ x1: start, x2: data[data.length - 1].trade_date });
+  if (start !== null) bands.push({ x1: start, x2: view[view.length - 1].trade_date });
 
   return (
     <div className="chart-wrap">
+      <PeriodFilter value={period} onChange={setPeriod} />
       <ResponsiveContainer width="100%" height={420}>
-        <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <ComposedChart data={view} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="pxFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#e6ebf5" stopOpacity={0.18} />

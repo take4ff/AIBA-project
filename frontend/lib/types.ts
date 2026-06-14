@@ -22,6 +22,8 @@ export interface RankingRow {
   pred_aiba: number | null;      // HORIZON日後のAIBAスコア予測
   // 成長シグナル
   sentiment_trend: number;       // 直近のセンチメント変化（＋=熱量上昇）
+  price_trend: number;           // 直近の株価変化[%]
+  divergence: boolean;           // 乖離: センチメント上昇 × 株価出遅れ ＝仕込み好機
   combo_score: number;           // 成長×割安スコア(0-100)=割安(AIBA)と熱量上昇の合成
   // 並び順キー：その地域の業界ETFスコア（ETF/個別株で同じ業界順に揃えるため）
   order_key: number;

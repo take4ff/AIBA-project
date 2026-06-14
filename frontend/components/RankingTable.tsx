@@ -8,6 +8,7 @@ const trendArrow = (t: number) => (t > 1 ? "↑" : t < -1 ? "↓" : "→");
 
 export default function RankingTable({ rows, showTheme = false }: { rows: RankingRow[]; showTheme?: boolean }) {
   return (
+    <div className="table-scroll">
     <table className="table">
       <colgroup>
         <col style={{ width: "4%" }} />
@@ -43,6 +44,9 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
                 <Link href={`/domain/${r.domain_id}`}>
                   <span className="domain-name">{r.domain_name}</span>
                   <span className="ticker">{r.ticker}</span>
+                  {r.divergence && (
+                    <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
+                  )}
                   {/* ETF/個別株の切替で行高が変わらないよう、サブ行は常に確保 */}
                   <span className="theme-sub">{showTheme ? r.theme_name : " "}</span>
                 </Link>
@@ -88,5 +92,6 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
         })}
       </tbody>
     </table>
+    </div>
   );
 }

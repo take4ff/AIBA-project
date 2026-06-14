@@ -48,7 +48,7 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
 
   // ドメインごとに最新行と、期間内で最古のセンチメント（傾き算出用）を採用
   const latest = new Map<string, any>();
-  const firstSent = new Map<string, { trade_date: string; sentiment_score: number | null }>();
+  const firstSent = new Map<string, any>();
   for (const m of metricsRes.data ?? []) {
     const cur = latest.get(m.domain_id);
     if (!cur || m.trade_date > cur.trade_date) latest.set(m.domain_id, m);
@@ -77,15 +77,23 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
 
     // センチメントの傾き（期間内の最古→最新の変化）と「成長×割安」合成スコア
     const sentNow = m.sentiment_score ?? 50;
-    const sentPast = firstSent.get(id)?.sentiment_score ?? sentNow;
+    const past = firstSent.get(id);
+    const sentPast = past?.sentiment_score ?? sentNow;
     const sentimentTrend = Math.round((sentNow - sentPast) * 10) / 10;
     const sentMomentum = clamp(50 + sentimentTrend * 3); // 熱量上昇を0-100へ
     const aiba = m.aiba_score ?? 0;
     const comboScore = Math.round(0.5 * aiba + 0.5 * sentMomentum);
 
+    // 株価トレンドと乖離（センチメント上昇 × 株価が出遅れ＝仕込み好機）
+    const closePast = past?.close_price ?? m.close_price;
+    const priceTrend = closePast ? Math.round(((m.close_price - closePast) / closePast) * 1000) / 10 : 0;
+    const divergence = sentimentTrend > 1 && priceTrend < 2;
+
     rows.push({
       order_key: etfScoreByTheme.get(p.theme) ?? (m.aiba_score ?? 0),
       sentiment_trend: sentimentTrend,
+      price_trend: priceTrend,
+      divergence,
       combo_score: comboScore,
       layer: d.layer,
       region: p.region,
