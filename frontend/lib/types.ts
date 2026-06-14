@@ -1,4 +1,4 @@
-// Supabase の latest_ranking ビュー / daily_metrics に対応する型。
+// ランキング行の型（domains × daily_metrics から構築）。
 
 import { Region, Kind } from "./regions";
 

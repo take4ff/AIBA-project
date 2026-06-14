@@ -59,21 +59,5 @@ drop policy if exists "public read daily_metrics" on daily_metrics;
 create policy "public read daily_metrics" on daily_metrics
     for select using (true);
 
--- 最新日の階層別ランキングを取得するビュー（フロントエンド用）
-create or replace view latest_ranking as
-select
-    d.layer,
-    d.id          as domain_id,
-    d.name        as domain_name,
-    d.ticker,
-    m.trade_date,
-    m.aiba_score,
-    m.technical_score,
-    m.sentiment_score,
-    m.rsi_14,
-    m.ma_deviation,
-    m.close_price
-from daily_metrics m
-join domains d on d.id = m.domain_id
-where m.trade_date = (select max(trade_date) from daily_metrics)
-order by d.layer, m.aiba_score desc;
+-- 注: 旧 latest_ranking ビューは廃止（フロントは domains＋daily_metrics を直接参照）。
+-- 既存環境では db/drop_latest_ranking.sql を実行して削除してください。
