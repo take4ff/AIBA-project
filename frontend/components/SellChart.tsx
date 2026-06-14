@@ -5,7 +5,12 @@ import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ReferenceArea, ReferenceLine, ResponsiveContainer,
 } from "recharts";
-import { SellMetricRow } from "@/lib/portfolio";
+export interface SellMetricRow {
+  trade_date: string;
+  close_price: number | null;
+  rsi_14: number | null;
+  overheat: number | null;
+}
 import PeriodFilter, { PERIODS, Period } from "@/components/PeriodFilter";
 
 const SELL_THRESHOLD = 70; // 過熱度がこれ以上＝売り検討ゾーン

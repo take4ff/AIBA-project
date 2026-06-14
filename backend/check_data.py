@@ -9,7 +9,7 @@
   2. カバレッジ : 直近データのあるドメイン数が十分か
   3. センチメント: 全ドメインが中立(50)一律＝API一括失敗していないか（警告）
   4. 予測      : 直近の predictions が存在するか
-  5. ポートフォリオ: 直近の portfolio_metrics が存在するか
+  5. ポートフォリオ: 保有があるのに ticker_metrics が無い場合に警告
 """
 from __future__ import annotations
 

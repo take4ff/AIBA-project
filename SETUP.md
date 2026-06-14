@@ -36,7 +36,14 @@ AIBA-project/
 ## Phase 1: データ基盤（バックエンド）
 
 ### 1. Supabase テーブル作成
-Supabase ダッシュボード → SQL Editor で `db/schema.sql` を実行。
+Supabase ダッシュボード → SQL Editor で以下を実行：
+- `db/schema.sql`（domains / daily_metrics / RLS）
+- `db/predictions.sql`（1ヶ月先予測）
+- `db/watchlist.sql`（ウォッチリスト・per-user）
+- `db/user_portfolio.sql`（ポートフォリオ：user_holdings / ticker_metrics / ticker_fundamentals）
+
+**認証（ログイン）**：Authentication → Providers の **Email** を有効化（既定ON）。
+新規登録後すぐ使うには **「Confirm email」を OFF** にする（個人利用向け）。
 
 ### 2. 環境変数
 ```bash
