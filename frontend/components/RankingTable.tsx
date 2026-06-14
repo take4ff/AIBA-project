@@ -19,12 +19,12 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
         <tr>
           <th></th>
           <th>領域</th>
-          <th>AIBAスコア</th>
-          <th className="num">テクニカル</th>
-          <th className="num">センチメント</th>
-          <th className="num">RSI(14)</th>
-          <th className="num">乖離率</th>
-          <th className="num">買い場確率<br />(1ヶ月)</th>
+          <th title="総合的な買い時度(0-100)。高いほど割安・買い場。色: 緑=買い場 / 赤=見送り">AIBAスコア</th>
+          <th className="num" title="株価の割安感(0-100)。RSIが低い・移動平均より下ほど高得点">テクニカル</th>
+          <th className="num" title="GitHub/arXivの研究熱量(0-100)。50=横ばい、50超=加速">センチメント</th>
+          <th className="num" title="相対力指数。70超=過熱、30未満=売られすぎ。50超はAIBA減点">RSI(14)</th>
+          <th className="num" title="25日移動平均からの乖離[%]。マイナス=平均より下(割安)">乖離率</th>
+          <th className="num" title="今後約1ヶ月でAIBAが買い場(60以上)に入る確率の予測">買い場確率<br />(1ヶ月)</th>
         </tr>
       </thead>
       <tbody>

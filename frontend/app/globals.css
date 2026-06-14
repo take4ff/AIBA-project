@@ -29,6 +29,38 @@ a { color: inherit; text-decoration: none; }
 .header .date { color: var(--accent); font-weight: 600; }
 .header .fullname { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px; }
 
+.guide {
+  margin-top: 20px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.guide > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  list-style: none;
+}
+.guide > summary::-webkit-details-marker { display: none; }
+.guide > summary::before { content: "▸ "; color: var(--muted); }
+.guide[open] > summary::before { content: "▾ "; }
+.guide-body { padding: 4px 16px 16px; border-top: 1px solid var(--border); }
+.guide-list { margin: 12px 0 0; }
+.guide-item { display: grid; grid-template-columns: 180px 1fr; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--border); }
+.guide-item dt { color: var(--accent); font-weight: 600; font-size: 13px; }
+.guide-item dd { margin: 0; color: var(--text); font-size: 13px; line-height: 1.6; }
+.guide-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.guide-legend-title { color: var(--muted); font-size: 12px; margin-right: 4px; }
+.guide-legend .lg { font-size: 11px; color: #0b0f1a; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+.guide-note { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 14px 0 0; }
+.guide-note strong { color: var(--text); }
+
+@media (max-width: 640px) {
+  .guide-item { grid-template-columns: 1fr; gap: 2px; }
+}
+
 .tabs {
   display: flex;
   gap: 6px;

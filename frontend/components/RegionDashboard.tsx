@@ -5,6 +5,7 @@ import { Region, Kind, REGION_LABEL, KIND_LABEL, regionHasStocks } from "@/lib/r
 import RankingTable from "@/components/RankingTable";
 import RegionTabs from "@/components/RegionTabs";
 import KindToggle from "@/components/KindToggle";
+import ScoreGuide from "@/components/ScoreGuide";
 
 export default async function RegionDashboard({
   region,
@@ -42,6 +43,8 @@ export default async function RegionDashboard({
           {tradeDate && <> 最新データ: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
+
+      <ScoreGuide />
 
       <RegionTabs active={region} />
       <KindToggle region={region} active={effectiveKind} />

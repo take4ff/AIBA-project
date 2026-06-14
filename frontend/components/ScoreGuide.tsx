@@ -1,0 +1,61 @@
+// スコアの見方を説明する折りたたみパネル。
+
+const ITEMS: { term: string; desc: string }[] = [
+  {
+    term: "AIBAスコア (0–100)",
+    desc: "総合的な「買い時度」。高いほど割安・買い場。層ごとにテクニカルとセンチメントを重み付けして算出し、RSIが過熱(50超)だと減点される。",
+  },
+  {
+    term: "テクニカル (0–100)",
+    desc: "株価の「割安感」。RSIが低い(売られすぎ)・移動平均より株価が下にあるほど高得点。",
+  },
+  {
+    term: "センチメント (0–100)",
+    desc: "GitHub・arXivの研究開発の熱量。50=横ばい、50超=加速、50未満=減速。地域共通の先行指標。",
+  },
+  {
+    term: "RSI(14)",
+    desc: "相対力指数。一般に70超で買われすぎ(過熱)、30未満で売られすぎ。AIBAは50超に過熱ペナルティを課す。",
+  },
+  {
+    term: "乖離率",
+    desc: "25日移動平均からの株価の乖離[%]。マイナス=平均より下(割安)、プラス=上(割高)。",
+  },
+  {
+    term: "買い場確率(1ヶ月)",
+    desc: "今後およそ1ヶ月以内に AIBA が買い場(60以上)へ入る確率。平均回帰＋確率モデルによる予測。",
+  },
+];
+
+export default function ScoreGuide() {
+  return (
+    <details className="guide">
+      <summary>📖 スコアの見方</summary>
+      <div className="guide-body">
+        <dl className="guide-list">
+          {ITEMS.map((it) => (
+            <div key={it.term} className="guide-item">
+              <dt>{it.term}</dt>
+              <dd>{it.desc}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="guide-legend">
+          <span className="guide-legend-title">色の目安（高いほど買い場）：</span>
+          <span className="lg" style={{ background: "#ef4444" }}>〜38 見送り</span>
+          <span className="lg" style={{ background: "#f59e0b" }}>〜48</span>
+          <span className="lg" style={{ background: "#5b8cff" }}>〜58 中立</span>
+          <span className="lg" style={{ background: "#22b5a0" }}>〜70</span>
+          <span className="lg" style={{ background: "#34d399" }}>70〜 買い場</span>
+        </div>
+
+        <p className="guide-note">
+          タブ＝地域（Global/米国/日本）、トグル＝業界ETF/個別株。並び順はその地域の
+          <strong>業界ETFスコア順</strong>で固定（ETF↔個別株を切替えても業界の位置が揃う）。
+          領域名をクリックすると時系列チャート（株価×スコア、買い場ハイライト）が見られます。
+        </p>
+      </div>
+    </details>
+  );
+}
