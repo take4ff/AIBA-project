@@ -178,12 +178,19 @@ def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> flo
 
 
 # ----------------------------- Hacker News -----------------------------
+HN_MIN_POINTS = 10  # 注目を集めた話題に限定（ノイズ除去＝熱量の質）
+
+
 def _hn_count(keyword: str, since: datetime, until: datetime) -> int | None:
-    """期間内に投稿されたHNストーリー数を nbHits から取得する。"""
+    """期間内に投稿された「注目された」HNストーリー数（points≥閾値）。"""
     params = {
         "query": keyword,
         "tags": "story",
-        "numericFilters": f"created_at_i>{int(since.timestamp())},created_at_i<{int(until.timestamp())}",
+        "numericFilters": (
+            f"created_at_i>{int(since.timestamp())},"
+            f"created_at_i<{int(until.timestamp())},"
+            f"points>={HN_MIN_POINTS}"
+        ),
         "hitsPerPage": 0,
     }
     try:
