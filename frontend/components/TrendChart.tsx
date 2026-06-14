@@ -35,9 +35,11 @@ function buyBands(data: MetricHistoryRow[]): { x1: string; x2: string }[] {
 export default function TrendChart({
   data,
   currency = "USD",
+  etfCompare = false,
 }: {
   data: MetricHistoryRow[];
   currency?: Currency;
+  etfCompare?: boolean;
 }) {
   const [period, setPeriod] = useState<Period>("6M");
   const view = data.slice(-PERIODS[period]);
@@ -127,6 +129,9 @@ export default function TrendChart({
 
           {/* AIBAスコア: 主役（左軸・太線） */}
           <Line yAxisId="score" type="monotone" dataKey="aiba_score" name="AIBA" stroke="#34d399" strokeWidth={2.8} dot={false} />
+          {etfCompare && (
+            <Line yAxisId="score" type="monotone" dataKey="etf_aiba" name="業界AIBA" stroke="#34d399" strokeWidth={1.4} strokeDasharray="5 3" strokeOpacity={0.6} dot={false} connectNulls />
+          )}
           <Line yAxisId="score" type="monotone" dataKey="technical_score" name="テクニカル" stroke="#5b8cff" strokeWidth={1.4} dot={false} />
           <Line yAxisId="score" type="monotone" dataKey="sentiment_score" name="センチメント" stroke="#f59e0b" strokeWidth={1.4} dot={false} />
           <Line yAxisId="score" type="monotone" dataKey="rsi_14" name="RSI" stroke="#8b97b3" strokeWidth={1} strokeDasharray="4 4" dot={false} />

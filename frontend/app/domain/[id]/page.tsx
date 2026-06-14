@@ -24,6 +24,23 @@ async function getHistory(id: string) {
 
   if (error) console.error("history fetch error:", error.message);
 
+  // 個別株は対応する業界ETFのAIBAを比較用に取得
+  const { theme, region, kind } = parseDomainId(id);
+  let compare: { name: string; ticker: string; aibaByDate: Record<string, number> } | null = null;
+  if (kind === "stock") {
+    const etfId = `${theme}_${region}_etf`;
+    const { data: etfDom } = await supabase
+      .from("domains").select("name,ticker").eq("id", etfId).single();
+    const { data: etfHist } = await supabase
+      .from("daily_metrics").select("trade_date,aiba_score")
+      .eq("domain_id", etfId).order("trade_date", { ascending: true }).limit(180);
+    if (etfDom) {
+      const aibaByDate: Record<string, number> = {};
+      for (const r of etfHist ?? []) if (r.aiba_score != null) aibaByDate[r.trade_date] = Number(r.aiba_score);
+      compare = { name: etfDom.name, ticker: etfDom.ticker, aibaByDate };
+    }
+  }
+
   const { data: predData } = await supabase
     .from("predictions")
     .select("as_of_date,horizon_days,pred_aiba,buyzone_prob")
@@ -32,7 +49,7 @@ async function getHistory(id: string) {
     .limit(1);
   const prediction = predData?.[0] ?? null;
 
-  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction };
+  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare };
 }
 
 export default async function DomainPage({ params }: { params: { id: string } }) {
@@ -45,15 +62,25 @@ export default async function DomainPage({ params }: { params: { id: string } })
     );
   }
 
-  const { dom, history, prediction } = await getHistory(params.id);
+  const { dom, history, prediction, compare } = await getHistory(params.id);
   const latest = history[history.length - 1];
   const { region } = parseDomainId(params.id);
 
   // 補助テクニカル（表示のみ）: ボリンジャーバンドを重ね、MACD状態を表示
   const closes = history.map((h) => h.close_price);
   const bb = bollinger(closes);
-  const chartData = history.map((h, i) => ({ ...h, bb_upper: bb.upper[i], bb_lower: bb.lower[i] }));
+  const chartData = history.map((h, i) => ({
+    ...h,
+    bb_upper: bb.upper[i],
+    bb_lower: bb.lower[i],
+    etf_aiba: compare?.aibaByDate[h.trade_date] ?? null,
+  }));
   const macd = macdState(closes);
+
+  // 個別株 vs 業界ETF の比較
+  const etfAiba = compare && latest ? compare.aibaByDate[latest.trade_date] ?? null : null;
+  const stockAiba = latest?.aiba_score ?? null;
+  const vsDelta = etfAiba != null && stockAiba != null ? stockAiba - etfAiba : null;
 
   return (
     <main className="container">
@@ -81,13 +108,21 @@ export default async function DomainPage({ params }: { params: { id: string } })
         )}
       </header>
 
+      {compare && vsDelta != null && (
+        <p className="forecast-line">
+          ⚖️ 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
+          <span style={{ color: vsDelta >= 0 ? "#34d399" : "#ef4444", fontWeight: 700 }}>
+            {vsDelta >= 0 ? `業界より割安（+${vsDelta.toFixed(0)}）` : `業界より割高/過熱（${vsDelta.toFixed(0)}）`}
+          </span>
+        </p>
+      )}
       {history.length > 0 && (
         <p className="forecast-line" style={{ marginTop: 0 }}>📉 MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
       )}
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>
       ) : (
-        <TrendChart data={chartData} currency={region === "jp" ? "JPY" : "USD"} />
+        <TrendChart data={chartData} currency={region === "jp" ? "JPY" : "USD"} etfCompare={!!compare} />
       )}
     </main>
   );
