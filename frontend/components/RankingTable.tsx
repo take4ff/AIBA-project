@@ -2,6 +2,7 @@ import Link from "next/link";
 import { RankingRow } from "@/lib/types";
 import { scoreColor, fmt } from "@/lib/score-color";
 import { parseDomainId } from "@/lib/regions";
+import { holdingStance } from "@/lib/stance";
 
 // センチメントの傾き（直近変化）を矢印で表す。±1未満は横ばい扱い。
 const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
@@ -73,6 +74,10 @@ export default function RankingTable({
                   {r.divergence && (
                     <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
                   )}
+                  {(() => {
+                    const s = holdingStance(r);
+                    return s ? <span className={`stance-badge ${s.cls}`} title={s.reason}>{s.icon} {s.label}</span> : null;
+                  })()}
                   {/* ETF/個別株の切替で行高が変わらないよう、サブ行は常に確保 */}
                   <span className="theme-sub">{showTheme ? r.theme_name : " "}</span>
                 </Link>
