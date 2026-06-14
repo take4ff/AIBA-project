@@ -8,6 +8,7 @@ import { bollinger, macdState, macdLabel, buyGuide } from "@/lib/indicators";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
+import { narrative } from "@/lib/narrative";
 
 export const revalidate = 0;
 
@@ -138,6 +139,19 @@ export default async function DomainPage({ params }: { params: { id: string } })
     }
   }
 
+  // 一行ナラティブ（自動要約）: 要点を1〜2文に
+  const summary = latest
+    ? narrative({
+        name: dom?.name ?? params.id,
+        aiba: latest.aiba_score,
+        fairDiscount: fairValue ? Math.max(-60, Math.min(60, fairValue.discountPct)) : null,
+        epsGrowth: fundamentals?.eps_growth ?? null,
+        sentiment: latest.sentiment_score,
+        buyzoneProb: prediction?.buyzone_prob ?? null,
+        nextEarnings: fundamentals?.next_earnings_date ?? null,
+      })
+    : null;
+
   // 個別株 vs 業界ETF の比較
   const etfAiba = compare && latest ? compare.aibaByDate[latest.trade_date] ?? null : null;
   const stockAiba = latest?.aiba_score ?? null;
@@ -168,6 +182,8 @@ export default async function DomainPage({ params }: { params: { id: string } })
           </p>
         )}
       </header>
+
+      {summary && <p className="narrative">📝 {summary}</p>}
 
       {compare && vsDelta != null && (
         <p className="forecast-line">
