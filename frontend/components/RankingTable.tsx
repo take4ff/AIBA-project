@@ -6,13 +6,14 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
   return (
     <table className="table">
       <colgroup>
-        <col style={{ width: "5%" }} />
-        <col style={{ width: "33%" }} />
-        <col style={{ width: "24%" }} />
-        <col style={{ width: "9.5%" }} />
-        <col style={{ width: "9.5%" }} />
+        <col style={{ width: "4%" }} />
+        <col style={{ width: "27%" }} />
+        <col style={{ width: "20%" }} />
         <col style={{ width: "9%" }} />
-        <col style={{ width: "10%" }} />
+        <col style={{ width: "9%" }} />
+        <col style={{ width: "8%" }} />
+        <col style={{ width: "8%" }} />
+        <col style={{ width: "15%" }} />
       </colgroup>
       <thead>
         <tr>
@@ -23,6 +24,7 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
           <th className="num">センチメント</th>
           <th className="num">RSI(14)</th>
           <th className="num">乖離率</th>
+          <th className="num">買い場確率<br />(1ヶ月)</th>
         </tr>
       </thead>
       <tbody>
@@ -56,6 +58,15 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
               <td className="num">{fmt(r.sentiment_score)}</td>
               <td className="num">{fmt(r.rsi_14)}</td>
               <td className="num">{fmt(r.ma_deviation, 2)}%</td>
+              <td className="num">
+                {r.buyzone_prob == null ? (
+                  "—"
+                ) : (
+                  <span style={{ color: scoreColor(r.buyzone_prob * 100), fontWeight: 700 }}>
+                    {(r.buyzone_prob * 100).toFixed(0)}%
+                  </span>
+                )}
+              </td>
             </tr>
           );
         })}

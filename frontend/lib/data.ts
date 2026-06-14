@@ -12,7 +12,7 @@ function cutoffDate(): string {
 
 /** 指定地域・種別の最新ランキング（ドメインごとの最新日を採用）を返す。 */
 export async function getRanking(region: Region, kind: Kind): Promise<RankingRow[]> {
-  const [domainsRes, metricsRes] = await Promise.all([
+  const [domainsRes, metricsRes, predRes] = await Promise.all([
     supabase.from("domains").select("id,name,layer,ticker"),
     supabase
       .from("daily_metrics")
@@ -20,11 +20,22 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
         "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price"
       )
       .gte("trade_date", cutoffDate()),
+    supabase
+      .from("predictions")
+      .select("domain_id,as_of_date,buyzone_prob,pred_aiba")
+      .gte("as_of_date", cutoffDate()),
   ]);
 
   if (domainsRes.error || metricsRes.error) {
     console.error("ranking fetch error:", domainsRes.error?.message, metricsRes.error?.message);
     return [];
+  }
+
+  // ドメインごとに最新の予測を採用（predictions テーブルが未作成でも動作）
+  const pred = new Map<string, any>();
+  for (const p of predRes.data ?? []) {
+    const cur = pred.get(p.domain_id);
+    if (!cur || p.as_of_date > cur.as_of_date) pred.set(p.domain_id, p);
   }
 
   const domainsData = domainsRes.data ?? [];
@@ -74,6 +85,8 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
       rsi_14: m.rsi_14,
       ma_deviation: m.ma_deviation,
       close_price: m.close_price,
+      buyzone_prob: pred.get(id)?.buyzone_prob ?? null,
+      pred_aiba: pred.get(id)?.pred_aiba ?? null,
     });
   }
   return rows;

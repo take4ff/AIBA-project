@@ -135,5 +135,8 @@ a { color: inherit; text-decoration: none; }
 }
 .notice code { color: var(--accent); }
 
+.forecast-line { color: var(--text); font-size: 14px; margin-top: 6px; }
+.forecast-note { color: var(--muted); font-size: 12px; margin-left: 8px; }
+
 .chart-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 20px; }
 .back-link { color: var(--accent); font-size: 14px; }

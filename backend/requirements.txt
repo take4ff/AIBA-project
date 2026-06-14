@@ -5,3 +5,4 @@ yfinance>=0.2.40
 PyYAML>=6.0
 supabase>=2.4
 python-dotenv>=1.0
+scikit-learn>=1.4

@@ -17,6 +17,9 @@ export interface RankingRow {
   rsi_14: number | null;
   ma_deviation: number | null;
   close_price: number | null;
+  // 1ヶ月先予測
+  buyzone_prob: number | null;   // 買い場(AIBA>=60)入り確率 (0-1)
+  pred_aiba: number | null;      // HORIZON日後のAIBAスコア予測
   // 並び順キー：その地域の業界ETFスコア（ETF/個別株で同じ業界順に揃えるため）
   order_key: number;
 }

@@ -37,3 +37,10 @@ jobs:
           # Actions既定の GITHUB_TOKEN は Search API に使えないため別Secretを参照。
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: python run_daily.py
+
+      - name: Run forecast
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python predict.py
