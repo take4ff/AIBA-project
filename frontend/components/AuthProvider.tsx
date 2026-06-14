@@ -10,7 +10,8 @@ interface AuthCtx {
   watchlist: Set<string>;
   isWatched: (domainId: string) => boolean;
   toggleWatch: (domainId: string) => Promise<void>;
-  signInWithEmail: (email: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirm: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -69,12 +70,19 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     [user, watchlist],
   );
 
-  const signInWithEmail = useCallback(async (email: string) => {
-    const { error } = await supabaseBrowser.auth.signInWithOtp({
-      email,
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const signUp = useCallback(async (email: string, password: string) => {
+    const { data, error } = await supabaseBrowser.auth.signUp({
+      email, password,
       options: { emailRedirectTo: window.location.origin + "/login" },
     });
-    return { error: error?.message ?? null };
+    // メール確認が有効な場合は session が無い（確認メール後にログイン）
+    const needsConfirm = !error && !data.session;
+    return { error: error?.message ?? null, needsConfirm };
   }, []);
 
   const signOut = useCallback(async () => {
@@ -84,7 +92,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   return (
     <Ctx.Provider
-      value={{ user, ready, watchlist, isWatched: (id) => watchlist.has(id), toggleWatch, signInWithEmail, signOut }}
+      value={{ user, ready, watchlist, isWatched: (id) => watchlist.has(id), toggleWatch, signIn, signUp, signOut }}
     >
       {children}
     </Ctx.Provider>
