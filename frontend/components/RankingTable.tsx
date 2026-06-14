@@ -17,14 +17,18 @@ function rowHref(r: RankingRow, linkMode: "auto" | "domain"): string {
   return `/domain/${r.domain_id}`;
 }
 
+const REGION_BADGE: Record<string, string> = { global: "Global", us: "米国", jp: "日本" };
+
 export default function RankingTable({
   rows,
   showTheme = false,
   linkMode = "auto",
+  showRegion = false,
 }: {
   rows: RankingRow[];
   showTheme?: boolean;
   linkMode?: "auto" | "domain";
+  showRegion?: boolean;
 }) {
   return (
     <div className="table-scroll">
@@ -71,6 +75,7 @@ export default function RankingTable({
                 <Link href={rowHref(r, linkMode)}>
                   <span className="domain-name">{r.domain_name}</span>
                   <span className="ticker">{r.ticker}</span>
+                  {showRegion && <span className="region-tag">{REGION_BADGE[r.region] ?? r.region}</span>}
                   {r.divergence && (
                     <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
                   )}

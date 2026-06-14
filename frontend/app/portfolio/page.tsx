@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPortfolio } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import PortfolioTable from "@/components/PortfolioTable";
+import NavTabs from "@/components/NavTabs";
 
 export const revalidate = 0;
 
@@ -20,14 +21,15 @@ export default async function PortfolioPage() {
 
   return (
     <main className="container">
-      <Link className="back-link" href="/">← ダッシュボードへ</Link>
-      <header className="header" style={{ marginTop: 12 }}>
+      <header className="header">
         <h1>💼 マイ・ポートフォリオ（売り時）</h1>
         <p>
           保有銘柄の<strong>過熱度</strong>から売り時を可視化。過熱度が高い（割高・買われすぎ）ほど売り検討。
           {tradeDate && <> 最新: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
+
+      <NavTabs active="portfolio" />
 
       {rows.length === 0 ? (
         <div className="notice">
