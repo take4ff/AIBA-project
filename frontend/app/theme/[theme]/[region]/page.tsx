@@ -43,7 +43,7 @@ export default async function IndustryPage({
       {rows.length === 0 ? (
         <div className="notice">この業界×地域のデータがまだありません。</div>
       ) : (
-        <RankingTable rows={rows} linkMode="domain" />
+        <RankingTable rows={rows} linkMode="domain" showRegion={region === "global"} />
       )}
 
       <p className="guide-note" style={{ marginTop: 16 }}>

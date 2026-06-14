@@ -102,14 +102,16 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
   return (await buildAllRows()).filter((r) => r.region === region && r.kind === kind);
 }
 
-/** 指定テーマ×地域の構成銘柄（業界ETF＋個別株）。業界ページ用。 */
+/** 指定テーマ×地域の構成銘柄（業界ETF＋個別株）。業界ページ用。
+ * global は地域横断：global ETF＋全地域の個別株を表示する。 */
 export async function getIndustry(theme: string, region: Region): Promise<RankingRow[]> {
-  const rows = (await buildAllRows()).filter(
-    (r) => r.region === region && parseDomainId(r.domain_id).theme === theme,
-  );
+  const all = (await buildAllRows()).filter((r) => parseDomainId(r.domain_id).theme === theme);
+  const rows = region === "global"
+    ? all.filter((r) => r.region === "global" || r.kind === "stock")  // global ETF＋全個別株
+    : all.filter((r) => r.region === region);
   return rows.sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === "etf" ? -1 : 1;
-    return (b.aiba_score ?? 0) - (a.aiba_score ?? 0);
+    if (a.kind !== b.kind) return a.kind === "etf" ? -1 : 1;          // ETFを先頭
+    return (b.aiba_score ?? 0) - (a.aiba_score ?? 0);                 // 個別株はAIBA降順
   });
 }
 
