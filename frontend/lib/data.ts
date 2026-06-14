@@ -158,6 +158,24 @@ export async function getUsdJpy(): Promise<number> {
   }
 }
 
+/** スクリーナー用：全ドメインの最新行（フィルタはクライアント側で行う）。 */
+export async function getAllRows(): Promise<RankingRow[]> {
+  return (await buildAllRows()).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
+}
+
+/** ticker → 予想PER・EPS成長 のマップ（スクリーナーのファンダ条件用）。 */
+export async function getFundamentalsMap(): Promise<Record<string, { forward_pe: number | null; eps_growth: number | null }>> {
+  const { data } = await supabase.from("ticker_fundamentals").select("ticker,forward_pe,eps_growth");
+  const map: Record<string, { forward_pe: number | null; eps_growth: number | null }> = {};
+  for (const r of data ?? []) {
+    map[(r as any).ticker] = {
+      forward_pe: (r as any).forward_pe != null ? Number((r as any).forward_pe) : null,
+      eps_growth: (r as any).eps_growth != null ? Number((r as any).eps_growth) : null,
+    };
+  }
+  return map;
+}
+
 /** Pickup: 地域・種別を問わず「今買い」候補（AIBA≥閾値 or 乖離）をAIBA順で。 */
 export async function getPickup(): Promise<RankingRow[]> {
   return (await buildAllRows())

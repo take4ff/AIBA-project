@@ -5,6 +5,7 @@ const TABS: { key: string; label: string; href: string }[] = [
   { key: "us", label: "米国", href: "/us" },
   { key: "jp", label: "日本", href: "/jp" },
   { key: "pickup", label: "⭐ Pickup", href: "/pickup" },
+  { key: "screener", label: "🔎 スクリーナー", href: "/screener" },
   { key: "watchlist", label: "☆ お気に入り", href: "/watchlist" },
   { key: "portfolio", label: "💼 マイ・ポートフォリオ", href: "/portfolio" },
   { key: "verify", label: "📊 検証", href: "/verify" },
