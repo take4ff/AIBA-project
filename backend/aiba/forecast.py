@@ -65,42 +65,27 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
 
     入力 df 必須列: domain_id, trade_date, aiba_score, technical_score,
                     sentiment_score, rsi_14, ma_deviation, close_price, layer
+    domain_id を列に保ったまま、groupby のベクトル演算で算出する。
     """
     df = df.copy()
     df["trade_date"] = pd.to_datetime(df["trade_date"])
     df = df.sort_values(["domain_id", "trade_date"]).reset_index(drop=True)
 
-    reg, kind = zip(*df["domain_id"].map(_parse))
-    df["region_code"] = pd.Series(reg, index=df.index).map(REGION_CODE)
-    df["kind_code"] = pd.Series(kind, index=df.index).map(KIND_CODE)
+    g = df.groupby("domain_id")
+    a = df["aiba_score"].astype(float)
 
-    g = df.groupby("domain_id", group_keys=False)
+    # 特徴量（後方参照のみ）
+    df["aiba_mom10"] = a - g["aiba_score"].shift(10)
+    df["aiba_rollmean21"] = g["aiba_score"].transform(lambda s: s.rolling(21, min_periods=5).mean())
+    df["aiba_rollstd21"] = g["aiba_score"].transform(lambda s: s.rolling(21, min_periods=5).std())
+    df["dist_to_buy"] = BUY - a
 
-    def per_domain(d: pd.DataFrame) -> pd.DataFrame:
-        a = d["aiba_score"].astype(float)
-        r = d["rsi_14"].astype(float)
-        c = d["close_price"].astype(float)
-        d["aiba_lag1"] = a.shift(1)
-        d["aiba_lag5"] = a.shift(5)
-        d["aiba_lag10"] = a.shift(10)
-        d["aiba_lag21"] = a.shift(21)
-        d["aiba_mom10"] = a - a.shift(10)
-        d["aiba_rollmean21"] = a.rolling(21, min_periods=5).mean()
-        d["aiba_rollstd21"] = a.rolling(21, min_periods=5).std()
-        d["rsi_lag5"] = r.shift(5)
-        d["rsi_mom5"] = r - r.shift(5)
-        d["dist_to_buy"] = BUY - a
-        d["ret5"] = c / c.shift(5) - 1.0
-        d["vol21"] = c.pct_change().rolling(21, min_periods=5).std()
-
-        # ターゲット: 今後HORIZON日の最大AIBAと、HORIZON日後のAIBA
-        future = pd.concat([a.shift(-k) for k in range(1, HORIZON + 1)], axis=1)
-        d["fwd_max_aiba"] = future.max(axis=1)
-        d["fwd_count"] = future.notna().sum(axis=1)
-        d["y_reg"] = a.shift(-HORIZON)
-        return d
-
-    return g.apply(per_domain).reset_index(drop=True)
+    # ターゲット: 今後HORIZON日の最大AIBA と HORIZON日後のAIBA（前方参照）
+    future = pd.concat([g["aiba_score"].shift(-k) for k in range(1, HORIZON + 1)], axis=1)
+    df["fwd_max_aiba"] = future.max(axis=1)
+    df["fwd_count"] = future.notna().sum(axis=1)
+    df["y_reg"] = g["aiba_score"].shift(-HORIZON)
+    return df
 
 
 def labeled_mask(feat: pd.DataFrame) -> pd.Series:
