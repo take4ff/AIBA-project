@@ -39,3 +39,57 @@ export function earningsLabel(dateStr: string | null): { text: string; soon: boo
   if (days < 0) return { text: dateStr, soon: false };
   return { text: `${dateStr}（あと${days}日）`, soon: days <= 7 };
 }
+
+const clamp = (x: number) => Math.max(0, Math.min(100, x));
+
+// ファンダによる過熱度の上乗せ（割高・減益ほど売り圧）。最大+20。
+function fundamentalAdj(p: {
+  forward_pe?: number | null; trailing_pe?: number | null; eps_growth?: number | null;
+}): { adj: number; reasons: string[] } {
+  const reasons: string[] = [];
+  let adj = 0;
+  const pe = p.forward_pe && p.forward_pe > 0 ? p.forward_pe
+    : p.trailing_pe && p.trailing_pe > 0 ? p.trailing_pe : null;
+  if (pe != null) {
+    if (pe >= 50) { adj += 12; reasons.push(`PER ${pe.toFixed(0)}＝かなり割高`); }
+    else if (pe >= 35) { adj += 8; reasons.push(`PER ${pe.toFixed(0)}＝割高`); }
+    else if (pe >= 25) { adj += 4; reasons.push(`PER ${pe.toFixed(0)}＝やや割高`); }
+  }
+  if (p.eps_growth != null && p.eps_growth < 0) {
+    adj += 6; reasons.push(`減益(EPS ${(p.eps_growth * 100).toFixed(0)}%)`);
+  }
+  return { adj: Math.min(adj, 20), reasons };
+}
+
+export interface SellAssessment {
+  effective: number | null; // テクニカル過熱＋ファンダ調整(0-100)
+  fundAdj: number;
+  reasons: string[];
+  earningsDays: number | null;
+  earningsSoon: boolean;
+  badge: { label: string; cls: string };
+  tooltip: string;
+}
+
+// 売りシグナルの総合評価（過熱度＋ファンダ＋決算接近）。
+export function assessSell(p: {
+  overheat: number | null;
+  forward_pe?: number | null; trailing_pe?: number | null; eps_growth?: number | null;
+  next_earnings_date?: string | null;
+}): SellAssessment {
+  const { adj, reasons } = fundamentalAdj(p);
+  const effective = p.overheat == null ? null : clamp(p.overheat + adj);
+  const days = daysUntil(p.next_earnings_date ?? null);
+  const soon = days != null && days >= 0 && days <= 7;
+
+  let badge: { label: string; cls: string };
+  if (soon) badge = { label: `🟣 決算前（あと${days}日）`, cls: "sb-event" };
+  else badge = sellBadge(effective);
+
+  const parts: string[] = [];
+  if (p.overheat != null) parts.push(`テクニカル過熱 ${Math.round(p.overheat)}`);
+  if (adj > 0) parts.push(`ファンダ +${adj}（${reasons.join("・")}）`);
+  if (effective != null && adj > 0) parts.push(`→ 総合 ${Math.round(effective)}`);
+  if (soon) parts.push("決算前のためイベントリスクに注意（様子見推奨）");
+  return { effective, fundAdj: adj, reasons, earningsDays: days, earningsSoon: soon, badge, tooltip: parts.join(" / ") };
+}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getHolding } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import SellChart from "@/components/SellChart";
-import { sellBadge, money, pct, earningsLabel } from "@/lib/sell-signal";
+import { assessSell, money, pct, earningsLabel } from "@/lib/sell-signal";
 
 export const revalidate = 0;
 
@@ -23,7 +23,14 @@ export default async function HoldingPage({ params }: { params: { id: string } }
     holding?.kind === "direct" && holding.avg_cost && close
       ? ((close - holding.avg_cost) / holding.avg_cost) * 100
       : null;
-  const badge = sellBadge(latest?.overheat ?? null);
+  const assessment = assessSell({
+    overheat: latest?.overheat ?? null,
+    forward_pe: holding?.forward_pe,
+    trailing_pe: holding?.trailing_pe,
+    eps_growth: holding?.eps_growth,
+    next_earnings_date: holding?.next_earnings_date,
+  });
+  const badge = assessment.badge;
   const currency = holding?.currency ?? "JPY";
 
   return (
@@ -61,6 +68,9 @@ export default async function HoldingPage({ params }: { params: { id: string } }
               </span>;
             })()}
           </p>
+        )}
+        {(assessment.fundAdj > 0 || assessment.earningsSoon) && (
+          <p className="forecast-line">🧮 総合売りシグナル：{assessment.tooltip}</p>
         )}
         {holding?.note && <p className="forecast-note">{holding.note}</p>}
       </header>

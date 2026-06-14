@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PortfolioRow } from "@/lib/portfolio";
-import { overheatColor, sellBadge, money, pct, earningsLabel } from "@/lib/sell-signal";
+import { overheatColor, assessSell, money, pct, earningsLabel } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 
 export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
@@ -30,7 +30,7 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
       </thead>
       <tbody>
         {rows.map((r) => {
-          const badge = sellBadge(r.overheat);
+          const a = assessSell(r);
           return (
             <tr key={r.id}>
               <td>
@@ -57,7 +57,7 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
                   </span>
                 )}
               </td>
-              <td><span className={`sell-badge ${badge.cls}`}>{badge.label}</span></td>
+              <td><span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span></td>
               <td>
                 {(() => {
                   const e = earningsLabel(r.next_earnings_date);
