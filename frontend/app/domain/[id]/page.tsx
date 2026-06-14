@@ -7,6 +7,7 @@ import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
 import { bollinger, macdState, macdLabel, buyGuide } from "@/lib/indicators";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
+import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
 
 export const revalidate = 0;
 
@@ -19,7 +20,7 @@ async function getHistory(id: string) {
 
   const { data, error } = await supabase
     .from("daily_metrics")
-    .select("trade_date,aiba_score,technical_score,sentiment_score,rsi_14,close_price")
+    .select("trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price")
     .eq("domain_id", id)
     .order("trade_date", { ascending: true })
     .limit(180);
@@ -89,6 +90,30 @@ export default async function DomainPage({ params }: { params: { id: string } })
   const guide = buyGuide(closes);
   const cur = region === "jp" ? "JPY" : "USD";
 
+  // 健康度レーダー（各スコアを0-100で）
+  const clamp = (x: number) => Math.max(0, Math.min(100, x));
+  const radar: RadarPoint[] = [];
+  if (latest) {
+    if (latest.aiba_score != null) radar.push({ axis: "AIBA", value: Math.round(latest.aiba_score) });
+    if (latest.technical_score != null) radar.push({ axis: "割安(テク)", value: Math.round(latest.technical_score) });
+    if (latest.sentiment_score != null) radar.push({ axis: "熱量", value: Math.round(latest.sentiment_score) });
+    if (latest.rsi_14 != null) radar.push({ axis: "非過熱", value: Math.round(clamp(100 - latest.rsi_14)) });
+    // 押し目度：移動平均より下ほど高い
+    if (latest.ma_deviation != null) {
+      radar.push({ axis: "押し目度", value: Math.round(clamp(100 / (1 + Math.exp(0.1 * latest.ma_deviation)))) });
+    }
+    // 業績（ファンダがあれば）
+    if (fundamentals && (fundamentals.eps_growth != null || fundamentals.revenue_growth != null)) {
+      const pe = fundamentals.forward_pe && fundamentals.forward_pe > 0 ? fundamentals.forward_pe
+        : fundamentals.trailing_pe && fundamentals.trailing_pe > 0 ? fundamentals.trailing_pe : null;
+      let f = 50;
+      if (fundamentals.eps_growth != null) f += fundamentals.eps_growth * 100 * 0.4;
+      if (fundamentals.revenue_growth != null) f += fundamentals.revenue_growth * 100 * 0.4;
+      if (pe != null && pe > 30) f -= (pe - 30) * 0.5;
+      radar.push({ axis: "業績", value: Math.round(clamp(f)) });
+    }
+  }
+
   // 個別株 vs 業界ETF の比較
   const etfAiba = compare && latest ? compare.aibaByDate[latest.trade_date] ?? null : null;
   const stockAiba = latest?.aiba_score ?? null;
@@ -135,6 +160,12 @@ export default async function DomainPage({ params }: { params: { id: string } })
           {" / "}下値支持(60日安値) {money(guide.support, cur)}
           <span className="forecast-note">（現在 {money(guide.current, cur)}）</span>
         </p>
+      )}
+      {radar.length >= 3 && (
+        <section className="layer">
+          <h2 className="layer-title">健康度（スコア・レーダー）</h2>
+          <HealthRadar data={radar} />
+        </section>
       )}
       {history.length > 0 && (
         <p className="forecast-line" style={{ marginTop: 0 }}>📉 MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>

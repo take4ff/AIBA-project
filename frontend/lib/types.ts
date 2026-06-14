@@ -35,6 +35,7 @@ export interface MetricHistoryRow {
   technical_score: number | null;
   sentiment_score: number | null;
   rsi_14: number | null;
+  ma_deviation?: number | null;
   close_price: number | null;
   bb_upper?: number | null;   // ボリンジャーバンド上限（表示用）
   bb_lower?: number | null;   // ボリンジャーバンド下限（表示用）
