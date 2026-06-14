@@ -52,6 +52,13 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python portfolio_job.py
 
+      - name: Universe fundamentals
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python fundamentals_job.py
+
       - name: Backtest (save results)
         working-directory: backend
         env:

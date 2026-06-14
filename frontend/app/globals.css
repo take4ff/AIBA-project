@@ -238,6 +238,17 @@ a { color: inherit; text-decoration: none; }
 .stat-val { font-size: 24px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
 .stat-val.pos { color: var(--green); }
 
+/* 決算・ファンダ */
+.fund-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.fund-cell { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 3px; }
+.fund-k { color: var(--muted); font-size: 11px; }
+.fund-v { font-size: 18px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.fund-interp { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.fund-interp li { padding: 10px 14px; border-radius: 10px; font-size: 13.5px; border: 1px solid var(--border); }
+.fi-pos { background: rgba(21,163,74,0.06); border-color: rgba(21,163,74,0.3); }
+.fi-neg { background: rgba(220,38,38,0.06); border-color: rgba(220,38,38,0.3); }
+.fi-neutral { background: var(--panel-2); }
+
 .pf-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; align-items: center; }
 .pf-add .login-input { width: auto; flex: 0 1 auto; }
 .pf-add .login-submit { width: auto; }

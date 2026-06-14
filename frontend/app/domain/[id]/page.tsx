@@ -6,6 +6,7 @@ import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
 import { bollinger, macdState, macdLabel, buyGuide } from "@/lib/indicators";
 import { money } from "@/lib/sell-signal";
+import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 
 export const revalidate = 0;
 
@@ -50,7 +51,15 @@ async function getHistory(id: string) {
     .limit(1);
   const prediction = predData?.[0] ?? null;
 
-  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare };
+  // 決算・ファンダ（個別株のみ。ETFは基本 None）
+  let fundamentals: (Fundamentals & { ticker: string }) | null = null;
+  if (kind === "stock" && dom?.ticker) {
+    const { data: f } = await supabase
+      .from("ticker_fundamentals").select("*").eq("ticker", dom.ticker).maybeSingle();
+    fundamentals = (f as any) ?? null;
+  }
+
+  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals };
 }
 
 export default async function DomainPage({ params }: { params: { id: string } }) {
@@ -63,7 +72,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
     );
   }
 
-  const { dom, history, prediction, compare } = await getHistory(params.id);
+  const { dom, history, prediction, compare, fundamentals } = await getHistory(params.id);
   const latest = history[history.length - 1];
   const { region } = parseDomainId(params.id);
 
@@ -134,6 +143,26 @@ export default async function DomainPage({ params }: { params: { id: string } })
         <div className="notice">この領域の時系列データがまだありません。</div>
       ) : (
         <TrendChart data={chartData} currency={cur} etfCompare={!!compare} buyLevel={guide.pullback} />
+      )}
+
+      {fundamentals && (fundamentals.trailing_pe != null || fundamentals.forward_pe != null || fundamentals.next_earnings_date != null) && (
+        <section className="layer">
+          <h2 className="layer-title">決算・ファンダと解釈</h2>
+          <div className="fund-grid">
+            <div className="fund-cell"><span className="fund-k">実績PER</span><span className="fund-v">{fundamentals.trailing_pe && fundamentals.trailing_pe > 0 ? fundamentals.trailing_pe.toFixed(1) : "—"}</span></div>
+            <div className="fund-cell"><span className="fund-k">予想PER</span><span className="fund-v">{fundamentals.forward_pe && fundamentals.forward_pe > 0 ? fundamentals.forward_pe.toFixed(1) : "—"}</span></div>
+            <div className="fund-cell"><span className="fund-k">EPS成長</span><span className="fund-v">{fundamentals.eps_growth != null ? (fundamentals.eps_growth >= 0 ? "+" : "") + (fundamentals.eps_growth * 100).toFixed(0) + "%" : "—"}</span></div>
+            <div className="fund-cell"><span className="fund-k">売上成長</span><span className="fund-v">{fundamentals.revenue_growth != null ? (fundamentals.revenue_growth >= 0 ? "+" : "") + (fundamentals.revenue_growth * 100).toFixed(0) + "%" : "—"}</span></div>
+            <div className="fund-cell"><span className="fund-k">直近サプライズ</span><span className="fund-v">{fundamentals.last_surprise_pct != null ? (fundamentals.last_surprise_pct >= 0 ? "+" : "") + fundamentals.last_surprise_pct.toFixed(0) + "%" : "—"}</span></div>
+            <div className="fund-cell"><span className="fund-k">次回決算</span><span className="fund-v">{fundamentals.next_earnings_date ?? "—"}</span></div>
+          </div>
+          <ul className="fund-interp">
+            {interpretFundamentals(fundamentals).map((it, i) => (
+              <li key={i} className={`fi-${it.tone}`}>{it.text}</li>
+            ))}
+          </ul>
+          <p className="guide-note">※ 解釈は指標からの自動生成（簡易ルール）。投資助言ではありません。</p>
+        </section>
       )}
     </main>
   );
