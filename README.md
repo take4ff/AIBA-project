@@ -120,9 +120,6 @@ AIBA-project/
 - [ ] **乖離アラートの LINE / メール対応**（現状は Slack）
 - [ ] **UI/UX の継続改善**
 - [ ] **特許**をセンチメント源に追加（PatentsView APIキー前提・保留）
-- [x] Pickupに株価フィルター＋通貨選択（円/ドル。逆単位は当日USD/JPYで換算）
-- [x] 押し目目安の点線を黒色に
-- [x] Supabase lint「Security Definer View（public.latest_ranking）」→ 未使用の旧ビューのため削除（`db/drop_latest_ranking.sql` を実行）
 
 > 競合調査メモ：[`docs/research.md`](./docs/research.md)（Danelfin / Kavout / Quiver 等）。
 > 実装済みの機能は「✨ 主な機能」を参照。

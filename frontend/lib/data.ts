@@ -115,6 +115,25 @@ export async function getIndustry(theme: string, region: Region): Promise<Rankin
   });
 }
 
+export interface BacktestRun {
+  run_date: string; horizon: number; n_samples: number | null;
+  ic_aiba: number | null; ic_technical: number | null; ic_sentiment: number | null;
+  buy_threshold: number | null; buy_count: number | null;
+  buy_avg_return: number | null; overall_avg_return: number | null;
+  best_w_l1: number | null; best_w_l2: number | null; best_w_l3: number | null;
+}
+
+/** 最新のバックテスト結果（無ければ null）。 */
+export async function getBacktest(): Promise<BacktestRun | null> {
+  const { data, error } = await supabase
+    .from("backtest_runs").select("*").order("run_date", { ascending: false }).limit(1);
+  if (error) {
+    console.error("backtest fetch error:", error.message);
+    return null;
+  }
+  return (data?.[0] as BacktestRun) ?? null;
+}
+
 /** 現在の USD/JPY レート（取得失敗時はフォールバック）。 */
 export async function getUsdJpy(): Promise<number> {
   try {

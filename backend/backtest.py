@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -62,10 +63,22 @@ def ic(score: pd.Series, ret: pd.Series) -> float:
     return float(spearmanr(score, ret).correlation)
 
 
+def _best_w(df: pd.DataFrame, layer: int):
+    d = df[df["layer"] == layer]
+    if len(d) < 30:
+        return None, None
+    ws = np.linspace(0, 1, 11)
+    return max(
+        ((w, ic(w * d["technical_score"] + (1 - w) * d["sentiment_score"], d["fwd_ret"])) for w in ws),
+        key=lambda x: (x[1] if x[1] == x[1] else -9),
+    )
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--horizon", type=int, default=21)
+    ap.add_argument("--save", action="store_true", help="結果を backtest_runs に保存")
     args = ap.parse_args()
     if not settings.has_supabase:
         raise SystemExit("Supabase 未設定。")
@@ -79,32 +92,34 @@ def main() -> int:
     if n < 100:
         log.warning("サンプルが少なく結果は参考程度です。")
 
-    # 1. 各スコアの IC（高いほど先行性あり）
-    log.info("\n[IC（順位相関 / 先行リターンとの相関）]")
-    for name, col in [("AIBA", "aiba_score"), ("テクニカル", "technical_score"), ("センチメント", "sentiment_score")]:
-        log.info("  %-8s IC = %+.3f", name, ic(df[col], df["fwd_ret"]))
+    ic_aiba = ic(df["aiba_score"], df["fwd_ret"])
+    ic_tech = ic(df["technical_score"], df["fwd_ret"])
+    ic_sent = ic(df["sentiment_score"], df["fwd_ret"])
+    log.info("\n[IC] AIBA %+.3f / テクニカル %+.3f / センチメント %+.3f", ic_aiba, ic_tech, ic_sent)
 
-    # 2. 買いシグナルの有効性
     buy = df[df["aiba_score"] >= BUY]["fwd_ret"]
-    log.info("\n[AIBA≥%.0f で買う戦略]", BUY)
-    log.info("  対象 %d 件 / 平均先行リターン = %+.2f%%（全体平均 %+.2f%%）",
-             len(buy), 100 * buy.mean() if len(buy) else float("nan"), 100 * df["fwd_ret"].mean())
+    buy_avg = 100 * buy.mean() if len(buy) else float("nan")
+    overall_avg = 100 * df["fwd_ret"].mean()
+    log.info("[AIBA≥%.0f] 対象 %d 件 / 平均先行 %+.2f%%（全体 %+.2f%%）", BUY, len(buy), buy_avg, overall_avg)
 
-    # 3. 層別の最適重み（score = w*テクニカル + (1-w)*センチメント）
-    log.info("\n[層別 最適重み探索（IC最大化）] 現行: L1=0.7 / L2=0.5 / L3=0.3")
-    ws = np.linspace(0, 1, 11)
+    bw = {layer: _best_w(df, layer) for layer in (1, 2, 3)}
     for layer in (1, 2, 3):
-        d = df[df["layer"] == layer]
-        if len(d) < 30:
-            log.info("  第%d層: サンプル不足", layer)
-            continue
-        best_w, best_ic = max(
-            ((w, ic(w * d["technical_score"] + (1 - w) * d["sentiment_score"], d["fwd_ret"])) for w in ws),
-            key=lambda x: (x[1] if x[1] == x[1] else -9),
-        )
-        log.info("  第%d層: 最適 w(テクニカル)=%.1f (IC %+.3f) / サンプル %d", layer, best_w, best_ic, len(d))
+        w, wic = bw[layer]
+        log.info("  第%d層 最適w(テク)=%s (IC %s)", layer,
+                 "—" if w is None else f"{w:.1f}", "—" if wic is None else f"{wic:+.3f}")
 
-    log.info("\n※ w はテクニカルの重み。IC>0 で先行性あり。重みは score.py の LAYER_WEIGHTS を手動調整。")
+    if args.save:
+        def num(x):
+            return None if x is None or x != x else round(float(x), 4)
+        row = {
+            "run_date": date.today().isoformat(), "horizon": args.horizon, "n_samples": n,
+            "ic_aiba": num(ic_aiba), "ic_technical": num(ic_tech), "ic_sentiment": num(ic_sent),
+            "buy_threshold": BUY, "buy_count": int(len(buy)),
+            "buy_avg_return": num(buy_avg), "overall_avg_return": num(overall_avg),
+            "best_w_l1": num(bw[1][0]), "best_w_l2": num(bw[2][0]), "best_w_l3": num(bw[3][0]),
+        }
+        client.table("backtest_runs").upsert(row, on_conflict="run_date,horizon").execute()
+        log.info("\nbacktest_runs に保存しました（%s, H=%d）。", row["run_date"], args.horizon)
     return 0
 
 

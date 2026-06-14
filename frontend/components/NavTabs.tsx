@@ -7,6 +7,7 @@ const TABS: { key: string; label: string; href: string }[] = [
   { key: "pickup", label: "⭐ Pickup", href: "/pickup" },
   { key: "watchlist", label: "☆ お気に入り", href: "/watchlist" },
   { key: "portfolio", label: "💼 マイ・ポートフォリオ", href: "/portfolio" },
+  { key: "verify", label: "📊 検証", href: "/verify" },
 ];
 
 export default function NavTabs({ active }: { active: string }) {

@@ -52,6 +52,13 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python portfolio_job.py
 
+      - name: Backtest (save results)
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python backtest.py --save
+
       - name: Data quality check
         working-directory: backend
         env:
