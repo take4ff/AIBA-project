@@ -3,6 +3,7 @@ import { RankingRow } from "@/lib/types";
 import { scoreColor, fmt } from "@/lib/score-color";
 import { parseDomainId } from "@/lib/regions";
 import { holdingStance } from "@/lib/stance";
+import StarButton from "@/components/StarButton";
 
 // センチメントの傾き（直近変化）を矢印で表す。±1未満は横ばい扱い。
 const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
@@ -70,7 +71,7 @@ export default function RankingTable({
           const score = r.aiba_score ?? 0;
           return (
             <tr key={r.domain_id}>
-              <td className="rank">{i + 1}</td>
+              <td className="rank"><StarButton domainId={r.domain_id} />{i + 1}</td>
               <td>
                 <Link href={rowHref(r, linkMode)}>
                   <span className="domain-name">{r.domain_name}</span>
