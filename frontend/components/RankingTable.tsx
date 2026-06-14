@@ -5,6 +5,15 @@ import { scoreColor, fmt } from "@/lib/score-color";
 export default function RankingTable({ rows, showTheme = false }: { rows: RankingRow[]; showTheme?: boolean }) {
   return (
     <table className="table">
+      <colgroup>
+        <col style={{ width: "5%" }} />
+        <col style={{ width: "33%" }} />
+        <col style={{ width: "24%" }} />
+        <col style={{ width: "9.5%" }} />
+        <col style={{ width: "9.5%" }} />
+        <col style={{ width: "9%" }} />
+        <col style={{ width: "10%" }} />
+      </colgroup>
       <thead>
         <tr>
           <th></th>
