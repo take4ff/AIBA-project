@@ -120,6 +120,15 @@ AIBA-project/
 - [ ] **乖離アラートの LINE / メール対応**（現状は Slack）
 - [ ] **UI/UX の継続改善**
 - [ ] **特許**をセンチメント源に追加（PatentsView APIキー前提・保留）
+- [x] Pickupに株価フィルター＋通貨選択（円/ドル。逆単位は当日USD/JPYで換算）
+- [x] 押し目目安の点線を黒色に
+- [ ] supabaseエラー
+Summarize the issue and suggest fixes for the following lint item:
+Title: Security Definer View
+Entity: public.latest_ranking
+Schema: public
+Issue Details: View `public.latest_ranking` is defined with the SECURITY DEFINER property
+Description: Detects views defined with the SECURITY DEFINER property. These views enforce Postgres permissions and row level security policies (RLS) of the view creator, rather than that of the querying user
 
 > 競合調査メモ：[`docs/research.md`](./docs/research.md)（Danelfin / Kavout / Quiver 等）。
 > 実装済みの機能は「✨ 主な機能」を参照。

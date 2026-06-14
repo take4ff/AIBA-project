@@ -115,6 +115,18 @@ export async function getIndustry(theme: string, region: Region): Promise<Rankin
   });
 }
 
+/** 現在の USD/JPY レート（取得失敗時はフォールバック）。 */
+export async function getUsdJpy(): Promise<number> {
+  try {
+    const r = await fetch("https://open.er-api.com/v6/latest/USD", { next: { revalidate: 3600 } });
+    const j = await r.json();
+    const v = j?.rates?.JPY;
+    return typeof v === "number" && v > 50 ? Math.round(v * 100) / 100 : 157;
+  } catch {
+    return 157;
+  }
+}
+
 /** Pickup: 地域・種別を問わず「今買い」候補（AIBA≥閾値 or 乖離）をAIBA順で。 */
 export async function getPickup(): Promise<RankingRow[]> {
   return (await buildAllRows())

@@ -95,8 +95,8 @@ export default function TrendChart({
             label={{ value: `買い閾値 ${BUY_THRESHOLD}`, position: "insideTopLeft", fill: C.buy, fontSize: 11 }} />
 
           {buyLevel != null && (
-            <ReferenceLine yAxisId="price" y={buyLevel} stroke={C.aiba} strokeDasharray="6 3" strokeOpacity={0.8}
-              label={{ value: `押し目目安 ${priceFmt(buyLevel)}`, position: "insideBottomRight", fill: C.aiba, fontSize: 11 }} />
+            <ReferenceLine yAxisId="price" y={buyLevel} stroke="#111418" strokeDasharray="6 3" strokeOpacity={0.85}
+              label={{ value: `押し目目安 ${priceFmt(buyLevel)}`, position: "insideBottomRight", fill: "#111418", fontSize: 11 }} />
           )}
 
           <Tooltip contentStyle={TOOLTIP}

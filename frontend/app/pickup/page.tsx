@@ -1,11 +1,15 @@
-import { getPickup } from "@/lib/data";
+import { getPickup, getUsdJpy } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import RankingTable from "@/components/RankingTable";
 import NavTabs from "@/components/NavTabs";
 
 export const revalidate = 0;
 
-export default async function PickupPage() {
+export default async function PickupPage({
+  searchParams,
+}: {
+  searchParams: { cur?: string; min?: string; max?: string };
+}) {
   if (!isSupabaseConfigured) {
     return (
       <main className="container">
@@ -14,8 +18,30 @@ export default async function PickupPage() {
     );
   }
 
-  const rows = await getPickup();
+  const cur: "JPY" | "USD" = searchParams.cur === "USD" ? "USD" : "JPY";
+  const minV = searchParams.min ? Number(searchParams.min) : null;
+  const maxV = searchParams.max ? Number(searchParams.max) : null;
+  const usdjpy = await getUsdJpy();
+
+  const all = await getPickup();
+  // 表示通貨に換算した株価
+  const disp = (r: { close_price: number | null; region: string }) => {
+    if (r.close_price == null) return null;
+    const native = r.region === "jp" ? "JPY" : "USD";
+    if (cur === native) return r.close_price;
+    return cur === "JPY" ? r.close_price * usdjpy : r.close_price / usdjpy;
+  };
+  const rows = all.filter((r) => {
+    const p = disp(r);
+    if (minV != null || maxV != null) {
+      if (p == null) return false;
+      if (minV != null && p < minV) return false;
+      if (maxV != null && p > maxV) return false;
+    }
+    return true;
+  });
   const tradeDate = rows.map((r) => r.trade_date).filter(Boolean).sort().at(-1);
+  const sym = cur === "JPY" ? "¥" : "$";
 
   return (
     <main className="container">
@@ -30,11 +56,28 @@ export default async function PickupPage() {
 
       <NavTabs active="pickup" />
 
+      {/* 通貨選択＋株価フィルター（GETフォーム） */}
+      <form className="pickup-filter" action="/pickup" method="get">
+        <label>通貨
+          <select name="cur" defaultValue={cur}>
+            <option value="JPY">¥ 円</option>
+            <option value="USD">$ ドル</option>
+          </select>
+        </label>
+        <label>株価
+          <input name="min" type="number" step="any" defaultValue={searchParams.min ?? ""} placeholder={`下限(${sym})`} />
+        </label>
+        <span>〜</span>
+        <input name="max" type="number" step="any" defaultValue={searchParams.max ?? ""} placeholder={`上限(${sym})`} />
+        <button className="kind-active" type="submit">適用</button>
+        <span className="pf-note">USD/JPY {usdjpy} で換算</span>
+      </form>
+
       {rows.length === 0 ? (
-        <div className="notice" style={{ marginTop: 20 }}>現在、買い水準の候補はありません。</div>
+        <div className="notice" style={{ marginTop: 20 }}>条件に合う候補がありません。</div>
       ) : (
         <section className="layer">
-          <RankingTable rows={rows} showTheme showRegion linkMode="auto" />
+          <RankingTable rows={rows} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} />
         </section>
       )}
     </main>

@@ -23,11 +23,15 @@ export default function RankingTable({
   showTheme = false,
   linkMode = "auto",
   showRegion = false,
+  displayCurrency,
+  usdjpy,
 }: {
   rows: RankingRow[];
   showTheme?: boolean;
   linkMode?: "auto" | "domain";
   showRegion?: boolean;
+  displayCurrency?: "JPY" | "USD";   // 指定時は全行をこの通貨に換算表示
+  usdjpy?: number;                   // 換算用 USD/JPY レート
 }) {
   return (
     <div className="table-scroll">
@@ -71,7 +75,14 @@ export default function RankingTable({
         {rows.map((r, i) => {
           const score = r.aiba_score ?? 0;
           const stance = holdingStance(r);
-          const currency = r.region === "jp" ? "JPY" : "USD";
+          const nativeCur = r.region === "jp" ? "JPY" : "USD";
+          // 表示通貨指定があれば換算（無ければネイティブ通貨）
+          let priceVal = r.close_price;
+          let currency: "JPY" | "USD" = nativeCur;
+          if (displayCurrency && usdjpy && priceVal != null && displayCurrency !== nativeCur) {
+            priceVal = displayCurrency === "JPY" ? priceVal * usdjpy : priceVal / usdjpy;
+          }
+          if (displayCurrency) currency = displayCurrency;
           return (
             <tr key={r.domain_id}>
               <td className="rank"><StarButton domainId={r.domain_id} />{i + 1}</td>
@@ -92,7 +103,7 @@ export default function RankingTable({
                   </span>
                 </Link>
               </td>
-              <td className="num">{money(r.close_price, currency)}</td>
+              <td className="num">{money(priceVal, currency)}</td>
               {/* --- 総合スコア --- */}
               <td>
                 <div className="score-cell">
