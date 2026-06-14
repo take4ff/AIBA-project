@@ -131,6 +131,13 @@ a { color: inherit; text-decoration: none; }
 .trend-down { color: #ef4444; }
 .trend-flat { color: var(--muted); }
 
+/* 売りシグナルのバッジ */
+.sell-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.sb-sell { color: #ef4444; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239,68,68,0.4); }
+.sb-watch { color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245,158,11,0.4); }
+.sb-hold { color: #34d399; background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52,211,153,0.4); }
+.sb-none { color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); }
+
 .layer { margin-top: 36px; }
 .layer-title { font-size: 18px; margin: 0 0 2px; }
 .layer-subtitle { color: var(--muted); font-size: 13px; margin: 0 0 14px; }

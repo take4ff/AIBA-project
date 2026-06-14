@@ -2,6 +2,7 @@ import { getRanking } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { LAYER_META } from "@/lib/types";
 import { Region, Kind, REGION_LABEL, KIND_LABEL, regionHasStocks } from "@/lib/regions";
+import Link from "next/link";
 import RankingTable from "@/components/RankingTable";
 import RegionTabs from "@/components/RegionTabs";
 import KindToggle from "@/components/KindToggle";
@@ -42,6 +43,7 @@ export default async function RegionDashboard({
           <span className="region-badge">{REGION_LABEL[region]} / {KIND_LABEL[effectiveKind]}</span>
           {tradeDate && <> 最新データ: <span className="date">{tradeDate}</span></>}
         </p>
+        <p><Link className="back-link" href="/portfolio">💼 マイ・ポートフォリオ（売り時）→</Link></p>
       </header>
 
       <ScoreGuide />

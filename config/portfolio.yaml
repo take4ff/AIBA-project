@@ -1,0 +1,56 @@
+# =============================================================================
+# 自分用ポートフォリオ（売り時＝過熱の可視化）
+# -----------------------------------------------------------------------------
+# kind:
+#   direct : 直接保有の上場銘柄/ETF。価格・損益％・過熱度を表示。
+#   proxy  : 投信を同一指数のETFで代替。過熱度（売り時）のみ。損益は非表示
+#            （投信の基準価額とETF価格は絶対水準が異なるため）。
+# avg_cost : 取得単価（direct のみ・currency 建て）。proxy は null。
+# 除外: eMAXIS Slim オルカン（積立投信）, スペースX（非上場で株価なし）。
+# =============================================================================
+
+holdings:
+  - id: ntt
+    name: NTT
+    ticker: "9432.T"
+    currency: JPY
+    kind: direct
+    avg_cost: 150.00
+
+  - id: rorze
+    name: ローツェ
+    ticker: "6323.T"
+    currency: JPY
+    kind: direct
+    avg_cost: 4075.00
+
+  - id: nikkei_entertainment
+    name: NF日経エンタメコンテンツ
+    ticker: "586A.T"
+    currency: JPY
+    kind: direct
+    avg_cost: 205.00
+    note: 新規上場のため指標(RSI/移動平均)は履歴蓄積後に表示
+
+  - id: ast_spacemobile
+    name: AST スペースモバイル
+    ticker: ASTS
+    currency: USD
+    kind: direct
+    avg_cost: 85.00
+
+  - id: nikkei_semiconductor_fund
+    name: eMAXIS 日経半導体インデックス（投信）
+    ticker: "200A.T"        # 同一指数ETFで代替（NEXT FUNDS 日経半導体株指数）
+    currency: JPY
+    kind: proxy
+    avg_cost: null
+    note: 投信。代替ETF 200A.T で過熱度のみ表示（損益は非表示）
+
+  - id: rakuten_nasdaq100
+    name: 楽天プラス NASDAQ100（投信）
+    ticker: "2840.T"        # iFreeETF NASDAQ100 円建て・非ヘッジで代替
+    currency: JPY
+    kind: proxy
+    avg_cost: null
+    note: 投信。代替ETF 2840.T で過熱度のみ表示（損益は非表示）
