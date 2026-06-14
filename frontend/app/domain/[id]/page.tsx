@@ -60,7 +60,31 @@ async function getHistory(id: string) {
     fundamentals = (f as any) ?? null;
   }
 
-  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals };
+  // 相対フェアバリュー：テーマ内ピアの予想PER中央値 × 自社予想EPS
+  let fairValue: { discountPct: number; peerMedianPE: number; selfPE: number; peers: number } | null = null;
+  const selfPE = fundamentals?.forward_pe && fundamentals.forward_pe > 0 ? fundamentals.forward_pe : null;
+  const lastClose = data && data.length ? (data[data.length - 1].close_price as number | null) : null;
+  if (kind === "stock" && selfPE && lastClose) {
+    const { data: allDoms } = await supabase.from("domains").select("id,ticker");
+    const peerTickers = (allDoms ?? [])
+      .filter((d: any) => {
+        const p = parseDomainId(d.id);
+        // 同一テーマ・同一地域のピア（PER水準を揃えるため地域を限定）
+        return p.theme === theme && p.region === region && p.kind === "stock" && d.ticker !== dom?.ticker;
+      })
+      .map((d: any) => d.ticker);
+    if (peerTickers.length) {
+      const { data: pf } = await supabase
+        .from("ticker_fundamentals").select("forward_pe").in("ticker", peerTickers);
+      const pes = (pf ?? []).map((x: any) => Number(x.forward_pe)).filter((v) => v > 0).sort((a, b) => a - b);
+      if (pes.length) {
+        const peerMedianPE = pes[Math.floor((pes.length - 1) / 2)];
+        fairValue = { discountPct: (peerMedianPE / selfPE - 1) * 100, peerMedianPE, selfPE, peers: pes.length };
+      }
+    }
+  }
+
+  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals, fairValue };
 }
 
 export default async function DomainPage({ params }: { params: { id: string } }) {
@@ -73,7 +97,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
     );
   }
 
-  const { dom, history, prediction, compare, fundamentals } = await getHistory(params.id);
+  const { dom, history, prediction, compare, fundamentals, fairValue } = await getHistory(params.id);
   const latest = history[history.length - 1];
   const { region } = parseDomainId(params.id);
 
@@ -179,6 +203,19 @@ export default async function DomainPage({ params }: { params: { id: string } })
       {fundamentals && (fundamentals.trailing_pe != null || fundamentals.forward_pe != null || fundamentals.next_earnings_date != null) && (
         <section className="layer">
           <h2 className="layer-title">決算・ファンダと解釈</h2>
+          {fairValue && (() => {
+            const capped = Math.max(-60, Math.min(60, fairValue.discountPct));
+            const over = Math.abs(fairValue.discountPct) > 60 ? "超" : "";
+            return (
+              <p className="forecast-line" style={{ marginTop: 0, marginBottom: 12 }}>
+                💰 相対PER：自社予想 {fairValue.selfPE.toFixed(1)}倍 vs ピア中央値 {fairValue.peerMedianPE.toFixed(1)}倍（同地域n={fairValue.peers}）→{" "}
+                <span style={{ color: capped >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>
+                  {capped >= 0 ? `${Math.abs(capped).toFixed(0)}%${over} 割安` : `${Math.abs(capped).toFixed(0)}%${over} 割高`}
+                </span>
+                <span className="forecast-note">（相対PERの目安。成長率差が大きい銘柄は参考程度）</span>
+              </p>
+            );
+          })()}
           <div className="fund-grid">
             <div className="fund-cell"><span className="fund-k">実績PER</span><span className="fund-v">{fundamentals.trailing_pe && fundamentals.trailing_pe > 0 ? fundamentals.trailing_pe.toFixed(1) : "—"}</span></div>
             <div className="fund-cell"><span className="fund-k">予想PER</span><span className="fund-v">{fundamentals.forward_pe && fundamentals.forward_pe > 0 ? fundamentals.forward_pe.toFixed(1) : "—"}</span></div>
