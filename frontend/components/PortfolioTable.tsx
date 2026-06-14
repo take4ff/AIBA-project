@@ -7,19 +7,21 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
   return (
     <table className="table">
       <colgroup>
-        <col style={{ width: "26%" }} />
+        <col style={{ width: "23%" }} />
+        <col style={{ width: "11%" }} />
+        <col style={{ width: "11%" }} />
         <col style={{ width: "10%" }} />
-        <col style={{ width: "13%" }} />
-        <col style={{ width: "13%" }} />
+        <col style={{ width: "8%" }} />
         <col style={{ width: "10%" }} />
+        <col style={{ width: "17%" }} />
         <col style={{ width: "10%" }} />
-        <col style={{ width: "18%" }} />
       </colgroup>
       <thead>
         <tr>
           <th>銘柄</th>
+          <th className="num" title="取得単価。投信(代替ETF)は価格基準が異なるため非表示">取得単価</th>
           <th className="num">現在値</th>
-          <th className="num" title="取得単価比の損益。投信(代替ETF)は価格基準が異なるため非表示">損益</th>
+          <th className="num" title="取得単価比の損益。投信(代替ETF)は非表示">損益</th>
           <th className="num" title="相対力指数。70超で買われすぎ(過熱)">RSI</th>
           <th className="num" title="過熱度(0-100)。高いほど割高・売り時">過熱度</th>
           <th>売りシグナル</th>
@@ -40,6 +42,7 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
                   </span>
                 </Link>
               </td>
+              <td className="num">{r.kind === "proxy" ? "—" : money(r.avg_cost, r.currency)}</td>
               <td className="num">{money(r.close_price, r.currency)}</td>
               <td className="num" style={{ color: r.return_pct == null ? undefined : r.return_pct >= 0 ? "#34d399" : "#ef4444" }}>
                 {pct(r.return_pct)}
