@@ -2,7 +2,7 @@ import Link from "next/link";
 import { RankingRow } from "@/lib/types";
 import { scoreColor, fmt } from "@/lib/score-color";
 
-export default function RankingTable({ rows }: { rows: RankingRow[] }) {
+export default function RankingTable({ rows, showTheme = false }: { rows: RankingRow[]; showTheme?: boolean }) {
   return (
     <table className="table">
       <thead>
@@ -26,6 +26,7 @@ export default function RankingTable({ rows }: { rows: RankingRow[] }) {
                 <Link href={`/domain/${r.domain_id}`}>
                   <span className="domain-name">{r.domain_name}</span>
                   <span className="ticker">{r.ticker}</span>
+                  {showTheme && <span className="theme-sub">{r.theme_name}</span>}
                 </Link>
               </td>
               <td>

@@ -1,11 +1,18 @@
 import { getRanking } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { LAYER_META } from "@/lib/types";
-import { Region, REGION_LABEL } from "@/lib/regions";
+import { Region, Kind, REGION_LABEL, KIND_LABEL, regionHasStocks } from "@/lib/regions";
 import RankingTable from "@/components/RankingTable";
 import RegionTabs from "@/components/RegionTabs";
+import KindToggle from "@/components/KindToggle";
 
-export default async function RegionDashboard({ region }: { region: Region }) {
+export default async function RegionDashboard({
+  region,
+  kind = "etf",
+}: {
+  region: Region;
+  kind?: Kind;
+}) {
   if (!isSupabaseConfigured) {
     return (
       <main className="container">
@@ -16,7 +23,9 @@ export default async function RegionDashboard({ region }: { region: Region }) {
     );
   }
 
-  const rows = await getRanking(region);
+  // Global は業界ETFのみ
+  const effectiveKind: Kind = regionHasStocks(region) ? kind : "etf";
+  const rows = await getRanking(region, effectiveKind);
   const tradeDate = rows.map((r) => r.trade_date).sort().at(-1);
   const byLayer = (layer: number) =>
     rows.filter((r) => r.layer === layer).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
@@ -28,12 +37,13 @@ export default async function RegionDashboard({ region }: { region: Region }) {
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           テクニカル指標とセンチメント指標の乖離から「買い時」を定量化。
-          <span className="region-badge">{REGION_LABEL[region]}</span>
+          <span className="region-badge">{REGION_LABEL[region]} / {KIND_LABEL[effectiveKind]}</span>
           {tradeDate && <> 最新データ: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
 
       <RegionTabs active={region} />
+      {regionHasStocks(region) && <KindToggle region={region} active={effectiveKind} />}
 
       {rows.length === 0 ? (
         <div className="notice">
@@ -49,7 +59,7 @@ export default async function RegionDashboard({ region }: { region: Region }) {
             <section className="layer" key={layer}>
               <h2 className="layer-title">{meta.title}</h2>
               <p className="layer-subtitle">{meta.subtitle}</p>
-              <RankingTable rows={layerRows} />
+              <RankingTable rows={layerRows} showTheme={effectiveKind === "stock"} />
             </section>
           );
         })

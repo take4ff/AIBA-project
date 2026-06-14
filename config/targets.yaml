@@ -1,14 +1,14 @@
 # =============================================================================
 # AIBA 監視ターゲット定義
 # -----------------------------------------------------------------------------
-# テーマ（技術領域）ごとに、テクニカル測定用のティッカーを地域別に定義する。
-#   tickers.global : 広範なテーマETF（グローバル）
-#   tickers.us     : 米国の代表銘柄/ETF
-#   tickers.jp     : 日本の代表銘柄（東証, .T）
+# テーマ（技術領域）ごとに、テクニカル測定用の銘柄を「地域 × 種別」で定義する。
+#   instruments.<region>.etf   : 業界テーマ/業種ETF（ランキングの主役）
+#   instruments.<region>.stock : 代表個別株（社名 name を表示、業界との比較用）
+#   region = global | us | jp
 # センチメント測定用キーワード（GitHub / arXiv）はテーマ共通（地域非依存）。
 #
-# layer: 1=現在のブーム / 2=次なる波 / 3=未来の開拓地
-# 各テーマ×地域は domains テーブルでは "<theme_id>_<region>" のIDで管理される。
+# domains テーブルでは "<theme_id>_<region>_<kind>" のIDで管理される。
+# 例: advanced_semiconductor_jp_stock
 # =============================================================================
 
 domains:
@@ -16,21 +16,30 @@ domains:
   - id: advanced_semiconductor
     name: 先端半導体（GPU）
     layer: 1
-    tickers: { global: SOXX, us: NVDA, jp: "8035.T" }
+    instruments:
+      global: { etf: { ticker: SOXX } }
+      us:     { etf: { ticker: SMH },          stock: { ticker: NVDA, name: NVIDIA } }
+      jp:     { etf: { ticker: "1625.T", name: "電機・精密(TOPIX-17)" }, stock: { ticker: "8035.T", name: 東京エレクトロン } }
     github_keywords: ["cuda", "gpu kernel", "tensorrt"]
     arxiv_keywords: ["GPU accelerator", "AI chip"]
 
   - id: generative_ai
     name: 生成AI基盤
     layer: 1
-    tickers: { global: AIQ, us: MSFT, jp: "9984.T" }
+    instruments:
+      global: { etf: { ticker: AIQ } }
+      us:     { etf: { ticker: IGV },          stock: { ticker: MSFT, name: Microsoft } }
+      jp:     { etf: { ticker: "1626.T", name: "情報通信(TOPIX-17)" }, stock: { ticker: "9984.T", name: ソフトバンクグループ } }
     github_keywords: ["llm", "transformer", "diffusion model"]
     arxiv_keywords: ["large language model", "generative model"]
 
   - id: cloud_infra
     name: クラウドインフラ
     layer: 1
-    tickers: { global: SKYY, us: AMZN, jp: "3778.T" }
+    instruments:
+      global: { etf: { ticker: SKYY } }
+      us:     { etf: { ticker: WCLD },         stock: { ticker: AMZN, name: Amazon } }
+      jp:     { etf: { ticker: "1626.T", name: "情報通信(TOPIX-17)" }, stock: { ticker: "3778.T", name: さくらインターネット } }
     github_keywords: ["kubernetes", "serverless", "terraform"]
     arxiv_keywords: ["cloud computing", "datacenter scheduling"]
 
@@ -38,21 +47,30 @@ domains:
   - id: cooling_power_infra
     name: 冷却・電力インフラ
     layer: 2
-    tickers: { global: GRID, us: VST, jp: "6501.T" }
+    instruments:
+      global: { etf: { ticker: GRID } }
+      us:     { etf: { ticker: XLU },          stock: { ticker: VST, name: Vistra } }
+      jp:     { etf: { ticker: "1627.T", name: "電力・ガス(TOPIX-17)" }, stock: { ticker: "6501.T", name: 日立製作所 } }
     github_keywords: ["liquid cooling", "power management", "smart grid"]
     arxiv_keywords: ["data center cooling", "power grid optimization"]
 
   - id: edge_ai_robotics
     name: エッジAI・ロボティクス
     layer: 2
-    tickers: { global: ROBO, us: ROK, jp: "6954.T" }
+    instruments:
+      global: { etf: { ticker: ROBO } }
+      us:     { etf: { ticker: BOTZ },         stock: { ticker: ROK, name: Rockwell Automation } }
+      jp:     { etf: { ticker: "1624.T", name: "機械(TOPIX-17)" }, stock: { ticker: "6954.T", name: ファナック } }
     github_keywords: ["edge ai", "ros2", "tinyml"]
     arxiv_keywords: ["edge inference", "robot learning"]
 
   - id: bioinformatics
     name: バイオインフォマティクス
     layer: 2
-    tickers: { global: ARKG, us: ILMN, jp: "4587.T" }
+    instruments:
+      global: { etf: { ticker: ARKG } }
+      us:     { etf: { ticker: XBI },          stock: { ticker: ILMN, name: Illumina } }
+      jp:     { etf: { ticker: "1621.T", name: "医薬品(TOPIX-17)" }, stock: { ticker: "4587.T", name: ペプチドリーム } }
     github_keywords: ["bioinformatics", "genomics", "protein folding"]
     arxiv_keywords: ["computational biology", "protein structure prediction"]
 
@@ -60,13 +78,19 @@ domains:
   - id: quantum_computing
     name: 量子コンピューティング
     layer: 3
-    tickers: { global: QTUM, us: IONQ, jp: "6702.T" }
+    instruments:
+      global: { etf: { ticker: QTUM } }
+      us:     { etf: { ticker: QTUM },         stock: { ticker: IONQ, name: IonQ } }
+      jp:     { etf: { ticker: "1625.T", name: "電機・精密(TOPIX-17)" }, stock: { ticker: "6702.T", name: 富士通 } }
     github_keywords: ["qiskit", "quantum circuit", "qubit"]
     arxiv_keywords: ["quantum computing", "quantum error correction"]
 
   - id: space_infra
     name: 宇宙インフラ・通信網
     layer: 3
-    tickers: { global: UFO, us: RKLB, jp: "7011.T" }
+    instruments:
+      global: { etf: { ticker: UFO } }
+      us:     { etf: { ticker: ARKX },         stock: { ticker: RKLB, name: Rocket Lab } }
+      jp:     { etf: { ticker: "1624.T", name: "機械(TOPIX-17)" }, stock: { ticker: "7011.T", name: 三菱重工業 } }
     github_keywords: ["satellite", "gnss", "orbital mechanics"]
     arxiv_keywords: ["satellite communication", "low earth orbit"]

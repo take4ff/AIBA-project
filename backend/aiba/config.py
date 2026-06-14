@@ -19,19 +19,22 @@ DEFAULT_TARGETS_PATH = ROOT_DIR / "config" / "targets.yaml"
 load_dotenv(ROOT_DIR / ".env")
 
 
-# 対応地域（表示順）
+# 対応地域・種別（表示順）
 REGIONS = ["global", "us", "jp"]
 REGION_NAMES = {"global": "Global", "us": "米国", "jp": "日本"}
+KINDS = ["etf", "stock"]  # etf=業界, stock=個別株
 
 
 @dataclass(frozen=True)
 class Domain:
-    """監視対象ドメイン1件（テーマ×地域）。"""
+    """監視対象ドメイン1件（テーマ×地域×種別）。"""
 
-    id: str            # 例: advanced_semiconductor_us
+    id: str            # 例: advanced_semiconductor_jp_stock
     theme_id: str      # 例: advanced_semiconductor
-    name: str          # 例: 先端半導体（GPU）
+    theme_name: str    # 例: 先端半導体（GPU）
+    name: str          # 表示名（ETF=テーマ/業種名, stock=社名）
     region: str        # global | us | jp
+    kind: str          # etf | stock
     layer: int
     ticker: str
     github_keywords: list[str] = field(default_factory=list)
@@ -60,23 +63,27 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
     for d in raw.get("domains", []):
         gh = list(d.get("github_keywords", []))
         ax = list(d.get("arxiv_keywords", []))
-        tickers: dict[str, str] = d.get("tickers", {})
+        theme_name = d["name"]
+        instruments: dict = d.get("instruments", {})
         for region in REGIONS:
-            ticker = tickers.get(region)
-            if not ticker:
-                continue  # その地域に対象が無いテーマはスキップ
-            domains.append(
-                Domain(
-                    id=f"{d['id']}_{region}",
-                    theme_id=d["id"],
-                    name=d["name"],
-                    region=region,
-                    layer=int(d["layer"]),
-                    ticker=str(ticker),
-                    github_keywords=gh,
-                    arxiv_keywords=ax,
+            for kind in KINDS:
+                inst = instruments.get(region, {}).get(kind)
+                if not inst:
+                    continue  # その地域・種別に対象が無ければスキップ
+                domains.append(
+                    Domain(
+                        id=f"{d['id']}_{region}_{kind}",
+                        theme_id=d["id"],
+                        theme_name=theme_name,
+                        name=inst.get("name") or theme_name,
+                        region=region,
+                        kind=kind,
+                        layer=int(d["layer"]),
+                        ticker=str(inst["ticker"]),
+                        github_keywords=gh,
+                        arxiv_keywords=ax,
+                    )
                 )
-            )
     return domains
 
 
