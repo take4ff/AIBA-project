@@ -70,6 +70,11 @@ python backfill.py --months 6 --no-sentiment       # テクニカルのみ高速
 `.github/workflows/daily.yml` が平日 22:00 UTC（≒米市場閉場後）に日次実行する。
 手動実行は Actions タブの「Run workflow」から。
 
+日次ジョブの流れ：`run_daily.py`（スコア）→ `predict.py`（予測）→
+`portfolio_job.py`（売り時）→ `check_data.py`（品質チェック）。
+品質チェックが異常を検知するとジョブが失敗し、**GitHub標準の失敗通知メール**で気づける。
+Slackにも飛ばしたい場合は Secrets に `SLACK_WEBHOOK_URL` を登録（未設定なら何もしない）。
+
 ---
 
 ## Phase 2: キャリブレーション
