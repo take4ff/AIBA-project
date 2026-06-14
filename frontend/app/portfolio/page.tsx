@@ -84,7 +84,7 @@ export default function PortfolioPage() {
               onChange={(e) => setForm({ ...form, avg_cost: e.target.value })} />
             <button className="kind-active login-submit" type="submit">追加</button>
           </form>
-          {err && <p style={{ color: "#ef4444", fontSize: 13 }}>{err}</p>}
+          {err && <p style={{ color: "#dc2626", fontSize: 13 }}>{err}</p>}
 
           {holdings.length === 0 ? (
             <div className="notice" style={{ marginTop: 12 }}>銘柄を追加してください。指標は翌日の日次バッチで反映されます。</div>
@@ -129,12 +129,12 @@ export default function PortfolioPage() {
                           ) : money(h.avg_cost, h.currency)}
                         </td>
                         <td className="num">{money(close, h.currency)}</td>
-                        <td className="num" style={{ color: ret == null ? undefined : ret >= 0 ? "#34d399" : "#ef4444" }}>{pct(ret)}</td>
+                        <td className="num" style={{ color: ret == null ? undefined : ret >= 0 ? "#15a34a" : "#dc2626" }}>{pct(ret)}</td>
                         <td className="num">
                           {m?.overheat == null ? "—" : <span className="combo-pill" style={{ background: overheatColor(m.overheat) }}>{Math.round(m.overheat)}</span>}
                         </td>
                         <td><span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span></td>
-                        <td style={{ color: e.soon ? "#f59e0b" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon ? "⚠️ " : ""}{e.text}</td>
+                        <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon ? "⚠️ " : ""}{e.text}</td>
                         <td>
                           {editing ? (
                             <>

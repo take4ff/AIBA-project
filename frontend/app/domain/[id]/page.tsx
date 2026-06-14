@@ -111,7 +111,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       {compare && vsDelta != null && (
         <p className="forecast-line">
           ⚖️ 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
-          <span style={{ color: vsDelta >= 0 ? "#34d399" : "#ef4444", fontWeight: 700 }}>
+          <span style={{ color: vsDelta >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>
             {vsDelta >= 0 ? `業界より割安（+${vsDelta.toFixed(0)}）` : `業界より割高/過熱（${vsDelta.toFixed(0)}）`}
           </span>
         </p>

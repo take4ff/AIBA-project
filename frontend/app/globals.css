@@ -1,11 +1,17 @@
 :root {
-  --bg: #0b0f1a;
-  --panel: #121829;
-  --panel-2: #1a2236;
-  --border: #263049;
-  --text: #e6ebf5;
-  --muted: #8b97b3;
-  --accent: #5b8cff;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #f5f6f8;
+  --border: #e6e8ec;
+  --text: #16191f;
+  --muted: #71767f;
+  --ink: #111418;          /* 黒に近いプライマリ（Sony風） */
+  --accent: #2456e6;       /* 抑えた青（リンク/ハイライト） */
+  --green: #15a34a;
+  --red: #dc2626;
+  --amber: #d97706;
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
 * { box-sizing: border-box; }
@@ -15,233 +21,186 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
-    "Noto Sans JP", Meiryo, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
 }
 
 a { color: inherit; text-decoration: none; }
 
-.container { max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; }
+.container { max-width: 1180px; margin: 0 auto; padding: 56px 24px 96px; }
 @media (max-width: 640px) {
-  .container { padding: 20px 12px 48px; }
-  .header h1 { font-size: 22px; }
+  .container { padding: 64px 16px 56px; }
+  .header h1 { font-size: 24px; }
 }
 
-.header h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: 0.02em; }
+/* ---------- ヘッダー ---------- */
+.header { margin-bottom: 8px; }
+.header h1 { font-size: 32px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.01em; color: var(--ink); }
 .header p { color: var(--muted); margin: 0; font-size: 14px; }
-.header .date { color: var(--accent); font-weight: 600; }
-.header .fullname { color: var(--muted); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 8px; }
+.header .date { color: var(--text); font-weight: 700; }
+.header .fullname {
+  display: inline-block; color: var(--muted); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase; margin: 0 0 10px;
+}
 
-.guide {
-  margin-top: 20px;
+/* ---------- カード共通（細線・低影） ---------- */
+.guide, .notice, .chart-wrap, .table-scroll {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
+
+.guide { margin-top: 24px; }
 .guide > summary {
-  cursor: pointer;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  list-style: none;
+  cursor: pointer; padding: 16px 20px; font-size: 14px; font-weight: 700;
+  color: var(--ink); list-style: none; user-select: none;
 }
 .guide > summary::-webkit-details-marker { display: none; }
-.guide > summary::before { content: "▸ "; color: var(--muted); }
-.guide[open] > summary::before { content: "▾ "; }
-.guide-body { padding: 4px 16px 16px; border-top: 1px solid var(--border); }
-.guide-list { margin: 12px 0 0; }
-.guide-item { display: grid; grid-template-columns: 180px 1fr; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--border); }
-.guide-item dt { color: var(--accent); font-weight: 600; font-size: 13px; }
-.guide-item dd { margin: 0; color: var(--text); font-size: 13px; line-height: 1.6; }
-.guide-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 14px; }
+.guide > summary::before { content: "＋ "; color: var(--muted); }
+.guide[open] > summary::before { content: "− "; }
+.guide-body { padding: 4px 20px 20px; border-top: 1px solid var(--border); }
+.guide-list { margin: 14px 0 0; }
+.guide-item { display: grid; grid-template-columns: 200px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.guide-item dt { color: var(--ink); font-weight: 700; font-size: 13px; }
+.guide-item dd { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.guide-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 16px; }
 .guide-legend-title { color: var(--muted); font-size: 12px; margin-right: 4px; }
-.guide-legend .lg { font-size: 11px; color: #0b0f1a; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
-.guide-note { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 14px 0 0; }
+.guide-legend .lg { font-size: 11px; color: #fff; font-weight: 700; padding: 2px 9px; border-radius: 5px; }
+.guide-note { color: var(--muted); font-size: 12px; line-height: 1.8; margin: 16px 0 0; }
 .guide-note strong { color: var(--text); }
+@media (max-width: 640px) { .guide-item { grid-template-columns: 1fr; gap: 2px; } }
 
-@media (max-width: 640px) {
-  .guide-item { grid-template-columns: 1fr; gap: 2px; }
-}
-
+/* ---------- ナビ（Sony風ミニマル・下線アクティブ） ---------- */
 .tabs {
-  display: flex;
-  gap: 6px;
-  margin-top: 20px;
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 28px;
   border-bottom: 1px solid var(--border);
 }
 .tab {
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--muted);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.15s;
+  padding: 12px 18px; font-size: 14px; font-weight: 600; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s; white-space: nowrap;
 }
-.tab:hover { color: var(--text); }
-.tab-active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover { color: var(--ink); }
+.tab-active, .tab-active:hover { color: var(--ink); font-weight: 700; border-bottom-color: var(--ink); }
 
 .region-badge {
-  display: inline-block;
-  margin-left: 10px;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  background: rgba(91, 140, 255, 0.12);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  vertical-align: middle;
+  display: inline-block; margin-left: 10px; padding: 2px 11px; font-size: 12px;
+  font-weight: 700; color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 999px; vertical-align: middle;
 }
 
+/* ---------- 種別トグル ---------- */
 .kind-toggle {
-  display: inline-flex;
-  gap: 2px;
-  margin-top: 16px;
-  padding: 3px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  display: inline-flex; gap: 2px; margin-top: 18px; padding: 4px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
 }
-.kind-btn {
-  padding: 6px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
-  border-radius: 7px;
-}
-.kind-btn:hover { color: var(--text); }
-.kind-active { color: #0b0f1a; background: var(--accent); }
+.kind-btn { padding: 7px 18px; font-size: 13px; font-weight: 700; color: var(--muted); border-radius: 7px; transition: 0.15s; }
+.kind-btn:hover { color: var(--ink); }
+.kind-active { color: #fff; background: var(--ink); }
 
-/* ETF/個別株の切替で行高が変わらないよう、空でも1行分の高さを確保 */
 .theme-sub { display: block; color: var(--muted); font-size: 11px; line-height: 14px; min-height: 14px; margin-top: 2px; }
 
-/* 乖離バッジ（仕込み好機） */
-.div-badge { margin-left: 8px; font-size: 11px; font-weight: 700; color: #c084fc; background: rgba(192,132,252,0.12); border: 1px solid rgba(192,132,252,0.4); padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
-
-/* 保有目安バッジ（短期/長期/両面） */
-.stance-badge { margin-left: 8px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
-.st-long { color: #34d399; background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.4); }
-.st-short { color: #f59e0b; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.4); }
-.st-both { color: #5b8cff; background: rgba(91,140,255,0.12); border: 1px solid rgba(91,140,255,0.4); }
+/* ---------- バッジ類（淡いトーン） ---------- */
+.div-badge { margin-left: 8px; font-size: 11px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.25); padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.stance-badge { margin-left: 8px; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.st-long { color: var(--green); background: rgba(21,163,74,0.08); border: 1px solid rgba(21,163,74,0.28); }
+.st-short { color: var(--amber); background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.28); }
+.st-both { color: var(--accent); background: rgba(36,86,230,0.08); border: 1px solid rgba(36,86,230,0.28); }
 .st-neutral { color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); }
 
-/* 成長×割安スコアのピル */
 .combo-pill {
-  display: inline-block;
-  min-width: 34px;
-  padding: 3px 8px;
-  border-radius: 6px;
-  color: #0b0f1a;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
+  display: inline-block; min-width: 34px; padding: 4px 9px; border-radius: 7px;
+  color: #fff; font-weight: 800; font-variant-numeric: tabular-nums; text-align: center;
 }
-/* センチメントの傾き矢印 */
 .trend { margin-left: 5px; font-weight: 700; }
-.trend-up { color: #34d399; }
-.trend-down { color: #ef4444; }
+.trend-up { color: var(--green); }
+.trend-down { color: var(--red); }
 .trend-flat { color: var(--muted); }
 
-/* 売りシグナルのバッジ */
-.sell-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-.sb-sell { color: #ef4444; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239,68,68,0.4); }
-.sb-watch { color: #f59e0b; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245,158,11,0.4); }
-.sb-hold { color: #34d399; background: rgba(52, 211, 153, 0.12); border: 1px solid rgba(52,211,153,0.4); }
+.sell-badge { font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 999px; white-space: nowrap; }
+.sb-sell { color: var(--red); background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.28); }
+.sb-watch { color: var(--amber); background: rgba(217,119,6,0.08); border: 1px solid rgba(217,119,6,0.28); }
+.sb-hold { color: var(--green); background: rgba(21,163,74,0.08); border: 1px solid rgba(21,163,74,0.28); }
 .sb-none { color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); }
-.sb-event { color: #c084fc; background: rgba(192, 132, 252, 0.12); border: 1px solid rgba(192,132,252,0.4); }
+.sb-event { color: #7c3aed; background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.28); }
 
-.layer { margin-top: 36px; }
-.layer-title { font-size: 18px; margin: 0 0 2px; }
-.layer-subtitle { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+/* ---------- レイヤー見出し ---------- */
+.layer { margin-top: 40px; }
+.layer-title { font-size: 19px; font-weight: 700; margin: 0 0 3px; color: var(--ink); }
+.layer-subtitle { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
 
+/* ---------- テーブル ---------- */
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table {
-  width: 100%;
-  table-layout: fixed;            /* 列幅を固定し、全テーブルでスコア列の位置を揃える */
-  border-collapse: collapse;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  width: 100%; table-layout: fixed; border-collapse: collapse;
+  background: var(--panel); border-radius: var(--radius); overflow: hidden;
 }
-.table-scroll .table { min-width: 760px; }  /* 狭幅でも崩れず横スクロール */
-
-/* チャート期間フィルタ */
-.period-filter { display: inline-flex; gap: 2px; margin-bottom: 10px; padding: 3px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; }
-.period-btn { padding: 4px 12px; font-size: 12px; font-weight: 600; color: var(--muted); background: none; border: none; border-radius: 6px; cursor: pointer; }
-.period-btn:hover { color: var(--text); }
-.period-active { color: #0b0f1a; background: var(--accent); }
-/* 領域名が長い場合も列幅を超えないように省略表示 */
-.domain-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.table-scroll .table { min-width: 760px; }
+.domain-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: var(--ink); }
 .table th, .table td {
-  padding: 12px 14px;
-  text-align: left;
-  font-size: 14px;
-  border-bottom: 1px solid var(--border);
-  overflow: hidden;            /* 固定列幅を超える内容のはみ出しを防ぐ */
+  padding: 14px 16px; text-align: left; font-size: 14px;
+  border-bottom: 1px solid var(--border); overflow: hidden;
 }
-.table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.table th { color: var(--muted); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
 .table tr:last-child td { border-bottom: none; }
+.table tbody tr { transition: background 0.12s; }
 .table tbody tr:hover { background: var(--panel-2); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
-/* 総合スコアと構成スコアの区切り */
-.col-divider { border-left: 2px solid var(--border); }
+.col-divider { border-left: 1px solid var(--border); }
 .grp-row th { padding-bottom: 4px; border-bottom: none; }
-.grp-head { text-align: center; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+.grp-head { text-align: center; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; }
+.rank { color: var(--muted); font-variant-numeric: tabular-nums; }
 
-.rank { color: var(--muted); }
+/* チャート期間フィルタ */
+.period-filter { display: inline-flex; gap: 2px; margin-bottom: 12px; padding: 4px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px; }
+.period-btn { padding: 5px 14px; font-size: 12px; font-weight: 700; color: var(--muted); background: none; border: none; border-radius: 6px; cursor: pointer; transition: 0.15s; }
+.period-btn:hover { color: var(--ink); }
+.period-active { color: #fff; background: var(--ink); }
 
-/* 認証バー（右上） */
-.authbar { position: absolute; top: 14px; right: 18px; display: flex; align-items: center; gap: 10px; z-index: 10; }
+/* ---------- 認証バー ---------- */
+.authbar { position: fixed; top: 14px; right: 18px; display: flex; align-items: center; gap: 10px; z-index: 20; }
 .authbar-user { color: var(--muted); font-size: 12px; }
-.authbar-btn { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+.authbar-btn {
+  font-size: 12px; font-weight: 700; color: var(--ink); background: var(--panel);
+  border: 1px solid var(--border); border-radius: 9px; padding: 6px 13px; cursor: pointer;
+  box-shadow: var(--shadow-sm); transition: 0.15s;
+}
+.authbar-btn:hover { border-color: var(--ink); }
 
 /* お気に入り★ */
-.star-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 15px; margin-right: 4px; padding: 0; line-height: 1; }
-.star-btn.star-on { color: #f5c518; }
+.star-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 15px; margin-right: 6px; padding: 0; line-height: 1; transition: transform 0.1s, color 0.15s; }
+.star-btn:hover { transform: scale(1.2); color: #eab308; }
+.star-btn.star-on { color: #eab308; }
 
-/* ログインフォーム */
+/* ---------- フォーム ---------- */
 .login-form { display: flex; flex-direction: column; gap: 12px; max-width: 360px; margin-top: 16px; }
-.login-input { padding: 10px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; }
-.login-submit { padding: 10px 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.login-input { padding: 11px 13px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-size: 14px; transition: border-color 0.15s; }
+.login-input:focus { outline: none; border-color: var(--ink); }
+.login-submit { padding: 11px 13px; border: none; border-radius: 9px; font-weight: 700; cursor: pointer; }
 .link-toggle { background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; text-align: left; padding: 4px 0; }
 
-/* ポートフォリオ追加フォーム */
-.pf-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; align-items: center; }
+.pf-add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; align-items: center; }
 .pf-add .login-input { width: auto; flex: 0 1 auto; }
 .pf-add .login-submit { width: auto; }
-.domain-name { font-weight: 600; }
 .ticker { color: var(--muted); font-size: 12px; margin-left: 6px; }
-.region-tag { margin-left: 6px; font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(91,140,255,0.12); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; }
+.region-tag { margin-left: 6px; font-size: 10px; font-weight: 700; color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 5px; }
 
-.score-cell { display: flex; align-items: center; gap: 8px; padding-right: 10px; }
-.score-bar-track {
-  flex: 1;
-  height: 8px;
-  background: var(--panel-2);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.score-bar-fill { height: 100%; border-radius: 999px; }
-.score-val { width: 42px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+/* ---------- スコアバー ---------- */
+.score-cell { display: flex; align-items: center; gap: 9px; padding-right: 10px; }
+.score-bar-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 999px; transition: width 0.3s; }
+.score-val { width: 42px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
 
 .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
 
-.notice {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  color: var(--muted);
-  margin-top: 24px;
-}
-.notice code { color: var(--accent); }
+.notice { padding: 24px; color: var(--muted); margin-top: 24px; }
+.notice code { color: var(--accent); background: var(--panel-2); padding: 1px 6px; border-radius: 5px; }
 
 .forecast-line { color: var(--text); font-size: 14px; margin-top: 6px; }
 .forecast-note { color: var(--muted); font-size: 12px; margin-left: 8px; }
 
-.chart-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 20px; }
-.back-link { color: var(--accent); font-size: 14px; }
+.chart-wrap { padding: 20px; margin-top: 20px; }
+.back-link { color: var(--accent); font-size: 14px; font-weight: 600; }
+.back-link:hover { text-decoration: underline; }

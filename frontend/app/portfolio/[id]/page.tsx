@@ -50,7 +50,7 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
           <p>
             現在値 <span className="date">{money(close, currency)}</span>
             {holding?.avg_cost != null && <>／ 取得単価 {money(holding.avg_cost, currency)}</>}
-            {ret != null && <>／ 損益 <span style={{ color: ret >= 0 ? "#34d399" : "#ef4444", fontWeight: 700 }}>{pct(ret)}</span></>}
+            {ret != null && <>／ 損益 <span style={{ color: ret >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>{pct(ret)}</span></>}
             {latest.overheat != null && <>／ 過熱度 {Math.round(latest.overheat)}</>}
             （{latest.trade_date}）
           </p>

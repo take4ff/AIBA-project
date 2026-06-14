@@ -116,5 +116,7 @@ AIBA-project/
 - [x] **類似サービス調査** → [`docs/research.md`](./docs/research.md)（Danelfin/Kavout/Quiver等）。取り込み候補：実績UI表示・特許・Google Trends・CSV出力
 - [ ] **特許 / Google Trends** をセンチメント源に追加（論文→特許→製品の先行指標）
 - [ ] バックテスト結果のUI表示、乖離アラートの LINE/メール対応
+- [ ] **ランキングにスコアと並べて最新株価を表示**
+- [ ] **UI/UXデザインの改善**（進行中）
 
 > これまでに実装済みの機能は「✨ 主な機能」を参照。

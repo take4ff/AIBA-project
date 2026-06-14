@@ -56,8 +56,8 @@ export default function LoginPage() {
           <button className="kind-active login-submit" disabled={busy} type="submit">
             {busy ? "処理中…" : mode === "login" ? "ログイン" : "新規登録"}
           </button>
-          {error && <p style={{ color: "#ef4444", fontSize: 13 }}>{error}</p>}
-          {info && <p style={{ color: "#34d399", fontSize: 13 }}>{info}</p>}
+          {error && <p style={{ color: "#dc2626", fontSize: 13 }}>{error}</p>}
+          {info && <p style={{ color: "#15a34a", fontSize: 13 }}>{info}</p>}
           <button type="button" className="link-toggle"
             onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(null); setInfo(null); }}>
             {mode === "login" ? "アカウントが無い方はこちら（新規登録）" : "既にアカウントをお持ちの方（ログイン）"}

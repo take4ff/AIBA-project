@@ -59,11 +59,11 @@ export default function ScoreGuide() {
 
         <div className="guide-legend">
           <span className="guide-legend-title">色の目安（高いほど買い場）：</span>
-          <span className="lg" style={{ background: "#ef4444" }}>〜38 見送り</span>
-          <span className="lg" style={{ background: "#f59e0b" }}>〜48</span>
-          <span className="lg" style={{ background: "#5b8cff" }}>〜58 中立</span>
-          <span className="lg" style={{ background: "#22b5a0" }}>〜70</span>
-          <span className="lg" style={{ background: "#34d399" }}>70〜 買い場</span>
+          <span className="lg" style={{ background: "#dc2626" }}>〜38 見送り</span>
+          <span className="lg" style={{ background: "#d97706" }}>〜48</span>
+          <span className="lg" style={{ background: "#2456e6" }}>〜58 中立</span>
+          <span className="lg" style={{ background: "#0d9488" }}>〜70</span>
+          <span className="lg" style={{ background: "#15a34a" }}>70〜 買い場</span>
         </div>
 
         <p className="guide-note">
