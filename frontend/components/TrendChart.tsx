@@ -15,7 +15,6 @@ const SYMBOL: Record<Currency, string> = { USD: "$", JPY: "¥" };
 const makePriceFmt = (cur: Currency) => (v: number) =>
   `${SYMBOL[cur]}${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
-// ライトテーマ用パレット
 const C = { grid: "#e6e8ec", axis: "#71767f", price: "#374151", aiba: "#15a34a", tech: "#2456e6", sent: "#d97706", rsi: "#9aa0aa", buy: "#15a34a" };
 const TOOLTIP = { background: "#ffffff", border: "1px solid #e6e8ec", borderRadius: 8, color: "#16191f", boxShadow: "0 4px 16px rgba(16,24,40,0.08)" };
 
@@ -31,6 +30,27 @@ function buyBands(data: MetricHistoryRow[]): { x1: string; x2: string }[] {
   return bands;
 }
 
+// 点線/実線を見分けられ、クリックで表示切替できる凡例
+function ClickableLegend({ payload, hidden, onToggle }: any) {
+  return (
+    <div className="chart-legend">
+      {payload.map((e: any) => {
+        const color = e.payload?.stroke && !String(e.payload.stroke).startsWith("url") ? e.payload.stroke : e.color;
+        const dash = e.payload?.strokeDasharray;
+        const off = hidden[e.dataKey];
+        return (
+          <span key={e.dataKey} className="cl-item" style={{ opacity: off ? 0.4 : 1 }} onClick={() => onToggle(e.dataKey)}>
+            <svg width="24" height="10" aria-hidden>
+              <line x1="1" y1="5" x2="23" y2="5" stroke={color} strokeWidth="2.4" strokeDasharray={dash ? "4 3" : undefined} strokeLinecap="round" />
+            </svg>
+            <span style={{ textDecoration: off ? "line-through" : "none" }}>{e.value}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function TrendChart({
   data,
   currency = "USD",
@@ -41,6 +61,8 @@ export default function TrendChart({
   etfCompare?: boolean;
 }) {
   const [period, setPeriod] = useState<Period>("6M");
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const toggle = (k: string) => setHidden((h) => ({ ...h, [k]: !h[k] }));
   const view = data.slice(-PERIODS[period]);
   const bands = buyBands(view);
   const priceFmt = makePriceFmt(currency);
@@ -72,25 +94,25 @@ export default function TrendChart({
 
           <Tooltip contentStyle={TOOLTIP}
             formatter={(value: number, name: string) => (name === "株価" ? priceFmt(value) : value?.toFixed(1))} />
-          <Legend />
+          <Legend content={(p: any) => <ClickableLegend {...p} hidden={hidden} onToggle={toggle} />} />
 
-          <Line yAxisId="price" type="monotone" dataKey="bb_upper" name="BB上限" stroke={C.tech} strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.45} dot={false} connectNulls />
-          <Line yAxisId="price" type="monotone" dataKey="bb_lower" name="BB下限" stroke={C.tech} strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.45} dot={false} connectNulls />
+          <Line yAxisId="price" type="monotone" dataKey="bb_upper" name="BB上限" stroke={C.tech} strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.5} dot={false} connectNulls hide={!!hidden.bb_upper} />
+          <Line yAxisId="price" type="monotone" dataKey="bb_lower" name="BB下限" stroke={C.tech} strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.5} dot={false} connectNulls hide={!!hidden.bb_lower} />
 
-          <Area yAxisId="price" type="monotone" dataKey="close_price" name="株価" stroke={C.price} strokeWidth={2} fill="url(#priceFill)" dot={false} />
+          <Area yAxisId="price" type="monotone" dataKey="close_price" name="株価" stroke={C.price} strokeWidth={2} fill="url(#priceFill)" dot={false} hide={!!hidden.close_price} />
 
-          <Line yAxisId="score" type="monotone" dataKey="aiba_score" name="AIBA" stroke={C.aiba} strokeWidth={2.8} dot={false} />
+          <Line yAxisId="score" type="monotone" dataKey="aiba_score" name="AIBA" stroke={C.aiba} strokeWidth={2.8} dot={false} hide={!!hidden.aiba_score} />
           {etfCompare && (
-            <Line yAxisId="score" type="monotone" dataKey="etf_aiba" name="業界AIBA" stroke={C.aiba} strokeWidth={1.4} strokeDasharray="5 3" strokeOpacity={0.6} dot={false} connectNulls />
+            <Line yAxisId="score" type="monotone" dataKey="etf_aiba" name="業界AIBA" stroke={C.aiba} strokeWidth={1.4} strokeDasharray="5 3" strokeOpacity={0.6} dot={false} connectNulls hide={!!hidden.etf_aiba} />
           )}
-          <Line yAxisId="score" type="monotone" dataKey="technical_score" name="テクニカル" stroke={C.tech} strokeWidth={1.4} dot={false} />
-          <Line yAxisId="score" type="monotone" dataKey="sentiment_score" name="センチメント" stroke={C.sent} strokeWidth={1.4} dot={false} />
-          <Line yAxisId="score" type="monotone" dataKey="rsi_14" name="RSI" stroke={C.rsi} strokeWidth={1} strokeDasharray="4 4" dot={false} />
+          <Line yAxisId="score" type="monotone" dataKey="technical_score" name="テクニカル" stroke={C.tech} strokeWidth={1.4} dot={false} hide={!!hidden.technical_score} />
+          <Line yAxisId="score" type="monotone" dataKey="sentiment_score" name="センチメント" stroke={C.sent} strokeWidth={1.4} dot={false} hide={!!hidden.sentiment_score} />
+          <Line yAxisId="score" type="monotone" dataKey="rsi_14" name="RSI" stroke={C.rsi} strokeWidth={1} strokeDasharray="4 4" dot={false} hide={!!hidden.rsi_14} />
         </ComposedChart>
       </ResponsiveContainer>
       <p style={{ color: "#71767f", fontSize: 12, marginTop: 10 }}>
         左軸＝各種スコア(0-100)、右軸＝株価(終値・{currency === "JPY" ? "円" : "ドル"})。
-        <span style={{ color: C.buy }}>緑の帯</span>は AIBAスコアが買い閾値({BUY_THRESHOLD})以上だった「買い場」期間。
+        <span style={{ color: C.buy }}>緑の帯</span>は AIBAスコアが買い閾値({BUY_THRESHOLD})以上だった「買い場」期間。凡例クリックで線の表示/非表示。
       </p>
     </div>
   );

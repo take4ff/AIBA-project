@@ -18,6 +18,26 @@ const SELL_THRESHOLD = 70;
 const C = { grid: "#e6e8ec", axis: "#71767f", price: "#374151", over: "#dc2626", rsi: "#9aa0aa" };
 const TOOLTIP = { background: "#ffffff", border: "1px solid #e6e8ec", borderRadius: 8, color: "#16191f", boxShadow: "0 4px 16px rgba(16,24,40,0.08)" };
 
+function ClickableLegend({ payload, hidden, onToggle }: any) {
+  return (
+    <div className="chart-legend">
+      {payload.map((e: any) => {
+        const color = e.payload?.stroke && !String(e.payload.stroke).startsWith("url") ? e.payload.stroke : e.color;
+        const dash = e.payload?.strokeDasharray;
+        const off = hidden[e.dataKey];
+        return (
+          <span key={e.dataKey} className="cl-item" style={{ opacity: off ? 0.4 : 1 }} onClick={() => onToggle(e.dataKey)}>
+            <svg width="24" height="10" aria-hidden>
+              <line x1="1" y1="5" x2="23" y2="5" stroke={color} strokeWidth="2.4" strokeDasharray={dash ? "4 3" : undefined} strokeLinecap="round" />
+            </svg>
+            <span style={{ textDecoration: off ? "line-through" : "none" }}>{e.value}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SellChart({
   data,
   currency = "JPY",
@@ -26,6 +46,8 @@ export default function SellChart({
   currency?: "JPY" | "USD";
 }) {
   const [period, setPeriod] = useState<Period>("6M");
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const toggle = (k: string) => setHidden((h) => ({ ...h, [k]: !h[k] }));
   const view = data.slice(-PERIODS[period]);
   const sym = currency === "JPY" ? "¥" : "$";
   const priceFmt = (v: number) => `${sym}${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -66,16 +88,16 @@ export default function SellChart({
 
           <Tooltip contentStyle={TOOLTIP}
             formatter={(value: number, name: string) => (name === "株価" ? priceFmt(value) : value?.toFixed(1))} />
-          <Legend />
+          <Legend content={(p: any) => <ClickableLegend {...p} hidden={hidden} onToggle={toggle} />} />
 
-          <Area yAxisId="price" type="monotone" dataKey="close_price" name="株価" stroke={C.price} strokeWidth={2} fill="url(#pxFill)" dot={false} />
-          <Line yAxisId="oh" type="monotone" dataKey="overheat" name="過熱度" stroke={C.over} strokeWidth={2.6} dot={false} />
-          <Line yAxisId="oh" type="monotone" dataKey="rsi_14" name="RSI" stroke={C.rsi} strokeWidth={1} strokeDasharray="4 4" dot={false} />
+          <Area yAxisId="price" type="monotone" dataKey="close_price" name="株価" stroke={C.price} strokeWidth={2} fill="url(#pxFill)" dot={false} hide={!!hidden.close_price} />
+          <Line yAxisId="oh" type="monotone" dataKey="overheat" name="過熱度" stroke={C.over} strokeWidth={2.6} dot={false} hide={!!hidden.overheat} />
+          <Line yAxisId="oh" type="monotone" dataKey="rsi_14" name="RSI" stroke={C.rsi} strokeWidth={1} strokeDasharray="4 4" dot={false} hide={!!hidden.rsi_14} />
         </ComposedChart>
       </ResponsiveContainer>
       <p style={{ color: "#71767f", fontSize: 12, marginTop: 10 }}>
         左軸＝過熱度(0-100)、右軸＝株価({currency === "JPY" ? "円" : "ドル"})。
-        <span style={{ color: C.over }}>赤い帯</span>は過熱度が売り閾値({SELL_THRESHOLD})以上＝「売り検討」期間。
+        <span style={{ color: C.over }}>赤い帯</span>は過熱度が売り閾値({SELL_THRESHOLD})以上＝「売り検討」期間。凡例クリックで線の表示/非表示。
       </p>
     </div>
   );
