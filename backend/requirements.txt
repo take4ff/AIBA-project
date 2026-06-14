@@ -7,3 +7,4 @@ supabase>=2.4
 python-dotenv>=1.0
 scikit-learn>=1.4
 lxml>=5.0
+pytrends>=4.9

@@ -31,10 +31,11 @@ _OS_NS = "{http://a9.com/-/spec/opensearch/1.1/}"
 
 @dataclass
 class SentimentSnapshot:
-    github_score: float   # 0-100（増加率ベース）
-    arxiv_score: float    # 0-100（増加率ベース）
-    sentiment_score: float  # 統合 0-100
-    hackernews_score: float = NEUTRAL  # 0-100（HNストーリー増加率）
+    github_score: float | None   # 0-100（増加率ベース。取得不可は None）
+    arxiv_score: float | None    # 0-100
+    sentiment_score: float       # 統合 0-100（利用可能な指標の平均）
+    hackernews_score: float | None = None  # 0-100（HN注目ストーリー増加率）
+    trends_score: float | None = None      # 0-100（Google Trends 検索関心の増加率）
 
 
 def _growth_to_score(recent: int, prior: int) -> float:
@@ -97,13 +98,14 @@ def _github_commit_count(keyword: str, since: datetime, until: datetime) -> int 
         return None
 
 
-def fetch_github_score(keywords: list[str], as_of: datetime | None = None) -> float:
+def fetch_github_score(keywords: list[str], as_of: datetime | None = None) -> float | None:
     """GitHub熱量＝新規リポジトリ増加率 と コミット活動増加率 の平均。
 
     リポジトリ数だけでなくコミット頻度も見ることで「熱量の質」を反映する。
+    取得できなければ None（平均から除外される）。
     """
     if not keywords:
-        return NEUTRAL
+        return None
     start, mid, base = _windows(as_of)
     delay = 0.4 if settings.github_token else 2
 
@@ -125,7 +127,7 @@ def fetch_github_score(keywords: list[str], as_of: datetime | None = None) -> fl
         scores.append(_growth_to_score(repo_recent, repo_prior))
     if com_ok:
         scores.append(_growth_to_score(com_recent, com_prior))
-    return round(sum(scores) / len(scores), 4) if scores else NEUTRAL
+    return round(sum(scores) / len(scores), 4) if scores else None
 
 
 # ----------------------------- arXiv -----------------------------
@@ -156,9 +158,9 @@ def _arxiv_total(keyword: str, since: datetime, until: datetime) -> int | None:
         return None
 
 
-def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> float:
+def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> float | None:
     if not keywords:
-        return NEUTRAL
+        return None
     start, mid, base = _windows(as_of)
 
     recent_total = prior_total = 0
@@ -174,7 +176,7 @@ def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> flo
         prior_total += prior
         ok = True
 
-    return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
+    return _growth_to_score(recent_total, prior_total) if ok else None
 
 
 # ----------------------------- Hacker News -----------------------------
@@ -202,10 +204,10 @@ def _hn_count(keyword: str, since: datetime, until: datetime) -> int | None:
         return None
 
 
-def fetch_hackernews_score(keywords: list[str], as_of: datetime | None = None) -> float:
-    """キーワード群のHacker News熱量（新規ストーリー増加率）を算出する。"""
+def fetch_hackernews_score(keywords: list[str], as_of: datetime | None = None) -> float | None:
+    """キーワード群のHacker News熱量（注目ストーリー増加率）。取得不可は None。"""
     if not keywords:
-        return NEUTRAL
+        return None
     start, mid, base = _windows(as_of)
 
     recent_total = prior_total = 0
@@ -220,7 +222,39 @@ def fetch_hackernews_score(keywords: list[str], as_of: datetime | None = None) -
         prior_total += prior
         ok = True
 
-    return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
+    return _growth_to_score(recent_total, prior_total) if ok else None
+
+
+# ----------------------------- Google Trends -----------------------------
+def fetch_google_trends_score(keywords: list[str], as_of: datetime | None = None) -> float | None:
+    """検索関心（Google Trends）の直近30日 vs 前30日の増加率。取得不可は None。
+
+    pytrends は datacenter IP で 429 になりやすいため、失敗時は None を返して
+    平均から除外する（日次の実行で取得できた時に寄与する）。
+    """
+    if not keywords:
+        return None
+    _, _, base = _windows(as_of)
+    start = base - timedelta(days=WINDOW_DAYS * 2)
+    timeframe = f"{start:%Y-%m-%d} {base:%Y-%m-%d}"
+    try:
+        from pytrends.request import TrendReq
+        pt = TrendReq(hl="en-US", tz=0)
+        pt.build_payload(keywords[:5], timeframe=timeframe)  # 最大5キーワード
+        df = pt.interest_over_time()
+        if df is None or df.empty:
+            return None
+        cols = [c for c in df.columns if c != "isPartial"]
+        series = df[cols].sum(axis=1)
+        n = len(series)
+        if n < 4:
+            return None
+        mid = n // 2
+        prior = float(series.iloc[:mid].mean())
+        recent = float(series.iloc[mid:].mean())
+        return _growth_to_score(recent, prior)
+    except Exception:
+        return None
 
 
 def fetch_sentiment(
@@ -228,14 +262,19 @@ def fetch_sentiment(
     arxiv_keywords: list[str],
     as_of: datetime | None = None,
 ) -> SentimentSnapshot:
-    """GitHub・arXiv・Hacker News の熱量を統合したスナップショットを返す。
+    """GitHub・arXiv・Hacker News・Google Trends の熱量を統合する。
 
-    HN はタイトルが自然文のため arxiv_keywords（自然言語）を流用する。
+    HN/Trends はタイトル・検索語が自然文のため arxiv_keywords（自然言語）を流用。
+    取得できた指標のみの平均をとる（失敗した指標は中立で薄めず除外）。
     """
     gh = fetch_github_score(github_keywords, as_of)
     ax = fetch_arxiv_score(arxiv_keywords, as_of)
     hn = fetch_hackernews_score(arxiv_keywords, as_of)
-    combined = round((gh + ax + hn) / 3.0, 2)
+    gt = fetch_google_trends_score(arxiv_keywords, as_of)
+
+    available = [s for s in (gh, ax, hn, gt) if s is not None]
+    combined = round(sum(available) / len(available), 2) if available else NEUTRAL
     return SentimentSnapshot(
-        github_score=gh, arxiv_score=ax, sentiment_score=combined, hackernews_score=hn,
+        github_score=gh, arxiv_score=ax, sentiment_score=combined,
+        hackernews_score=hn, trends_score=gt,
     )
