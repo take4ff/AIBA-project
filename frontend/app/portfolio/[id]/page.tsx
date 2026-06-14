@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getHolding } from "@/lib/portfolio";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import SellChart from "@/components/SellChart";
-import { sellBadge, money, pct } from "@/lib/sell-signal";
+import { sellBadge, money, pct, earningsLabel } from "@/lib/sell-signal";
 
 export const revalidate = 0;
 
@@ -44,6 +44,22 @@ export default async function HoldingPage({ params }: { params: { id: string } }
             )}
             {latest.overheat != null && <>／ 過熱度 {Math.round(latest.overheat)}</>}
             （{latest.trade_date}）
+          </p>
+        )}
+        {holding && (holding.trailing_pe != null || holding.next_earnings_date != null) && (
+          <p className="forecast-line">
+            📊 ファンダ：
+            PER {holding.trailing_pe != null && holding.trailing_pe > 0 ? holding.trailing_pe.toFixed(1) : "—"}
+            {" / "}予想PER {holding.forward_pe != null && holding.forward_pe > 0 ? holding.forward_pe.toFixed(1) : "—"}
+            {" / "}EPS成長 {holding.eps_growth != null ? pct(holding.eps_growth * 100) : "—"}
+            {" / "}売上成長 {holding.revenue_growth != null ? pct(holding.revenue_growth * 100) : "—"}
+            {" / "}直近サプライズ {holding.last_surprise_pct != null ? pct(holding.last_surprise_pct) : "—"}
+            {holding.next_earnings_date && (() => {
+              const e = earningsLabel(holding.next_earnings_date);
+              return <span style={{ color: e.soon ? "#f59e0b" : undefined, fontWeight: e.soon ? 700 : undefined }}>
+                {" / "}{e.soon ? "⚠️ " : ""}次回決算 {e.text}
+              </span>;
+            })()}
           </p>
         )}
         {holding?.note && <p className="forecast-note">{holding.note}</p>}

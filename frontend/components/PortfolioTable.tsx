@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { PortfolioRow } from "@/lib/portfolio";
-import { overheatColor, sellBadge, money, pct } from "@/lib/sell-signal";
+import { overheatColor, sellBadge, money, pct, earningsLabel } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 
 export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
   return (
     <table className="table">
       <colgroup>
-        <col style={{ width: "23%" }} />
-        <col style={{ width: "11%" }} />
-        <col style={{ width: "11%" }} />
+        <col style={{ width: "20%" }} />
         <col style={{ width: "10%" }} />
-        <col style={{ width: "8%" }} />
         <col style={{ width: "10%" }} />
-        <col style={{ width: "17%" }} />
-        <col style={{ width: "10%" }} />
+        <col style={{ width: "9%" }} />
+        <col style={{ width: "7%" }} />
+        <col style={{ width: "9%" }} />
+        <col style={{ width: "15%" }} />
+        <col style={{ width: "20%" }} />
       </colgroup>
       <thead>
         <tr>
@@ -25,7 +25,7 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
           <th className="num" title="相対力指数。70超で買われすぎ(過熱)">RSI</th>
           <th className="num" title="過熱度(0-100)。高いほど割高・売り時">過熱度</th>
           <th>売りシグナル</th>
-          <th className="num" title="25日移動平均からの乖離[%]。プラス=平均より上(過熱側)">乖離率</th>
+          <th title="次回決算発表予定日。7日以内は⚠️。ETF/投信は対象外">次回決算</th>
         </tr>
       </thead>
       <tbody>
@@ -58,7 +58,14 @@ export default function PortfolioTable({ rows }: { rows: PortfolioRow[] }) {
                 )}
               </td>
               <td><span className={`sell-badge ${badge.cls}`}>{badge.label}</span></td>
-              <td className="num">{r.ma_deviation == null ? "—" : `${fmt(r.ma_deviation, 2)}%`}</td>
+              <td>
+                {(() => {
+                  const e = earningsLabel(r.next_earnings_date);
+                  return <span style={{ color: e.soon ? "#f59e0b" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>
+                    {e.soon ? "⚠️ " : ""}{e.text}
+                  </span>;
+                })()}
+              </td>
             </tr>
           );
         })}

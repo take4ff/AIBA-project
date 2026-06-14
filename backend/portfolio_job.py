@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,52 @@ MONTHS = 6
 def load_holdings() -> list[dict[str, Any]]:
     with open(PORTFOLIO_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f).get("holdings", [])
+
+
+def _num(v: Any) -> float | None:
+    """NaN/None/極端値を安全に float|None へ。"""
+    try:
+        if v is None:
+            return None
+        f = float(v)
+        return None if (f != f or abs(f) > 1e6) else round(f, 4)
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_fundamentals(ticker: str) -> dict[str, Any]:
+    """決算日・サプライズ・PER・成長率を取得。ETF等で無い項目は None。"""
+    out: dict[str, Any] = {
+        "quote_type": None, "next_earnings_date": None, "last_surprise_pct": None,
+        "trailing_pe": None, "forward_pe": None, "eps_growth": None, "revenue_growth": None,
+        "fundamentals_updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        tk = yf.Ticker(ticker)
+        info = tk.info or {}
+    except Exception:
+        return out
+    out["quote_type"] = info.get("quoteType")
+    out["trailing_pe"] = _num(info.get("trailingPE"))
+    out["forward_pe"] = _num(info.get("forwardPE"))
+    out["eps_growth"] = _num(info.get("earningsQuarterlyGrowth"))
+    out["revenue_growth"] = _num(info.get("revenueGrowth"))
+
+    # 決算日・サプライズは個別株(EQUITY)のみ
+    if info.get("quoteType") == "EQUITY":
+        try:
+            ed = tk.get_earnings_dates(limit=12)
+            if ed is not None and not ed.empty:
+                now = pd.Timestamp.now(tz=ed.index.tz)
+                future = ed[ed.index > now]
+                if not future.empty:
+                    out["next_earnings_date"] = future.index.min().date().isoformat()
+                past = ed[ed.index <= now]
+                if not past.empty and "Surprise(%)" in ed.columns:
+                    out["last_surprise_pct"] = _num(past.iloc[0]["Surprise(%)"])
+        except Exception:
+            pass
+    return out
 
 
 def metrics_for(ticker: str) -> list[dict[str, Any]]:
@@ -75,11 +122,15 @@ def main() -> int:
     client = create_client(settings.supabase_url, settings.supabase_key)
 
     holdings = load_holdings()
-    master = [{
-        "id": h["id"], "name": h["name"], "ticker": h["ticker"],
-        "currency": h["currency"], "kind": h["kind"],
-        "avg_cost": h.get("avg_cost"), "note": h.get("note"),
-    } for h in holdings]
+    master = []
+    for h in holdings:
+        row = {
+            "id": h["id"], "name": h["name"], "ticker": h["ticker"],
+            "currency": h["currency"], "kind": h["kind"],
+            "avg_cost": h.get("avg_cost"), "note": h.get("note"),
+        }
+        row.update(fetch_fundamentals(h["ticker"]))  # 決算・ファンダ
+        master.append(row)
     client.table("portfolio_holdings").upsert(master, on_conflict="id").execute()
 
     total = 0

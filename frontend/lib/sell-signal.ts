@@ -23,3 +23,19 @@ export function pct(v: number | null): string {
   if (v == null) return "—";
   return `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
 }
+
+// 次回決算までの日数（過去/不明は null）
+export function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + "T00:00:00");
+  const diff = Math.ceil((d.getTime() - Date.now()) / 86_400_000);
+  return diff;
+}
+
+// 次回決算の表示テキスト＋接近フラグ（7日以内）
+export function earningsLabel(dateStr: string | null): { text: string; soon: boolean } {
+  const days = daysUntil(dateStr);
+  if (dateStr == null || days == null) return { text: "—", soon: false };
+  if (days < 0) return { text: dateStr, soon: false };
+  return { text: `${dateStr}（あと${days}日）`, soon: days <= 7 };
+}

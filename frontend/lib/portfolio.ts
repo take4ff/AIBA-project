@@ -8,6 +8,14 @@ export interface Holding {
   kind: "direct" | "proxy";
   avg_cost: number | null;
   note: string | null;
+  // 決算・ファンダ（個別株のみ値が入る）
+  quote_type: string | null;
+  next_earnings_date: string | null;
+  last_surprise_pct: number | null;
+  trailing_pe: number | null;
+  forward_pe: number | null;
+  eps_growth: number | null;
+  revenue_growth: number | null;
 }
 
 export interface PortfolioRow extends Holding {
