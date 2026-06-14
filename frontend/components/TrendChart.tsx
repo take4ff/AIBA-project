@@ -9,8 +9,10 @@ import { MetricHistoryRow } from "@/lib/types";
 // AIBAスコアがこの値以上の期間を「買い場」としてハイライトする
 const BUY_THRESHOLD = 60;
 
-const priceFmt = (v: number) =>
-  `$${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+export type Currency = "USD" | "JPY";
+const SYMBOL: Record<Currency, string> = { USD: "$", JPY: "¥" };
+const makePriceFmt = (cur: Currency) => (v: number) =>
+  `${SYMBOL[cur]}${v.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
 /** AIBAが買い閾値以上だった連続区間を [開始日, 終了日] で返す。 */
 function buyBands(data: MetricHistoryRow[]): { x1: string; x2: string }[] {
@@ -28,8 +30,15 @@ function buyBands(data: MetricHistoryRow[]): { x1: string; x2: string }[] {
   return bands;
 }
 
-export default function TrendChart({ data }: { data: MetricHistoryRow[] }) {
+export default function TrendChart({
+  data,
+  currency = "USD",
+}: {
+  data: MetricHistoryRow[];
+  currency?: Currency;
+}) {
   const bands = buyBands(data);
+  const priceFmt = makePriceFmt(currency);
 
   return (
     <div className="chart-wrap">
@@ -115,7 +124,7 @@ export default function TrendChart({ data }: { data: MetricHistoryRow[] }) {
         </ComposedChart>
       </ResponsiveContainer>
       <p style={{ color: "#8b97b3", fontSize: 12, marginTop: 10 }}>
-        左軸＝各種スコア(0-100)、右軸＝株価(終値)。
+        左軸＝各種スコア(0-100)、右軸＝株価(終値・{currency === "JPY" ? "円" : "ドル"})。
         <span style={{ color: "#34d399" }}>緑の帯</span>は AIBAスコアが買い閾値({BUY_THRESHOLD})以上だった「買い場」期間。
       </p>
     </div>

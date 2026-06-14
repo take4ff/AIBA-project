@@ -77,7 +77,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>
       ) : (
-        <TrendChart data={history} />
+        <TrendChart data={history} currency={region === "jp" ? "JPY" : "USD"} />
       )}
     </main>
   );
