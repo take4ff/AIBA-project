@@ -60,19 +60,36 @@ def _windows(as_of: datetime | None) -> tuple[datetime, datetime, datetime]:
 
 
 # ----------------------------- GitHub -----------------------------
-def _github_count(keyword: str, since: datetime, until: datetime) -> int | None:
-    headers = {"Accept": "application/vnd.github+json"}
+GITHUB_COMMIT_URL = "https://api.github.com/search/commits"
+
+
+def _gh_headers(commit: bool = False) -> dict[str, str]:
+    accept = "application/vnd.github.cloak-preview+json" if commit else "application/vnd.github+json"
+    headers = {"Accept": accept}
     if settings.github_token:
         headers["Authorization"] = f"Bearer {settings.github_token}"
+    return headers
 
+
+def _github_count(keyword: str, since: datetime, until: datetime) -> int | None:
+    """期間内に作成された新規リポジトリ数。"""
     query = f'{keyword} created:{since:%Y-%m-%d}..{until:%Y-%m-%d}'
     try:
-        resp = requests.get(
-            GITHUB_SEARCH_URL,
-            headers=headers,
-            params={"q": query, "per_page": 1},
-            timeout=REQUEST_TIMEOUT,
-        )
+        resp = requests.get(GITHUB_SEARCH_URL, headers=_gh_headers(),
+                            params={"q": query, "per_page": 1}, timeout=REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            return None
+        return int(resp.json().get("total_count", 0))
+    except (requests.RequestException, ValueError):
+        return None
+
+
+def _github_commit_count(keyword: str, since: datetime, until: datetime) -> int | None:
+    """期間内のコミット数（開発活動量＝熱量の質の指標）。"""
+    query = f'{keyword} committer-date:{since:%Y-%m-%d}..{until:%Y-%m-%d}'
+    try:
+        resp = requests.get(GITHUB_COMMIT_URL, headers=_gh_headers(commit=True),
+                            params={"q": query, "per_page": 1}, timeout=REQUEST_TIMEOUT)
         if resp.status_code != 200:
             return None
         return int(resp.json().get("total_count", 0))
@@ -81,23 +98,34 @@ def _github_count(keyword: str, since: datetime, until: datetime) -> int | None:
 
 
 def fetch_github_score(keywords: list[str], as_of: datetime | None = None) -> float:
+    """GitHub熱量＝新規リポジトリ増加率 と コミット活動増加率 の平均。
+
+    リポジトリ数だけでなくコミット頻度も見ることで「熱量の質」を反映する。
+    """
     if not keywords:
         return NEUTRAL
     start, mid, base = _windows(as_of)
+    delay = 0.4 if settings.github_token else 2
 
-    recent_total = prior_total = 0
-    ok = False
+    repo_recent = repo_prior = 0
+    com_recent = com_prior = 0
+    repo_ok = com_ok = False
     for kw in keywords:
-        recent = _github_count(kw, mid, base)
-        prior = _github_count(kw, start, mid)
-        time.sleep(0.5 if settings.github_token else 2)
-        if recent is None or prior is None:
-            continue
-        recent_total += recent
-        prior_total += prior
-        ok = True
+        rr, rp = _github_count(kw, mid, base), _github_count(kw, start, mid)
+        time.sleep(delay)
+        cr, cp = _github_commit_count(kw, mid, base), _github_commit_count(kw, start, mid)
+        time.sleep(delay)
+        if rr is not None and rp is not None:
+            repo_recent += rr; repo_prior += rp; repo_ok = True
+        if cr is not None and cp is not None:
+            com_recent += cr; com_prior += cp; com_ok = True
 
-    return _growth_to_score(recent_total, prior_total) if ok else NEUTRAL
+    scores: list[float] = []
+    if repo_ok:
+        scores.append(_growth_to_score(repo_recent, repo_prior))
+    if com_ok:
+        scores.append(_growth_to_score(com_recent, com_prior))
+    return round(sum(scores) / len(scores), 4) if scores else NEUTRAL
 
 
 # ----------------------------- arXiv -----------------------------
