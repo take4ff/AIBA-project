@@ -59,6 +59,13 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python backtest.py --save
 
+      - name: Score snapshots (record monthly + evaluate)
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python snapshot.py
+
       - name: Data quality check
         working-directory: backend
         env:

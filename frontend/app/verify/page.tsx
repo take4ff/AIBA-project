@@ -1,4 +1,4 @@
-import { getBacktest } from "@/lib/data";
+import { getBacktest, getSnapshots, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 
@@ -7,13 +7,31 @@ export const revalidate = 0;
 const f3 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(3));
 const f2 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%");
 
+// 定点ログの集計：買い判定の平均リターン・勝率を horizon 別に
+function aggregate(rows: SnapshotRow[], key: "ret_1m" | "ret_3m" | "ret_6m") {
+  const buys = rows.filter((r) => r.is_buy && r[key] != null).map((r) => r[key] as number);
+  const all = rows.filter((r) => r[key] != null).map((r) => r[key] as number);
+  if (all.length === 0) return null;
+  const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+  const win = buys.length ? (buys.filter((x) => x > 0).length / buys.length) * 100 : null;
+  return {
+    buyN: buys.length,
+    buyAvg: buys.length ? mean(buys) : null,
+    allAvg: mean(all),
+    win,
+  };
+}
+
 export default async function VerifyPage() {
   if (!isSupabaseConfigured) {
     return <main className="container"><div className="notice">Supabase の環境変数が未設定です。</div></main>;
   }
-  const bt = await getBacktest();
+  const [bt, snaps] = await Promise.all([getBacktest(), getSnapshots()]);
   const edge = bt && bt.buy_avg_return != null && bt.overall_avg_return != null
     ? bt.buy_avg_return - bt.overall_avg_return : null;
+  const snapDates = Array.from(new Set(snaps.map((s) => s.snapshot_date))).sort();
+  const agg = { ret_1m: aggregate(snaps, "ret_1m"), ret_3m: aggregate(snaps, "ret_3m"), ret_6m: aggregate(snaps, "ret_6m") };
+  const hasEval = agg.ret_1m || agg.ret_3m || agg.ret_6m;
 
   return (
     <main className="container">
@@ -67,6 +85,44 @@ export default async function VerifyPage() {
           </p>
         </>
       )}
+
+      <section className="layer" style={{ marginTop: 40 }}>
+        <h2 className="layer-title">定点記録（先読みなし検証）</h2>
+        <p className="layer-subtitle">
+          毎月スコアのスナップショットを保存し、1/3/6ヶ月後の実リターンで「買い判定(AIBA≥60)」の当否を検証。
+          {snapDates.length > 0 && <>（記録 {snapDates.length} 回・最古 {snapDates[0]} 〜 最新 {snapDates.at(-1)}）</>}
+        </p>
+        {!hasEval ? (
+          <div className="notice" style={{ marginTop: 0 }}>
+            {snapDates.length === 0
+              ? "まだスナップショットがありません（日次バッチで月初に記録されます）。"
+              : "蓄積中：評価は記録から1ヶ月以上経過後に表示されます。"}
+          </div>
+        ) : (
+          <div className="table-scroll">
+            <table className="table">
+              <colgroup><col style={{ width: "22%" }} /><col style={{ width: "22%" }} /><col style={{ width: "22%" }} /><col style={{ width: "16%" }} /><col style={{ width: "18%" }} /></colgroup>
+              <thead><tr>
+                <th>期間</th><th className="num">買い銘柄 平均</th><th className="num">全体 平均</th><th className="num">買い勝率</th><th className="num">評価件数</th>
+              </tr></thead>
+              <tbody>
+                {([["1ヶ月", "ret_1m"], ["3ヶ月", "ret_3m"], ["6ヶ月", "ret_6m"]] as const).map(([label, k]) => {
+                  const a = agg[k];
+                  return (
+                    <tr key={k}>
+                      <td>{label}</td>
+                      <td className="num" style={{ color: a && a.buyAvg != null && a.buyAvg >= 0 ? "#34d399" : undefined }}>{a ? f2(a.buyAvg) : "—"}</td>
+                      <td className="num">{a ? f2(a.allAvg) : "—"}</td>
+                      <td className="num">{a && a.win != null ? a.win.toFixed(0) + "%" : "—"}</td>
+                      <td className="num">{a ? a.buyN : "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

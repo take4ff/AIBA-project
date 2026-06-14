@@ -134,6 +134,18 @@ export async function getBacktest(): Promise<BacktestRun | null> {
   return (data?.[0] as BacktestRun) ?? null;
 }
 
+export interface SnapshotRow {
+  snapshot_date: string; is_buy: boolean | null;
+  ret_1m: number | null; ret_3m: number | null; ret_6m: number | null;
+}
+
+/** 定点記録（スコアのスナップショット）。out-of-sample 検証用。 */
+export async function getSnapshots(): Promise<SnapshotRow[]> {
+  const { data } = await supabase
+    .from("score_snapshots").select("snapshot_date,is_buy,ret_1m,ret_3m,ret_6m");
+  return (data ?? []) as SnapshotRow[];
+}
+
 /** 現在の USD/JPY レート（取得失敗時はフォールバック）。 */
 export async function getUsdJpy(): Promise<number> {
   try {
