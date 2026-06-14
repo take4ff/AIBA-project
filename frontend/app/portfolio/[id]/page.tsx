@@ -39,8 +39,8 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
 
   return (
     <main className="container">
-      <Link className="back-link" href="/portfolio">← ポートフォリオへ</Link>
-      <header className="header" style={{ marginTop: 12 }}>
+      <header className="header">
+        <Link className="back-link" href="/portfolio">← ポートフォリオへ</Link>
         <h1>
           {holding?.name ?? ticker}
           <span className="ticker">{ticker}</span>

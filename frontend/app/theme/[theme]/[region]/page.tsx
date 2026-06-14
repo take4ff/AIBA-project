@@ -28,8 +28,8 @@ export default async function IndustryPage({
 
   return (
     <main className="container">
-      <Link className="back-link" href={REGION_PATH[region] ?? "/"}>← {REGION_LABEL[region]}ランキングへ</Link>
-      <header className="header" style={{ marginTop: 12 }}>
+      <header className="header">
+        <Link className="back-link" href={REGION_PATH[region] ?? "/"}>← {REGION_LABEL[region]}ランキングへ</Link>
         <h1>
           {themeName}
           <span className="region-badge">{REGION_LABEL[region]}</span>

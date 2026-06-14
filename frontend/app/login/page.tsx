@@ -33,8 +33,8 @@ export default function LoginPage() {
 
   return (
     <main className="container">
-      <Link className="back-link" href="/">← ダッシュボードへ</Link>
-      <header className="header" style={{ marginTop: 12 }}>
+      <header className="header">
+        <Link className="back-link" href="/">← ダッシュボードへ</Link>
         <h1>🔑 {mode === "login" ? "ログイン" : "新規登録"}</h1>
         <p>お気に入り（ウォッチリスト）等を使うにはアカウントが必要です。</p>
       </header>
