@@ -3,13 +3,13 @@ import { RankingRow } from "@/lib/types";
 import { scoreColor, fmt } from "@/lib/score-color";
 import { parseDomainId } from "@/lib/regions";
 import { holdingStance } from "@/lib/stance";
+import { money } from "@/lib/sell-signal";
 import StarButton from "@/components/StarButton";
 
-// センチメントの傾き（直近変化）を矢印で表す。±1未満は横ばい扱い。
 const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
 const trendArrow = (t: number) => (t > 1 ? "↑" : t < -1 ? "↓" : "→");
+const REGION_BADGE: Record<string, string> = { global: "Global", us: "米国", jp: "日本" };
 
-// linkMode "auto": ETFは業界ページ、個別株は銘柄詳細へ。"domain": 常に銘柄詳細。
 function rowHref(r: RankingRow, linkMode: "auto" | "domain"): string {
   if (linkMode === "auto" && r.kind === "etf") {
     const { theme, region } = parseDomainId(r.domain_id);
@@ -17,8 +17,6 @@ function rowHref(r: RankingRow, linkMode: "auto" | "domain"): string {
   }
   return `/domain/${r.domain_id}`;
 }
-
-const REGION_BADGE: Record<string, string> = { global: "Global", us: "米国", jp: "日本" };
 
 export default function RankingTable({
   rows,
@@ -36,19 +34,21 @@ export default function RankingTable({
     <table className="table">
       <colgroup>
         <col style={{ width: "4%" }} />
-        <col style={{ width: "20%" }} />
+        <col style={{ width: "19%" }} />
+        <col style={{ width: "9%" }} />
         {/* 総合スコア */}
-        <col style={{ width: "15%" }} />
-        <col style={{ width: "12%" }} />
-        <col style={{ width: "12%" }} />
-        {/* 構成スコア（元データ）*/}
-        <col style={{ width: "9%" }} />
-        <col style={{ width: "12%" }} />
+        <col style={{ width: "14%" }} />
+        <col style={{ width: "11%" }} />
+        <col style={{ width: "11%" }} />
+        {/* 構成スコア */}
+        <col style={{ width: "8%" }} />
+        <col style={{ width: "10%" }} />
         <col style={{ width: "7%" }} />
-        <col style={{ width: "9%" }} />
+        <col style={{ width: "7%" }} />
       </colgroup>
       <thead>
         <tr className="grp-row">
+          <th></th>
           <th></th>
           <th></th>
           <th colSpan={3} className="grp-head">総合スコア</th>
@@ -57,6 +57,7 @@ export default function RankingTable({
         <tr>
           <th></th>
           <th>領域</th>
+          <th className="num">株価</th>
           <th title="総合的な買い時度(0-100)。高いほど割安・買い場。色: 緑=買い場 / 赤=見送り">AIBAスコア</th>
           <th title="成長×割安(0-100)。割安(AIBA)と研究熱量の上昇を合成。今買い時かつ将来伸びそうな候補を探す指標">成長×割安</th>
           <th className="num" title="今後約1ヶ月でAIBAが買い場(60以上)に入る確率の予測">買い場確率<br />(1ヶ月)</th>
@@ -69,60 +70,51 @@ export default function RankingTable({
       <tbody>
         {rows.map((r, i) => {
           const score = r.aiba_score ?? 0;
+          const stance = holdingStance(r);
+          const currency = r.region === "jp" ? "JPY" : "USD";
           return (
             <tr key={r.domain_id}>
               <td className="rank"><StarButton domainId={r.domain_id} />{i + 1}</td>
               <td>
                 <Link href={rowHref(r, linkMode)}>
-                  <span className="domain-name">{r.domain_name}</span>
-                  <span className="ticker">{r.ticker}</span>
-                  {showRegion && <span className="region-tag">{REGION_BADGE[r.region] ?? r.region}</span>}
-                  {r.divergence && (
-                    <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
-                  )}
-                  {(() => {
-                    const s = holdingStance(r);
-                    return s ? <span className={`stance-badge ${s.cls}`} title={s.reason}>{s.icon} {s.label}</span> : null;
-                  })()}
-                  {/* ETF/個別株の切替で行高が変わらないよう、サブ行は常に確保 */}
-                  <span className="theme-sub">{showTheme ? r.theme_name : " "}</span>
+                  <span className="name-line">
+                    <span className="domain-name">{r.domain_name}</span>
+                    <span className="ticker">{r.ticker}</span>
+                    {showRegion && <span className="region-tag">{REGION_BADGE[r.region] ?? r.region}</span>}
+                  </span>
+                  {/* 2行目：乖離・保有目安タグ＋（個別株表示時の）テーマ名 */}
+                  <span className="tag-row">
+                    {r.divergence && (
+                      <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
+                    )}
+                    {stance && <span className={`stance-badge ${stance.cls}`} title={stance.reason}>{stance.icon} {stance.label}</span>}
+                    {showTheme && <span className="row2-theme">{r.theme_name}</span>}
+                  </span>
                 </Link>
               </td>
+              <td className="num">{money(r.close_price, currency)}</td>
               {/* --- 総合スコア --- */}
               <td>
                 <div className="score-cell">
                   <div className="score-bar-track">
-                    <div
-                      className="score-bar-fill"
-                      style={{ width: `${score}%`, background: scoreColor(r.aiba_score) }}
-                    />
+                    <div className="score-bar-fill" style={{ width: `${score}%`, background: scoreColor(r.aiba_score) }} />
                   </div>
-                  <span className="score-val" style={{ color: scoreColor(r.aiba_score) }}>
-                    {fmt(r.aiba_score)}
-                  </span>
+                  <span className="score-val" style={{ color: scoreColor(r.aiba_score) }}>{fmt(r.aiba_score)}</span>
                 </div>
               </td>
               <td>
-                <span className="combo-pill" style={{ background: scoreColor(r.combo_score) }}>
-                  {r.combo_score}
-                </span>
+                <span className="combo-pill" style={{ background: scoreColor(r.combo_score) }}>{r.combo_score}</span>
               </td>
               <td className="num">
-                {r.buyzone_prob == null ? (
-                  "—"
-                ) : (
-                  <span style={{ color: scoreColor(r.buyzone_prob * 100), fontWeight: 700 }}>
-                    {(r.buyzone_prob * 100).toFixed(0)}%
-                  </span>
+                {r.buyzone_prob == null ? "—" : (
+                  <span style={{ color: scoreColor(r.buyzone_prob * 100), fontWeight: 700 }}>{(r.buyzone_prob * 100).toFixed(0)}%</span>
                 )}
               </td>
-              {/* --- 構成スコア（元データ）--- */}
+              {/* --- 構成スコア --- */}
               <td className="num col-divider">{fmt(r.technical_score)}</td>
               <td className="num">
                 {fmt(r.sentiment_score)}
-                <span className={`trend trend-${trendDir(r.sentiment_trend)}`}>
-                  {trendArrow(r.sentiment_trend)}
-                </span>
+                <span className={`trend trend-${trendDir(r.sentiment_trend)}`}>{trendArrow(r.sentiment_trend)}</span>
               </td>
               <td className="num">{fmt(r.rsi_14)}</td>
               <td className="num">{fmt(r.ma_deviation, 2)}%</td>

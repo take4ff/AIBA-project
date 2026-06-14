@@ -163,7 +163,13 @@ a { color: inherit; text-decoration: none; }
   width: 100%; table-layout: fixed; border-collapse: collapse;
   background: var(--navy); color: var(--navy-text); border-radius: var(--radius); overflow: hidden;
 }
-.table-scroll .table { min-width: 760px; }
+.table-scroll .table { min-width: 880px; }
+/* 銘柄セル：1行目=名称、2行目=タグ */
+.name-line { display: block; }
+.tag-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 18px; margin-top: 4px; }
+.tag-row .div-badge, .tag-row .stance-badge { margin-left: 0; }
+.row2-theme { color: var(--muted); font-size: 11px; }
+.table .row2-theme { color: var(--navy-muted); }
 .table th, .table td {
   padding: 14px 16px; text-align: left; font-size: 14px;
   border-bottom: 1px solid var(--navy-border); overflow: hidden;
