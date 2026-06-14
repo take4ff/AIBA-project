@@ -36,6 +36,8 @@ export interface MetricHistoryRow {
   sentiment_score: number | null;
   rsi_14: number | null;
   close_price: number | null;
+  bb_upper?: number | null;   // ボリンジャーバンド上限（表示用）
+  bb_lower?: number | null;   // ボリンジャーバンド下限（表示用）
 }
 
 export const LAYER_META: Record<number, { title: string; subtitle: string }> = {

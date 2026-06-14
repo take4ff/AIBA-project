@@ -4,6 +4,7 @@ import { MetricHistoryRow } from "@/lib/types";
 import TrendChart from "@/components/TrendChart";
 import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
+import { bollinger, macdState, macdLabel } from "@/lib/indicators";
 
 export const revalidate = 0;
 
@@ -48,6 +49,12 @@ export default async function DomainPage({ params }: { params: { id: string } })
   const latest = history[history.length - 1];
   const { region } = parseDomainId(params.id);
 
+  // 補助テクニカル（表示のみ）: ボリンジャーバンドを重ね、MACD状態を表示
+  const closes = history.map((h) => h.close_price);
+  const bb = bollinger(closes);
+  const chartData = history.map((h, i) => ({ ...h, bb_upper: bb.upper[i], bb_lower: bb.lower[i] }));
+  const macd = macdState(closes);
+
   return (
     <main className="container">
       <Link className="back-link" href={REGION_PATH[region]}>← {REGION_LABEL[region]}のランキングへ戻る</Link>
@@ -74,10 +81,13 @@ export default async function DomainPage({ params }: { params: { id: string } })
         )}
       </header>
 
+      {history.length > 0 && (
+        <p className="forecast-line" style={{ marginTop: 0 }}>📉 MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
+      )}
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>
       ) : (
-        <TrendChart data={history} currency={region === "jp" ? "JPY" : "USD"} />
+        <TrendChart data={chartData} currency={region === "jp" ? "JPY" : "USD"} />
       )}
     </main>
   );

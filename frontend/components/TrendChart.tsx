@@ -109,6 +109,10 @@ export default function TrendChart({
           />
           <Legend />
 
+          {/* ボリンジャーバンド（右軸・株価のボラティリティ目安）*/}
+          <Line yAxisId="price" type="monotone" dataKey="bb_upper" name="BB上限" stroke="#5b8cff" strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.5} dot={false} connectNulls />
+          <Line yAxisId="price" type="monotone" dataKey="bb_lower" name="BB下限" stroke="#5b8cff" strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.5} dot={false} connectNulls />
+
           {/* 株価: 右軸・面付きで背景的に表示 */}
           <Area
             yAxisId="price"
