@@ -79,7 +79,8 @@ a { color: inherit; text-decoration: none; }
 .kind-btn:hover { color: var(--text); }
 .kind-active { color: #0b0f1a; background: var(--accent); }
 
-.theme-sub { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+/* ETF/個別株の切替で行高が変わらないよう、空でも1行分の高さを確保 */
+.theme-sub { display: block; color: var(--muted); font-size: 11px; line-height: 14px; min-height: 14px; margin-top: 2px; }
 
 .layer { margin-top: 36px; }
 .layer-title { font-size: 18px; margin: 0 0 2px; }

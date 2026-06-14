@@ -26,7 +26,8 @@ export default function RankingTable({ rows, showTheme = false }: { rows: Rankin
                 <Link href={`/domain/${r.domain_id}`}>
                   <span className="domain-name">{r.domain_name}</span>
                   <span className="ticker">{r.ticker}</span>
-                  {showTheme && <span className="theme-sub">{r.theme_name}</span>}
+                  {/* ETF/個別株の切替で行高が変わらないよう、サブ行は常に確保 */}
+                  <span className="theme-sub">{showTheme ? r.theme_name : " "}</span>
                 </Link>
               </td>
               <td>
