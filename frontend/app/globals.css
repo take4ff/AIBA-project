@@ -92,6 +92,22 @@ a { color: inherit; text-decoration: none; }
 .guide-note strong { color: var(--text); }
 @media (max-width: 640px) { .guide-item { grid-template-columns: 1fr; gap: 2px; } }
 
+/* ---------- スコア定義ページ ---------- */
+.def-section { margin-top: 20px; }
+.def-section > p { color: var(--text); font-size: 14px; line-height: 1.8; margin: 8px 0; }
+.def-section code { background: var(--panel-2); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+.formula {
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; line-height: 1.7; color: var(--text);
+  overflow-x: auto; white-space: pre; margin: 10px 0;
+}
+.def-list { margin: 8px 0; padding-left: 20px; }
+.def-list li { color: var(--text); font-size: 14px; line-height: 1.9; }
+.def-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+.def-table th, .def-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+.def-table th { background: var(--panel-2); color: var(--muted); font-weight: 700; }
+.def-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
 /* ---------- ナビ（Sony風ミニマル・下線アクティブ） ---------- */
 .tabs {
   display: flex; flex-wrap: wrap; gap: 4px; margin-top: 28px;

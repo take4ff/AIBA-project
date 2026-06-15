@@ -71,6 +71,9 @@ export default function ScoreGuide() {
           <strong>業界ETFスコア順</strong>で固定（ETF↔個別株を切替えても業界の位置が揃う）。
           領域名をクリックすると時系列チャート（株価×スコア、買い場ハイライト）が見られます。
         </p>
+        <p className="guide-note">
+          各スコアの計算式・詳細は <a href="/guide" className="back-link">📖 スコア定義ページ</a> を参照。
+        </p>
       </div>
     </details>
   );
