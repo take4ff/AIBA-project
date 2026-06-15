@@ -1,20 +1,22 @@
 // 地域・種別の定義と domain_id（"<theme>_<region>_<kind>"）の解析ヘルパー。
 
-export type Region = "global" | "us" | "jp";
+export type Region = "global" | "us" | "jp" | "row";
 export type Kind = "etf" | "stock";
 
-export const REGIONS: Region[] = ["global", "us", "jp"];
+export const REGIONS: Region[] = ["global", "us", "jp", "row"];
 
 export const REGION_LABEL: Record<Region, string> = {
   global: "Global",
   us: "米国",
   jp: "日本",
+  row: "その他",
 };
 
 export const REGION_PATH: Record<Region, string> = {
   global: "/",
   us: "/us",
   jp: "/jp",
+  row: "/row",
 };
 
 export const KIND_LABEL: Record<Kind, string> = {
@@ -22,9 +24,14 @@ export const KIND_LABEL: Record<Kind, string> = {
   stock: "個別株",
 };
 
-/** Global は業界ETFのみ。US/JP は ETF + 個別株。 */
+/** Global は業界ETFのみ。US/JP は ETF + 個別株。その他(row) は個別株のみ。 */
 export function regionHasStocks(region: Region): boolean {
   return region !== "global";
+}
+
+/** その他(row) は専用ETFを持たない（主要各国の個別株のみ）。 */
+export function regionHasEtf(region: Region): boolean {
+  return region !== "row";
 }
 
 /**

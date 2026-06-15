@@ -11,6 +11,7 @@ import {
 import { assessSell, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
+import ConceptIcon from "@/components/ConceptIcon";
 
 const EMPTY = { ticker: "", name: "", currency: "JPY" as "JPY" | "USD", avg_cost: "", shares: "" };
 
@@ -68,7 +69,7 @@ export default function PortfolioPage() {
   return (
     <main className="container">
       <header className="header">
-        <h1>💼 マイ・ポートフォリオ（売り時）</h1>
+        <h1><ConceptIcon name="portfolio" size={24} /> マイ・ポートフォリオ（売り時）</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>保有銘柄の<strong>過熱度</strong>・ファンダ・決算から売り時を可視化。アカウントに紐付き、追加・編集できます。</p>
       </header>
@@ -151,7 +152,7 @@ export default function PortfolioPage() {
                           {m?.overheat == null ? "—" : <span className="combo-pill" style={{ background: overheatColor(m.overheat) }}>{Math.round(m.overheat)}</span>}
                         </td>
                         <td><span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span></td>
-                        <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon ? "⚠️ " : ""}{e.text}</td>
+                        <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon && <ConceptIcon name="warn" size={12} />} {e.text}</td>
                         <td>
                           {editing ? (
                             <>

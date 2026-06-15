@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { RankingRow } from "@/lib/types";
 import RankingTable from "@/components/RankingTable";
+import ConceptIcon from "@/components/ConceptIcon";
 
 type Fund = { forward_pe: number | null; eps_growth: number | null };
 
@@ -102,7 +103,7 @@ export default function ScreenerClient({
           <input type="checkbox" checked={trendUp} onChange={(e) => setTrendUp(e.target.checked)} /> 熱量↑のみ
         </label>
         <label className="screener-check">
-          <input type="checkbox" checked={divOnly} onChange={(e) => setDivOnly(e.target.checked)} /> 🔀乖離のみ
+          <input type="checkbox" checked={divOnly} onChange={(e) => setDivOnly(e.target.checked)} /> <ConceptIcon name="divergence" size={12} /> 乖離のみ
         </label>
         <label>並び替え
           <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>

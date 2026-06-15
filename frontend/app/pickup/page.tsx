@@ -2,6 +2,7 @@ import { getPickup, getUsdJpy } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import RankingTable from "@/components/RankingTable";
 import NavTabs from "@/components/NavTabs";
+import ConceptIcon from "@/components/ConceptIcon";
 
 export const revalidate = 0;
 
@@ -46,7 +47,7 @@ export default async function PickupPage({
   return (
     <main className="container">
       <header className="header">
-        <h1>⭐ Pickup — 今買いの候補</h1>
+        <h1><ConceptIcon name="pickup" size={24} /> Pickup — 今買いの候補</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           地域・ETF/個別株を問わず、AIBAスコアが買い水準（60以上）または乖離（仕込み好機）の銘柄を横断抽出。

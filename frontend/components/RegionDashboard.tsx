@@ -1,11 +1,12 @@
 import { getRanking } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { LAYER_META } from "@/lib/types";
-import { Region, Kind, REGION_LABEL, KIND_LABEL, regionHasStocks } from "@/lib/regions";
+import { Region, Kind, REGION_LABEL, KIND_LABEL, regionHasStocks, regionHasEtf } from "@/lib/regions";
 import RankingTable from "@/components/RankingTable";
 import NavTabs from "@/components/NavTabs";
 import KindToggle from "@/components/KindToggle";
 import ScoreGuide from "@/components/ScoreGuide";
+import ConceptIcon from "@/components/ConceptIcon";
 
 export default async function RegionDashboard({
   region,
@@ -24,8 +25,9 @@ export default async function RegionDashboard({
     );
   }
 
-  // Global は業界ETFのみ
-  const effectiveKind: Kind = regionHasStocks(region) ? kind : "etf";
+  // Global=ETFのみ / その他(row)=個別株のみ / US・JP=指定 kind
+  const effectiveKind: Kind = !regionHasEtf(region) ? "stock"
+    : regionHasStocks(region) ? kind : "etf";
   const rows = await getRanking(region, effectiveKind);
   const tradeDate = rows.map((r) => r.trade_date).sort().at(-1);
   // 並び順は「業界ETFスコア」基準（ETF/個別株を切り替えても業界の順番が揃う）
@@ -35,7 +37,7 @@ export default async function RegionDashboard({
   return (
     <main className="container">
       <header className="header">
-        <h1>📊 AIBA — 次世代技術投資分析</h1>
+        <h1><ConceptIcon name="verify" size={24} /> AIBA — 次世代技術投資分析</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           テクニカル指標とセンチメント指標の乖離から<strong>「入口（押し目）」</strong>を定量化。次世代技術テーマを<strong>長期で育てるサテライト枠</strong>向け。

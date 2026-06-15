@@ -1,32 +1,37 @@
 import Link from "next/link";
+import {
+  Globe, Globe2, Flag, Star, Compass, Search, BarChart3, BookOpen, Bookmark, Briefcase,
+  type LucideIcon,
+} from "lucide-react";
 
-interface Tab { key: string; label: string; href: string; icon: string }
+interface Tab { key: string; label: string; href: string; Icon: LucideIcon }
 
-// 「ランキング / ツール / マイ」の3グループに整理したナビ（FontAwesomeアイコン）。
+// 「ランキング / ツール / マイ」の3グループ（Lucideアイコン・モノクロ＋アクセント）。
 const GROUPS: { label: string; tabs: Tab[] }[] = [
   {
     label: "ランキング",
     tabs: [
-      { key: "global", label: "Global", href: "/", icon: "fa-solid fa-earth-americas" },
-      { key: "us", label: "米国", href: "/us", icon: "fa-solid fa-flag-usa" },
-      { key: "jp", label: "日本", href: "/jp", icon: "fa-solid fa-torii-gate" },
+      { key: "global", label: "Global", href: "/", Icon: Globe },
+      { key: "us", label: "米国", href: "/us", Icon: Flag },
+      { key: "jp", label: "日本", href: "/jp", Icon: Flag },
+      { key: "row", label: "その他", href: "/row", Icon: Globe2 },
     ],
   },
   {
     label: "ツール",
     tabs: [
-      { key: "pickup", label: "Pickup", href: "/pickup", icon: "fa-solid fa-star" },
-      { key: "themes", label: "テーマ", href: "/themes", icon: "fa-solid fa-compass" },
-      { key: "screener", label: "スクリーナー", href: "/screener", icon: "fa-solid fa-magnifying-glass" },
-      { key: "verify", label: "検証", href: "/verify", icon: "fa-solid fa-chart-column" },
-      { key: "guide", label: "スコア定義", href: "/guide", icon: "fa-solid fa-book" },
+      { key: "pickup", label: "Pickup", href: "/pickup", Icon: Star },
+      { key: "themes", label: "テーマ", href: "/themes", Icon: Compass },
+      { key: "screener", label: "スクリーナー", href: "/screener", Icon: Search },
+      { key: "verify", label: "検証", href: "/verify", Icon: BarChart3 },
+      { key: "guide", label: "スコア定義", href: "/guide", Icon: BookOpen },
     ],
   },
   {
     label: "マイ",
     tabs: [
-      { key: "watchlist", label: "お気に入り", href: "/watchlist", icon: "fa-regular fa-star" },
-      { key: "portfolio", label: "ポートフォリオ", href: "/portfolio", icon: "fa-solid fa-briefcase" },
+      { key: "watchlist", label: "お気に入り", href: "/watchlist", Icon: Bookmark },
+      { key: "portfolio", label: "ポートフォリオ", href: "/portfolio", Icon: Briefcase },
     ],
   },
 ];
@@ -38,9 +43,10 @@ export default function NavTabs({ active }: { active: string }) {
         <div key={g.label} className="nav-group">
           <span className="nav-label">{g.label}</span>
           <div className="nav-tabs">
-            {g.tabs.map((t) => (
-              <Link key={t.key} href={t.href} className={`tab${t.key === active ? " tab-active" : ""}`}>
-                <i className={`${t.icon} tab-ico`} aria-hidden /> {t.label}
+            {g.tabs.map(({ key, label, href, Icon }) => (
+              <Link key={key} href={href} className={`tab${key === active ? " tab-active" : ""}`}>
+                <Icon size={15} strokeWidth={2} className="tab-ico" aria-hidden />
+                <span>{label}</span>
               </Link>
             ))}
           </div>

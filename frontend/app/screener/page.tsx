@@ -2,6 +2,7 @@ import { getAllRows, getFundamentalsMap, getUsdJpy } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import ScreenerClient from "@/components/ScreenerClient";
+import ConceptIcon from "@/components/ConceptIcon";
 
 export const revalidate = 0;
 
@@ -20,7 +21,7 @@ export default async function ScreenerPage() {
   return (
     <main className="container">
       <header className="header">
-        <h1>🔎 スクリーナー — 多条件で絞り込み</h1>
+        <h1><ConceptIcon name="screener" size={24} /> スクリーナー — 多条件で絞り込み</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           地域・種別・階層・AIBA・買い場確率・予想PER・熱量・乖離を組み合わせて、条件に合う銘柄を即時抽出。

@@ -8,6 +8,7 @@ import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm } from "@/lib/
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
+import ConceptIcon from "@/components/ConceptIcon";
 import { narrative } from "@/lib/narrative";
 
 export const revalidate = 0;
@@ -194,7 +195,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
         )}
         {prediction && (
           <p className="forecast-line">
-            🔮 1ヶ月先（入口の目安）：買い場入り確率{" "}
+            <ConceptIcon name="forecast" size={14} /> 1ヶ月先（入口の目安）：買い場入り確率{" "}
             <span className="date">{Math.round((prediction.buyzone_prob ?? 0) * 100)}%</span>
             {" / "}予測AIBA <span className="date">{fmt(prediction.pred_aiba)}</span>
             <span className="forecast-note">（{prediction.horizon_days}営業日先。検証上AIBAが最も有効な“入口”の時間軸。保有はテーマ成長を長期で）</span>
@@ -202,11 +203,11 @@ export default async function DomainPage({ params }: { params: { id: string } })
         )}
       </header>
 
-      {summary && <p className="narrative">📝 {summary}</p>}
+      {summary && <p className="narrative"><ConceptIcon name="narrative" size={15} /> {summary}</p>}
 
       {compare && vsDelta != null && (
         <p className="forecast-line">
-          ⚖️ 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
+          <ConceptIcon name="both" size={14} /> 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
           <span style={{ color: vsDelta >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>
             {vsDelta >= 0 ? `業界より割安（+${vsDelta.toFixed(0)}）` : `業界より割高/過熱（${vsDelta.toFixed(0)}）`}
           </span>
@@ -214,7 +215,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       )}
       {guide.fair != null && (
         <p className="forecast-line">
-          🎯 購入目安：妥当値(25日MA) <span className="date">{money(guide.fair, cur)}</span>
+          <ConceptIcon name="guide" size={14} /> 購入目安：妥当値(25日MA) <span className="date">{money(guide.fair, cur)}</span>
           {" / "}押し目買い目安 <span style={{ color: "#15a34a", fontWeight: 700 }}>{money(guide.pullback, cur)}</span>
           {" / "}下値支持(60日安値) {money(guide.support, cur)}
           <span className="forecast-note">（現在 {money(guide.current, cur)}）</span>
@@ -222,7 +223,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       )}
       {lt.dev200 != null && (
         <p className="forecast-line">
-          🛰️ 長期トレンド：200日線乖離 <span className="date">{lt.dev200 >= 0 ? "+" : ""}{lt.dev200}%</span>
+          <ConceptIcon name="longterm" size={14} /> 長期トレンド：200日線乖離 <span className="date">{lt.dev200 >= 0 ? "+" : ""}{lt.dev200}%</span>
           {lt.rangePct != null && <> ／ 52週レンジ位置 <span className="date">{lt.rangePct}%</span></>}
           {" → "}
           <span style={{ fontWeight: 700, color: lt.zone === "長期の買い場" || lt.zone === "やや割安" ? "#15a34a" : lt.zone === "割高" ? "#dc2626" : "var(--muted)" }}>
@@ -233,7 +234,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       )}
       {momentum != null && (
         <p className="forecast-line">
-          🚀 順張りモメンタム：<span className="date">{momentum}</span>
+          <ConceptIcon name="momentum" size={14} /> 順張りモメンタム：<span className="date">{momentum}</span>
           <span style={{ marginLeft: 8, fontWeight: 700, color: momentum >= 55 ? "#15a34a" : momentum < 45 ? "#dc2626" : "var(--muted)" }}>
             {momentumLabel(momentum)}
           </span>
@@ -247,7 +248,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
         </section>
       )}
       {history.length > 0 && (
-        <p className="forecast-line" style={{ marginTop: 0 }}>📉 MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
+        <p className="forecast-line" style={{ marginTop: 0 }}><ConceptIcon name="macd" size={14} /> MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
       )}
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>
@@ -263,7 +264,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
             const over = Math.abs(fairValue.discountPct) > 60 ? "超" : "";
             return (
               <p className="forecast-line" style={{ marginTop: 0, marginBottom: 12 }}>
-                💰 相対PER：自社予想 {fairValue.selfPE.toFixed(1)}倍 vs ピア中央値 {fairValue.peerMedianPE.toFixed(1)}倍（同地域n={fairValue.peers}）→{" "}
+                <ConceptIcon name="value" size={14} /> 相対PER：自社予想 {fairValue.selfPE.toFixed(1)}倍 vs ピア中央値 {fairValue.peerMedianPE.toFixed(1)}倍（同地域n={fairValue.peers}）→{" "}
                 <span style={{ color: capped >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>
                   {capped >= 0 ? `${Math.abs(capped).toFixed(0)}%${over} 割安` : `${Math.abs(capped).toFixed(0)}%${over} 割高`}
                 </span>

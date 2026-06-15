@@ -6,6 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { parseDomainId, REGION_LABEL } from "@/lib/regions";
 import { scoreColor, fmt } from "@/lib/score-color";
+import ConceptIcon from "@/components/ConceptIcon";
 import NavTabs from "@/components/NavTabs";
 
 interface Row { id: string; name: string; ticker: string; region: string; aiba: number | null; trade_date: string | null }
@@ -47,7 +48,7 @@ export default function WatchlistPage() {
   return (
     <main className="container">
       <header className="header">
-        <h1>⭐ お気に入り（ウォッチリスト）</h1>
+        <h1><ConceptIcon name="watchlist" size={24} /> お気に入り（ウォッチリスト）</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>登録した銘柄のAIBAスコアをまとめて確認。各ページの ☆ で登録／解除できます。</p>
       </header>

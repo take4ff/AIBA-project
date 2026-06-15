@@ -5,6 +5,9 @@ import { parseDomainId } from "@/lib/regions";
 import { holdingStance } from "@/lib/stance";
 import { money } from "@/lib/sell-signal";
 import StarButton from "@/components/StarButton";
+import ConceptIcon from "@/components/ConceptIcon";
+
+const STANCE_ICON: Record<string, string> = { "st-long": "long", "st-short": "short", "st-both": "both", "st-neutral": "neutral" };
 
 const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
 const trendArrow = (t: number) => (t > 1 ? "↑" : t < -1 ? "↓" : "→");
@@ -96,11 +99,11 @@ export default function RankingTable({
                   {/* 2行目：乖離・保有目安タグ＋（個別株表示時の）テーマ名 */}
                   <span className="tag-row">
                     {r.divergence && (
-                      <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
+                      <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）"><ConceptIcon name="divergence" /> 乖離</span>
                     )}
-                    {stance && <span className={`stance-badge ${stance.cls}`} title={stance.reason}>{stance.icon} {stance.label}</span>}
+                    {stance && <span className={`stance-badge ${stance.cls}`} title={stance.reason}><ConceptIcon name={STANCE_ICON[stance.cls] ?? "neutral"} /> {stance.label}</span>}
                     {r.momentum_score >= 65 && (
-                      <span className="mom-badge" title="順張りモメンタム：MAより上・RSI強い・直近上昇。勢いに乗る視点（AIBAの逆張りと対）">🚀 順張り{r.momentum_score}</span>
+                      <span className="mom-badge" title="順張りモメンタム：MAより上・RSI強い・直近上昇。勢いに乗る視点（AIBAの逆張りと対）"><ConceptIcon name="momentum" /> 順張り{r.momentum_score}</span>
                     )}
                     {showTheme && <span className="row2-theme">{r.theme_name}</span>}
                   </span>

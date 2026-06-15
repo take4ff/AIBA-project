@@ -20,8 +20,8 @@ load_dotenv(ROOT_DIR / ".env")
 
 
 # 対応地域・種別（表示順）
-REGIONS = ["global", "us", "jp"]
-REGION_NAMES = {"global": "Global", "us": "米国", "jp": "日本"}
+REGIONS = ["global", "us", "jp", "row"]
+REGION_NAMES = {"global": "Global", "us": "米国", "jp": "日本", "row": "その他"}
 KINDS = ["etf", "stock"]  # etf=業界, stock=個別株
 
 

@@ -1,4 +1,5 @@
 // スコアの見方を説明する折りたたみパネル。
+import { BookOpen } from "lucide-react";
 
 const ITEMS: { term: string; desc: string }[] = [
   {
@@ -18,12 +19,12 @@ const ITEMS: { term: string; desc: string }[] = [
     desc: "センチメントの直近の傾き。↑=研究開発の熱量が上昇中(将来の伸びの先行サイン)、↓=減速、→=横ばい。",
   },
   {
-    term: "🔀 乖離",
+    term: "乖離",
     desc: "センチメント(先行指標)が上昇しているのに株価がまだ追いついていない状態。本システムが狙う「仕込み好機」のサイン。",
   },
   {
-    term: "保有目安 🌱長期 / ⚡短期 / ⚖️両面",
-    desc: "買い場候補(AIBA≥55)の性質。🌱長期=第2/3層＋熱量で構造的成長、⚡短期=売られすぎの技術的リバウンド狙い、⚖️両面=その両方。",
+    term: "保有目安（長期 / 短期 / 両面）",
+    desc: "買い場候補(AIBA≥55)の性質。長期=第2/3層＋熱量で構造的成長、短期=売られすぎの技術的リバウンド狙い、両面=その両方。",
   },
   {
     term: "センチメント (0–100)",
@@ -46,7 +47,7 @@ const ITEMS: { term: string; desc: string }[] = [
 export default function ScoreGuide() {
   return (
     <details className="guide">
-      <summary>📖 スコアの見方</summary>
+      <summary><BookOpen size={15} strokeWidth={2.2} style={{ verticalAlign: "-0.15em", color: "var(--accent)" }} /> スコアの見方</summary>
       <div className="guide-body">
         <dl className="guide-list">
           {ITEMS.map((it) => (
@@ -72,7 +73,7 @@ export default function ScoreGuide() {
           領域名をクリックすると時系列チャート（株価×スコア、買い場ハイライト）が見られます。
         </p>
         <p className="guide-note">
-          各スコアの計算式・詳細は <a href="/guide" className="back-link">📖 スコア定義ページ</a> を参照。
+          各スコアの計算式・詳細は <a href="/guide" className="back-link">スコア定義ページ</a> を参照。
         </p>
       </div>
     </details>

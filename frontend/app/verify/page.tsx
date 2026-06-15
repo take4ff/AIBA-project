@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import SnapshotChart from "@/components/SnapshotChart";
 import EquityCurve from "@/components/EquityCurve";
+import ConceptIcon from "@/components/ConceptIcon";
 
 export const revalidate = 0;
 
@@ -83,7 +84,7 @@ export default async function VerifyPage() {
   return (
     <main className="container">
       <header className="header">
-        <h1>📊 検証 — スコアの実績</h1>
+        <h1><ConceptIcon name="verify" size={24} /> 検証 — スコアの実績</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>AIBAスコアが将来リターンをどれだけ説明できているかをバックテストで確認。</p>
       </header>

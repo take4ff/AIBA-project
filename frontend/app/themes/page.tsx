@@ -6,6 +6,7 @@ import { LAYER_META } from "@/lib/types";
 import { scoreColor, fmt } from "@/lib/score-color";
 import { THEME_KEYWORDS } from "@/lib/theme-meta";
 import NavTabs from "@/components/NavTabs";
+import ConceptIcon from "@/components/ConceptIcon";
 
 export const revalidate = 0;
 
@@ -49,7 +50,7 @@ export default async function ThemesPage() {
   return (
     <main className="container">
       <header className="header">
-        <h1>🧭 テーマ一覧</h1>
+        <h1><ConceptIcon name="themes" size={24} /> テーマ一覧</h1>
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           監視テーマを階層別に俯瞰。各テーマの<strong>研究熱量</strong>（関連ワードの活動量＝センチメント）と業界AIBAを併記。
@@ -68,7 +69,7 @@ export default async function ThemesPage() {
               <Link key={c.theme} href={`/theme/${c.theme}/global`} className="theme-card">
                 <div className="tc-head">
                   <span className="tc-name">{c.name}</span>
-                  {c.rising && <span className="tc-rising">🔥 話題上昇中</span>}
+                  {c.rising && <span className="tc-rising"><ConceptIcon name="rising" size={12} /> 話題上昇中</span>}
                 </div>
                 <div className="tc-metrics">
                   <span className="combo-pill" style={{ background: scoreColor(c.aiba) }} title="業界ETFのAIBAスコア">
@@ -91,7 +92,7 @@ export default async function ThemesPage() {
 
       {candidates.length > 0 && (
         <section className="layer">
-          <h2 className="layer-title">🌱 新興テーマ候補（ユニバース未採用）</h2>
+          <h2 className="layer-title"><ConceptIcon name="long" size={18} /> 新興テーマ候補（ユニバース未採用）</h2>
           <p className="layer-subtitle">
             まだ銘柄を採用していないが、関連ワードの研究熱量が高まりつつある領域。熱量順（50=横ばい・50超=加速）。
           </p>
@@ -100,7 +101,7 @@ export default async function ThemesPage() {
               <div key={c.candidate_id} className="theme-card theme-card-static">
                 <div className="tc-head">
                   <span className="tc-name">{c.name}</span>
-                  {(c.heat_score ?? 0) > 55 && <span className="tc-rising">🔥 加速中</span>}
+                  {(c.heat_score ?? 0) > 55 && <span className="tc-rising"><ConceptIcon name="rising" size={12} /> 加速中</span>}
                 </div>
                 <div className="tc-metrics">
                   <span className="combo-pill" style={{ background: scoreColor(c.heat_score) }} title="研究熱量（センチメント）">

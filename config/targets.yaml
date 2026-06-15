@@ -24,6 +24,8 @@ domains:
       jp:
         etf: { ticker: "2644.T", name: "Global X 日本半導体" }
         stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }, { ticker: "2802.T", name: 味の素（ABF基板材料） }, { ticker: "4063.T", name: 信越化学工業 }, { ticker: "3436.T", name: SUMCO }, { ticker: "4186.T", name: 東京応化工業 }, { ticker: "4004.T", name: レゾナック（後工程材料） }]
+      row:
+        stocks: [{ ticker: "2330.TW", name: TSMC（台湾） }, { ticker: "005930.KS", name: サムスン電子（韓国） }]
     github_keywords: ["cuda", "gpu kernel", "tensorrt"]
     arxiv_keywords: ["GPU accelerator", "AI chip"]
 
@@ -38,6 +40,8 @@ domains:
       jp:
         etf: { ticker: "2854.T", name: "Global X 日本テックTop20" }
         stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }, { ticker: "4488.T", name: AI inside }, { ticker: "9432.T", name: NTT（tsuzumi） }, { ticker: "9433.T", name: KDDI }, { ticker: "9434.T", name: ソフトバンク（通信） }]
+      row:
+        stocks: [{ ticker: SAP, name: SAP（独） }, { ticker: "9988.HK", name: アリババ（中国） }]
     github_keywords: ["llm", "transformer", "diffusion model"]
     arxiv_keywords: ["large language model", "generative model"]
 
@@ -52,6 +56,8 @@ domains:
       jp:
         etf: { ticker: "1626.T", name: "情報通信(TOPIX-17)" }
         stocks: [{ ticker: "3778.T", name: さくらインターネット }, { ticker: "4478.T", name: freee }, { ticker: "3994.T", name: マネーフォワード }, { ticker: "4684.T", name: オービック }, { ticker: "4307.T", name: 野村総合研究所 }]
+      row:
+        stocks: [{ ticker: INFY, name: Infosys（印） }]
     github_keywords: ["kubernetes", "serverless", "terraform"]
     arxiv_keywords: ["cloud computing", "datacenter scheduling"]
 
@@ -67,6 +73,8 @@ domains:
       jp:
         etf: { ticker: "1627.T", name: "電力・ガス(TOPIX-17)" }
         stocks: [{ ticker: "6594.T", name: ニデック }, { ticker: "6501.T", name: 日立製作所 }, { ticker: "6503.T", name: 三菱電機 }, { ticker: "5803.T", name: フジクラ }, { ticker: "6504.T", name: 富士電機 }]
+      row:
+        stocks: [{ ticker: "SU.PA", name: シュナイダーエレクトリック（仏） }]
     github_keywords: ["liquid cooling", "power management", "smart grid"]
     arxiv_keywords: ["data center cooling", "power grid optimization"]
 
@@ -81,6 +89,8 @@ domains:
       jp:
         etf: { ticker: "1624.T", name: "機械(TOPIX-17)" }
         stocks: [{ ticker: "6954.T", name: ファナック }, { ticker: "6506.T", name: 安川電機 }, { ticker: "6645.T", name: オムロン }, { ticker: "6324.T", name: ハーモニック・ドライブ }, { ticker: "6273.T", name: SMC }]
+      row:
+        stocks: [{ ticker: ABB, name: ABB（スイス） }]
     github_keywords: ["edge ai", "ros2", "tinyml"]
     arxiv_keywords: ["edge inference", "robot learning"]
 
@@ -95,6 +105,8 @@ domains:
       jp:
         etf: { ticker: "1621.T", name: "医薬品(TOPIX-17)" }
         stocks: [{ ticker: "4587.T", name: ペプチドリーム }, { ticker: "4565.T", name: そーせい }, { ticker: "4519.T", name: 中外製薬 }]
+      row:
+        stocks: [{ ticker: AZN, name: アストラゼネカ（英） }, { ticker: NVO, name: ノボノルディスク（デンマーク） }]
     github_keywords: ["bioinformatics", "genomics", "protein folding"]
     arxiv_keywords: ["computational biology", "protein structure prediction"]
 
@@ -109,6 +121,8 @@ domains:
       jp:
         etf: { ticker: "586A.T", name: "NF日経エンタメ" }
         stocks: [{ ticker: "6758.T", name: ソニーグループ }, { ticker: "7974.T", name: 任天堂 }, { ticker: "7832.T", name: バンダイナムコ }, { ticker: "9697.T", name: カプコン }, { ticker: "9684.T", name: スクウェア・エニックス }]
+      row:
+        stocks: [{ ticker: "0700.HK", name: テンセント（中国） }]
     github_keywords: ["game engine", "unreal engine", "unity"]
     arxiv_keywords: ["game ai", "procedural content generation"]
 
@@ -189,6 +203,8 @@ domains:
         stocks: [{ ticker: QS, name: QuantumScape }, { ticker: ENVX, name: Enovix }, { ticker: AMPX, name: Amprius }, { ticker: SLDP, name: Solid Power }]
       jp:
         stocks: [{ ticker: "6674.T", name: GSユアサ }, { ticker: "6981.T", name: 村田製作所 }, { ticker: "4004.T", name: レゾナック }]
+      row:
+        stocks: [{ ticker: "1211.HK", name: BYD（中国） }]
     github_keywords: ["solid state battery", "battery management", "lithium battery"]
     arxiv_keywords: ["solid-state battery", "lithium metal anode", "battery electrolyte"]
 
