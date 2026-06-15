@@ -37,7 +37,7 @@ domains:
         stocks: [{ ticker: MSFT, name: Microsoft }, { ticker: GOOGL, name: Alphabet }, { ticker: META, name: Meta }, { ticker: PLTR, name: Palantir }, { ticker: CRM, name: Salesforce }, { ticker: NOW, name: ServiceNow }, { ticker: ADBE, name: Adobe }]
       jp:
         etf: { ticker: "2854.T", name: "Global X 日本テックTop20" }
-        stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }, { ticker: "4488.T", name: AI inside }, { ticker: "9613.T", name: NTTデータ }]
+        stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }, { ticker: "4488.T", name: AI inside }, { ticker: "9432.T", name: NTT（tsuzumi） }]
     github_keywords: ["llm", "transformer", "diffusion model"]
     arxiv_keywords: ["large language model", "generative model"]
 
