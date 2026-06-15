@@ -1,8 +1,9 @@
-import { getBacktest, getSnapshots, getBenchmark, SnapshotRow } from "@/lib/data";
+import { getBacktest, getBacktestHistory, getSnapshots, getBenchmark, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import SnapshotChart from "@/components/SnapshotChart";
 import EquityCurve from "@/components/EquityCurve";
+import ICHistoryChart from "@/components/ICHistoryChart";
 import ConceptIcon from "@/components/ConceptIcon";
 
 export const revalidate = 0;
@@ -29,7 +30,10 @@ export default async function VerifyPage() {
   if (!isSupabaseConfigured) {
     return <main className="container"><div className="notice">Supabase の環境変数が未設定です。</div></main>;
   }
-  const [bt, snaps, bench] = await Promise.all([getBacktest(), getSnapshots(), getBenchmark("ACWI")]);
+  const [bt, btHist, snaps, bench] = await Promise.all([getBacktest(), getBacktestHistory(), getSnapshots(), getBenchmark("ACWI")]);
+  const icHistory = btHist.map((r) => ({
+    run_date: r.run_date, ic_aiba: r.ic_aiba, ic_technical: r.ic_technical, ic_sentiment: r.ic_sentiment,
+  }));
   const edge = bt && bt.buy_avg_return != null && bt.overall_avg_return != null
     ? bt.buy_avg_return - bt.overall_avg_return : null;
   const snapDates = Array.from(new Set(snaps.map((s) => s.snapshot_date))).sort();
@@ -116,6 +120,12 @@ export default async function VerifyPage() {
               <div className="stat"><div className="stat-label">テクニカル</div><div className="stat-val">{f3(bt.ic_technical)}</div></div>
               <div className="stat"><div className="stat-label">センチメント</div><div className="stat-val">{f3(bt.ic_sentiment)}</div></div>
             </div>
+            {icHistory.length >= 2 && (
+              <>
+                <h3 className="layer-title" style={{ fontSize: 15, marginTop: 24 }}>ICの推移（経時評価）</h3>
+                <ICHistoryChart data={icHistory} />
+              </>
+            )}
           </section>
 
           <section className="layer">

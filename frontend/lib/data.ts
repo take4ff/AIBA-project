@@ -160,6 +160,12 @@ export async function getBacktest(): Promise<BacktestRun | null> {
   return (data?.[0] as BacktestRun) ?? null;
 }
 
+/** バックテスト結果の全履歴（run_date昇順）。IC推移グラフ用。 */
+export async function getBacktestHistory(horizon = 21): Promise<BacktestRun[]> {
+  return selectAll<BacktestRun>("backtest_runs", "*",
+    (q) => q.eq("horizon", horizon).order("run_date", { ascending: true }));
+}
+
 export interface SnapshotRow {
   snapshot_date: string; is_buy: boolean | null; aiba_score: number | null;
   ret_1m: number | null; ret_3m: number | null; ret_6m: number | null; ret_12m: number | null;
