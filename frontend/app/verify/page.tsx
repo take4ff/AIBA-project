@@ -37,6 +37,7 @@ export default async function VerifyPage() {
     <main className="container">
       <header className="header">
         <h1>📊 検証 — スコアの実績</h1>
+        <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>AIBAスコアが将来リターンをどれだけ説明できているかをバックテストで確認。</p>
       </header>
       <NavTabs active="verify" />

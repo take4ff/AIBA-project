@@ -48,6 +48,7 @@ export default function WatchlistPage() {
     <main className="container">
       <header className="header">
         <h1>⭐ お気に入り（ウォッチリスト）</h1>
+        <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>登録した銘柄のAIBAスコアをまとめて確認。各ページの ☆ で登録／解除できます。</p>
       </header>
       <NavTabs active="watchlist" />

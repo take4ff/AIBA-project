@@ -44,9 +44,9 @@ export default async function RegionDashboard({
         </p>
       </header>
 
-      <ScoreGuide />
-
       <NavTabs active={region} />
+
+      <ScoreGuide />
       <KindToggle region={region} active={effectiveKind} />
 
       {rows.length === 0 ? (

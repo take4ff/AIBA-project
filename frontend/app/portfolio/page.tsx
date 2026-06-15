@@ -69,6 +69,7 @@ export default function PortfolioPage() {
     <main className="container">
       <header className="header">
         <h1>💼 マイ・ポートフォリオ（売り時）</h1>
+        <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>保有銘柄の<strong>過熱度</strong>・ファンダ・決算から売り時を可視化。アカウントに紐付き、追加・編集できます。</p>
       </header>
       <NavTabs active="portfolio" />

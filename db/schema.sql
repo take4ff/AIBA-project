@@ -60,4 +60,4 @@ create policy "public read daily_metrics" on daily_metrics
     for select using (true);
 
 -- 注: 旧 latest_ranking ビューは廃止（フロントは domains＋daily_metrics を直接参照）。
--- 既存環境では db/drop_latest_ranking.sql を実行して削除してください。
+-- 既存環境に残っている場合は `drop view if exists latest_ranking;` で削除してよい。
