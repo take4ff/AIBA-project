@@ -20,10 +20,10 @@ domains:
       global: { etf: { ticker: SOXX } }
       us:
         etf: { ticker: SMH }
-        stocks: [{ ticker: NVDA, name: NVIDIA }, { ticker: AMD, name: AMD }, { ticker: AVGO, name: Broadcom }, { ticker: ARM, name: Arm }]
+        stocks: [{ ticker: NVDA, name: NVIDIA }, { ticker: AMD, name: AMD }, { ticker: AVGO, name: Broadcom }, { ticker: ARM, name: Arm }, { ticker: TSM, name: TSMC }, { ticker: ASML, name: ASML }, { ticker: MU, name: Micron }, { ticker: QCOM, name: Qualcomm }, { ticker: LRCX, name: Lam Research }]
       jp:
         etf: { ticker: "2644.T", name: "Global X 日本半導体" }
-        stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }]
+        stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }]
     github_keywords: ["cuda", "gpu kernel", "tensorrt"]
     arxiv_keywords: ["GPU accelerator", "AI chip"]
 
@@ -34,10 +34,10 @@ domains:
       global: { etf: { ticker: AIQ } }
       us:
         etf: { ticker: IGV }
-        stocks: [{ ticker: MSFT, name: Microsoft }, { ticker: GOOGL, name: Alphabet }, { ticker: META, name: Meta }, { ticker: PLTR, name: Palantir }]
+        stocks: [{ ticker: MSFT, name: Microsoft }, { ticker: GOOGL, name: Alphabet }, { ticker: META, name: Meta }, { ticker: PLTR, name: Palantir }, { ticker: CRM, name: Salesforce }, { ticker: NOW, name: ServiceNow }, { ticker: ADBE, name: Adobe }]
       jp:
         etf: { ticker: "2854.T", name: "Global X 日本テックTop20" }
-        stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }]
+        stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }, { ticker: "4488.T", name: AI inside }, { ticker: "9613.T", name: NTTデータ }]
     github_keywords: ["llm", "transformer", "diffusion model"]
     arxiv_keywords: ["large language model", "generative model"]
 
@@ -48,10 +48,10 @@ domains:
       global: { etf: { ticker: SKYY } }
       us:
         etf: { ticker: WCLD }
-        stocks: [{ ticker: AMZN, name: Amazon }, { ticker: NET, name: Cloudflare }, { ticker: SNOW, name: Snowflake }]
+        stocks: [{ ticker: AMZN, name: Amazon }, { ticker: NET, name: Cloudflare }, { ticker: SNOW, name: Snowflake }, { ticker: ORCL, name: Oracle }, { ticker: DDOG, name: Datadog }, { ticker: MDB, name: MongoDB }]
       jp:
         etf: { ticker: "1626.T", name: "情報通信(TOPIX-17)" }
-        stocks: [{ ticker: "3778.T", name: さくらインターネット }, { ticker: "4478.T", name: freee }, { ticker: "3994.T", name: マネーフォワード }]
+        stocks: [{ ticker: "3778.T", name: さくらインターネット }, { ticker: "4478.T", name: freee }, { ticker: "3994.T", name: マネーフォワード }, { ticker: "4684.T", name: オービック }, { ticker: "4307.T", name: 野村総合研究所 }]
     github_keywords: ["kubernetes", "serverless", "terraform"]
     arxiv_keywords: ["cloud computing", "datacenter scheduling"]
 
@@ -63,10 +63,10 @@ domains:
       global: { etf: { ticker: GRID } }
       us:
         etf: { ticker: XLU }
-        stocks: [{ ticker: VRT, name: Vertiv }, { ticker: ETN, name: Eaton }, { ticker: VST, name: Vistra }]
+        stocks: [{ ticker: VRT, name: Vertiv }, { ticker: ETN, name: Eaton }, { ticker: VST, name: Vistra }, { ticker: GEV, name: GE Vernova }, { ticker: CEG, name: Constellation Energy }, { ticker: PWR, name: Quanta Services }]
       jp:
         etf: { ticker: "1627.T", name: "電力・ガス(TOPIX-17)" }
-        stocks: [{ ticker: "6594.T", name: ニデック }, { ticker: "6501.T", name: 日立製作所 }, { ticker: "6503.T", name: 三菱電機 }]
+        stocks: [{ ticker: "6594.T", name: ニデック }, { ticker: "6501.T", name: 日立製作所 }, { ticker: "6503.T", name: 三菱電機 }, { ticker: "5803.T", name: フジクラ }, { ticker: "6504.T", name: 富士電機 }]
     github_keywords: ["liquid cooling", "power management", "smart grid"]
     arxiv_keywords: ["data center cooling", "power grid optimization"]
 
@@ -77,10 +77,10 @@ domains:
       global: { etf: { ticker: ROBO } }
       us:
         etf: { ticker: BOTZ }
-        stocks: [{ ticker: ROK, name: Rockwell Automation }, { ticker: ISRG, name: Intuitive Surgical }]
+        stocks: [{ ticker: ROK, name: Rockwell Automation }, { ticker: ISRG, name: Intuitive Surgical }, { ticker: TER, name: Teradyne }, { ticker: SYM, name: Symbotic }, { ticker: PATH, name: UiPath }]
       jp:
         etf: { ticker: "1624.T", name: "機械(TOPIX-17)" }
-        stocks: [{ ticker: "6954.T", name: ファナック }, { ticker: "6506.T", name: 安川電機 }, { ticker: "6645.T", name: オムロン }]
+        stocks: [{ ticker: "6954.T", name: ファナック }, { ticker: "6506.T", name: 安川電機 }, { ticker: "6645.T", name: オムロン }, { ticker: "6324.T", name: ハーモニック・ドライブ }, { ticker: "6273.T", name: SMC }]
     github_keywords: ["edge ai", "ros2", "tinyml"]
     arxiv_keywords: ["edge inference", "robot learning"]
 
@@ -91,10 +91,10 @@ domains:
       global: { etf: { ticker: ARKG } }
       us:
         etf: { ticker: XBI }
-        stocks: [{ ticker: ILMN, name: Illumina }, { ticker: CRSP, name: CRISPR }, { ticker: BEAM, name: Beam Therapeutics }, { ticker: TEM, name: Tempus AI }]
+        stocks: [{ ticker: ILMN, name: Illumina }, { ticker: CRSP, name: CRISPR }, { ticker: BEAM, name: Beam Therapeutics }, { ticker: TEM, name: Tempus AI }, { ticker: SDGR, name: Schrödinger }, { ticker: NTLA, name: Intellia }]
       jp:
         etf: { ticker: "1621.T", name: "医薬品(TOPIX-17)" }
-        stocks: [{ ticker: "4587.T", name: ペプチドリーム }, { ticker: "4565.T", name: そーせい }]
+        stocks: [{ ticker: "4587.T", name: ペプチドリーム }, { ticker: "4565.T", name: そーせい }, { ticker: "4519.T", name: 中外製薬 }]
     github_keywords: ["bioinformatics", "genomics", "protein folding"]
     arxiv_keywords: ["computational biology", "protein structure prediction"]
 
@@ -105,10 +105,10 @@ domains:
       global: { etf: { ticker: ESPO } }
       us:
         etf: { ticker: PEJ }
-        stocks: [{ ticker: NFLX, name: Netflix }, { ticker: EA, name: Electronic Arts }]
+        stocks: [{ ticker: NFLX, name: Netflix }, { ticker: EA, name: Electronic Arts }, { ticker: DIS, name: Disney }, { ticker: TTWO, name: Take-Two }, { ticker: RBLX, name: Roblox }]
       jp:
         etf: { ticker: "586A.T", name: "NF日経エンタメ" }
-        stocks: [{ ticker: "6758.T", name: ソニーグループ }, { ticker: "7974.T", name: 任天堂 }, { ticker: "7832.T", name: バンダイナムコ }]
+        stocks: [{ ticker: "6758.T", name: ソニーグループ }, { ticker: "7974.T", name: 任天堂 }, { ticker: "7832.T", name: バンダイナムコ }, { ticker: "9697.T", name: カプコン }, { ticker: "9684.T", name: スクウェア・エニックス }]
     github_keywords: ["game engine", "unreal engine", "unity"]
     arxiv_keywords: ["game ai", "procedural content generation"]
 
@@ -120,7 +120,7 @@ domains:
       global: { etf: { ticker: QTUM } }
       us:
         etf: { ticker: QTUM }
-        stocks: [{ ticker: IONQ, name: IonQ }, { ticker: RGTI, name: Rigetti }, { ticker: QBTS, name: D-Wave }]
+        stocks: [{ ticker: IONQ, name: IonQ }, { ticker: RGTI, name: Rigetti }, { ticker: QBTS, name: D-Wave }, { ticker: QUBT, name: Quantum Computing Inc }, { ticker: ARQQ, name: Arqit Quantum }]
       jp:
         etf: { ticker: "1625.T", name: "電機・精密(TOPIX-17)" }
         stocks: [{ ticker: "6702.T", name: 富士通 }, { ticker: "6701.T", name: NEC }, { ticker: "6613.T", name: QDレーザ }]
@@ -134,7 +134,7 @@ domains:
       global: { etf: { ticker: UFO } }
       us:
         etf: { ticker: ARKX }
-        stocks: [{ ticker: RKLB, name: Rocket Lab }, { ticker: ASTS, name: AST SpaceMobile }, { ticker: LUNR, name: Intuitive Machines }, { ticker: SPCX, name: SpaceX }]
+        stocks: [{ ticker: RKLB, name: Rocket Lab }, { ticker: ASTS, name: AST SpaceMobile }, { ticker: LUNR, name: Intuitive Machines }, { ticker: SPCX, name: SpaceX }, { ticker: PL, name: Planet Labs }, { ticker: RDW, name: Redwire }]
       jp:
         stocks: [{ ticker: "7011.T", name: 三菱重工業 }, { ticker: "9348.T", name: ispace }, { ticker: "186A.T", name: アストロスケール }, { ticker: "464A.T", name: QPS研究所 }]
     github_keywords: ["satellite", "gnss", "orbital mechanics"]
@@ -147,9 +147,9 @@ domains:
       global: { etf: { ticker: NLR } }
       us:
         etf: { ticker: NUKZ }
-        stocks: [{ ticker: OKLO, name: Oklo }, { ticker: SMR, name: NuScale Power }, { ticker: CCJ, name: Cameco }, { ticker: NNE, name: Nano Nuclear }, { ticker: LEU, name: Centrus Energy }, { ticker: BWXT, name: BWX Technologies }]
+        stocks: [{ ticker: OKLO, name: Oklo }, { ticker: SMR, name: NuScale Power }, { ticker: CCJ, name: Cameco }, { ticker: NNE, name: Nano Nuclear }, { ticker: LEU, name: Centrus Energy }, { ticker: BWXT, name: BWX Technologies }, { ticker: UEC, name: Uranium Energy }]
       jp:
-        stocks: [{ ticker: "485A.T", name: POWER X }]
+        stocks: [{ ticker: "485A.T", name: POWER X }, { ticker: "5631.T", name: 日本製鋼所 }]
     github_keywords: ["small modular reactor", "nuclear", "nuclear fusion", "tokamak"]
     arxiv_keywords: ["small modular reactor", "nuclear fusion", "plasma confinement", "grid scale energy storage"]
 
@@ -173,7 +173,7 @@ domains:
       global: { etf: { ticker: HDRO } }
       us:
         etf: { ticker: HYDR }
-        stocks: [{ ticker: PLUG, name: Plug Power }, { ticker: BE, name: Bloom Energy }, { ticker: BLDP, name: Ballard Power }]
+        stocks: [{ ticker: PLUG, name: Plug Power }, { ticker: BE, name: Bloom Energy }, { ticker: BLDP, name: Ballard Power }, { ticker: FCEL, name: FuelCell Energy }]
       jp:
         stocks: [{ ticker: "7012.T", name: 川崎重工業 }, { ticker: "3402.T", name: 東レ }, { ticker: "1963.T", name: 日揮HD }]
     github_keywords: ["hydrogen fuel cell", "electrolysis", "pem fuel cell"]
@@ -186,7 +186,7 @@ domains:
       global: { etf: { ticker: LIT } }
       us:
         etf: { ticker: BATT }
-        stocks: [{ ticker: QS, name: QuantumScape }, { ticker: ENVX, name: Enovix }, { ticker: AMPX, name: Amprius }]
+        stocks: [{ ticker: QS, name: QuantumScape }, { ticker: ENVX, name: Enovix }, { ticker: AMPX, name: Amprius }, { ticker: SLDP, name: Solid Power }]
       jp:
         stocks: [{ ticker: "6674.T", name: GSユアサ }, { ticker: "6981.T", name: 村田製作所 }, { ticker: "4004.T", name: レゾナック }]
     github_keywords: ["solid state battery", "battery management", "lithium battery"]
