@@ -63,12 +63,12 @@ def test_growth_to_score():
 
 
 def test_patents_score_without_key():
-    # APIキー未設定なら特許スコアは None（平均から除外され他指標を薄めない）
+    # 認証情報未設定なら特許スコアは None（平均から除外され他指標を薄めない）
     from datetime import datetime, timezone
     from types import SimpleNamespace
     from unittest.mock import patch
     from aiba import sentiment
-    with patch.object(sentiment, "settings", SimpleNamespace(uspto_api_key=None)):
+    with patch.object(sentiment, "settings", SimpleNamespace(epo_ops_key=None, epo_ops_secret=None)):
         now = datetime(2026, 1, 1, tzinfo=timezone.utc)
         assert sentiment.fetch_patents_score(["quantum computing"], as_of=now) is None
         assert sentiment._patent_count("quantum", now, now) is None

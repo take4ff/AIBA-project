@@ -48,9 +48,10 @@ class Settings:
     supabase_url: str | None = os.getenv("SUPABASE_URL")
     supabase_key: str | None = os.getenv("SUPABASE_KEY")
     github_token: str | None = os.getenv("GITHUB_TOKEN")
-    # USPTO Open Data Portal の APIキー（特許センチメント用）。
-    # PatentsView は 2026-03 に ODP(api.uspto.gov) へ移行。旧 PATENTSVIEW_API_KEY も後方互換で受ける。
-    uspto_api_key: str | None = os.getenv("USPTO_ODP_API_KEY") or os.getenv("PATENTSVIEW_API_KEY")
+    # EPO Open Patent Services（特許センチメント用・任意）。OAuth2 の consumer key/secret。
+    # 無料登録で取得でき、米国SSN等の本人確認は不要（日本からも利用可）。
+    epo_ops_key: str | None = os.getenv("EPO_OPS_KEY")
+    epo_ops_secret: str | None = os.getenv("EPO_OPS_SECRET")
 
     @property
     def has_supabase(self) -> bool:
