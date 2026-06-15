@@ -127,13 +127,48 @@ AIBA-project/
 - [x] **フェアバリュー（相対PER）**：自社予想PER vs 同地域ピア中央値で「◯%割安/割高」（±60%上限・注記つき）
 - [x] **一行ナラティブ（自動要約）**：AIBA＋相対PER＋業績＋熱量＋予測＋決算接近を1〜2文に自動要約（銘柄詳細の冒頭）
 - [x] **カスタムスクリーナー** → `/screener`：地域/種別/階層/AIBA/買い場確率/予想PER/熱量/乖離を即時フィルタ＋並び替え（Pickupの発展）
-- [ ] **ポートフォリオ配分分析**（テーマ/地域別エクスポージャー・集中度）
+- [x] **ポートフォリオ配分分析**：保有のテーマ別/地域別配分バー＋集中度（最大比率・実効銘柄数・HHI）。株数入力で評価額ベース、未入力は均等ウェイト
 
 > 実装済みの機能は「✨ 主な機能」を参照。
 
 ### 後回し
 - [ ] **乖離アラートの LINE / メール対応**（現状は Slack）
 - [ ] **CSVエクスポート**（ランキング/ポートフォリオ）
+
+
+## supabase warning
+Leaked Password Protection Disabled
+SECURITY
+
+Entity
+
+Auth
+Issue
+
+Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.
+Description
+
+Leaked password protection is currently disabled.
+
+
+Summary of the lint issue
+Leaked Password Protection Disabled (Auth) means your Supabase Auth configuration is currently not rejecting passwords known to be compromised. Supabase can check proposed passwords against the HaveIBeenPwned (Pwned Passwords) API, but right now that protection is off.
+
+Why this matters
+If leaked/compromised passwords are allowed, attackers can more easily attempt credential stuffing or reuse passwords from previous breaches.
+
+Suggested fixes
+Enable “Prevent the use of leaked passwords” in Supabase Auth settings
+
+In the Supabase Dashboard, go to the Auth settings for password strength and turn on leaked password protection.
+Note: Supabase’s docs state this feature is available on the Pro Plan and above.
+If you’re on Free/other unsupported tiers
+
+Upgrade to Pro+ to enable this specific control.
+In the meantime, mitigate risk by strengthening other password policies (minimum length + required character sets), also available in Auth settings.
+After enabling, verify the behavior
+
+Try signing up (or setting/changing a password) with a known compromised password pattern and confirm Auth rejects it with a weak/leaked-password related error.
 
 ---
 

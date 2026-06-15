@@ -84,6 +84,26 @@ export async function getTickerData(tickers: string[]): Promise<{
   return { metrics, funds };
 }
 
+/** ticker → テーマ（slug/表示名）・地域。ユニバース外は未登録。配分分析用。 */
+export async function getTickerThemes(): Promise<Map<string, { theme: string; label: string; region: string }>> {
+  const { parseDomainId } = await import("@/lib/regions");
+  const { data } = await supabaseBrowser.from("domains").select("id,ticker,name");
+  // テーマ表示名は global ETF の名称を採用
+  const labelByTheme = new Map<string, string>();
+  for (const d of data ?? []) {
+    const p = parseDomainId((d as any).id);
+    if (p.region === "global" && p.kind === "etf") labelByTheme.set(p.theme, (d as any).name);
+  }
+  const map = new Map<string, { theme: string; label: string; region: string }>();
+  for (const d of data ?? []) {
+    const t = (d as any).ticker as string | null;
+    if (!t) continue;
+    const p = parseDomainId((d as any).id);
+    if (!map.has(t)) map.set(t, { theme: p.theme, label: labelByTheme.get(p.theme) ?? p.theme, region: p.region });
+  }
+  return map;
+}
+
 export async function getTickerHistory(ticker: string): Promise<TickerMetric[]> {
   const { data } = await supabaseBrowser.from("ticker_metrics")
     .select("ticker,trade_date,close_price,rsi_14,ma_deviation,overheat")
