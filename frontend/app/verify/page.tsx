@@ -109,8 +109,8 @@ export default async function VerifyPage() {
           </section>
 
           <section className="layer">
-            <h2 className="layer-title">IC（先行性）</h2>
-            <p className="layer-subtitle">スコアと {bt.horizon}営業日先リターンの順位相関。0より大きいほど先行性あり。</p>
+            <h2 className="layer-title">IC（先行性・クロスセクション）</h2>
+            <p className="layer-subtitle">各取引日に銘柄横断でスコア×{bt.horizon}営業日先リターンの順位相関を取り、期間平均したもの（市場全体の上下を除いた純粋な銘柄選別力）。0より大きいほど先行性あり。ICは元来小さく、0.02〜0.05でも有意水準。</p>
             <div className="stat-grid">
               <div className="stat"><div className="stat-label">AIBA</div><div className="stat-val">{f3(bt.ic_aiba)}</div></div>
               <div className="stat"><div className="stat-label">テクニカル</div><div className="stat-val">{f3(bt.ic_technical)}</div></div>

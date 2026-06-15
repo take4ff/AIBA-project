@@ -57,19 +57,35 @@ def add_forward_return(df: pd.DataFrame, h: int) -> pd.DataFrame:
     return df.dropna(subset=["fwd_ret", "aiba_score", "technical_score", "sentiment_score"])
 
 
-def ic(score: pd.Series, ret: pd.Series) -> float:
-    if len(score) < 30 or score.nunique() < 3:
-        return float("nan")
-    return float(spearmanr(score, ret).correlation)
+def xs_ic(df: pd.DataFrame, score: pd.Series) -> tuple[float, float]:
+    """クロスセクションIC：各取引日に銘柄横断でスコア×先行リターンのSpearmanを取り、
+    期間平均と IR（平均/標準偏差＝安定性）を返す。市場全体の共通変動を除いて先行性を測る。"""
+    tmp = pd.DataFrame({
+        "d": df["trade_date"].to_numpy(),
+        "s": np.asarray(score, dtype=float),
+        "r": df["fwd_ret"].to_numpy(dtype=float),
+    })
+    ics: list[float] = []
+    for _, g in tmp.groupby("d"):
+        if len(g) < 5 or g["s"].nunique() < 3:
+            continue  # 横断に十分な銘柄数がある日のみ
+        c = spearmanr(g["s"], g["r"]).correlation
+        if c == c:
+            ics.append(float(c))
+    if len(ics) < 5:
+        return float("nan"), float("nan")
+    a = np.array(ics)
+    sd = a.std()
+    return float(a.mean()), (float(a.mean() / sd) if sd > 0 else float("nan"))
 
 
 def _best_w(df: pd.DataFrame, layer: int):
     d = df[df["layer"] == layer]
-    if len(d) < 30:
+    if len(d) < 100:
         return None, None
     ws = np.linspace(0, 1, 11)
     return max(
-        ((w, ic(w * d["technical_score"] + (1 - w) * d["sentiment_score"], d["fwd_ret"])) for w in ws),
+        ((w, xs_ic(d, w * d["technical_score"] + (1 - w) * d["sentiment_score"])[0]) for w in ws),
         key=lambda x: (x[1] if x[1] == x[1] else -9),
     )
 
@@ -92,10 +108,12 @@ def main() -> int:
     if n < 100:
         log.warning("サンプルが少なく結果は参考程度です。")
 
-    ic_aiba = ic(df["aiba_score"], df["fwd_ret"])
-    ic_tech = ic(df["technical_score"], df["fwd_ret"])
-    ic_sent = ic(df["sentiment_score"], df["fwd_ret"])
-    log.info("\n[IC] AIBA %+.3f / テクニカル %+.3f / センチメント %+.3f", ic_aiba, ic_tech, ic_sent)
+    ic_aiba, ir_aiba = xs_ic(df, df["aiba_score"])
+    ic_tech, ir_tech = xs_ic(df, df["technical_score"])
+    ic_sent, ir_sent = xs_ic(df, df["sentiment_score"])
+    log.info("\n[クロスセクションIC（日付別→平均 / IR）]")
+    log.info("  AIBA %+.3f (IR %+.2f) / テクニカル %+.3f (IR %+.2f) / センチメント %+.3f (IR %+.2f)",
+             ic_aiba, ir_aiba, ic_tech, ir_tech, ic_sent, ir_sent)
 
     buy = df[df["aiba_score"] >= BUY]["fwd_ret"]
     buy_avg = 100 * buy.mean() if len(buy) else float("nan")
