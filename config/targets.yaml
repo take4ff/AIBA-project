@@ -141,14 +141,53 @@ domains:
     arxiv_keywords: ["satellite communication", "low earth orbit"]
 
   - id: nextgen_energy
-    name: 次世代エネルギー
+    name: 次世代エネルギー（原子力・核融合）
     layer: 3
     instruments:
       global: { etf: { ticker: NLR } }
       us:
         etf: { ticker: NUKZ }
-        stocks: [{ ticker: OKLO, name: Oklo }, { ticker: SMR, name: NuScale Power }, { ticker: CCJ, name: Cameco }]
+        stocks: [{ ticker: OKLO, name: Oklo }, { ticker: SMR, name: NuScale Power }, { ticker: CCJ, name: Cameco }, { ticker: NNE, name: Nano Nuclear }, { ticker: LEU, name: Centrus Energy }, { ticker: BWXT, name: BWX Technologies }]
       jp:
         stocks: [{ ticker: "485A.T", name: POWER X }]
-    github_keywords: ["small modular reactor", "nuclear", "grid storage"]
-    arxiv_keywords: ["small modular reactor", "nuclear fusion", "grid scale energy storage"]
+    github_keywords: ["small modular reactor", "nuclear", "nuclear fusion", "tokamak"]
+    arxiv_keywords: ["small modular reactor", "nuclear fusion", "plasma confinement", "grid scale energy storage"]
+
+  - id: synthetic_biology
+    name: 合成生物学
+    layer: 3
+    instruments:
+      global: { etf: { ticker: ARKG } }
+      us:
+        etf: { ticker: IDNA }
+        stocks: [{ ticker: DNA, name: Ginkgo Bioworks }, { ticker: TWST, name: Twist Bioscience }, { ticker: CDXS, name: Codexis }, { ticker: RXRX, name: Recursion }]
+      jp:
+        stocks: [{ ticker: "2931.T", name: ユーグレナ }, { ticker: "4974.T", name: タカラバイオ }, { ticker: "4587.T", name: ペプチドリーム }]
+    github_keywords: ["synthetic biology", "crispr", "genome editing"]
+    arxiv_keywords: ["synthetic biology", "genome design", "directed evolution"]
+
+  - id: hydrogen_fuelcell
+    name: 水素・燃料電池
+    layer: 3
+    instruments:
+      global: { etf: { ticker: HDRO } }
+      us:
+        etf: { ticker: HYDR }
+        stocks: [{ ticker: PLUG, name: Plug Power }, { ticker: BE, name: Bloom Energy }, { ticker: BLDP, name: Ballard Power }]
+      jp:
+        stocks: [{ ticker: "7012.T", name: 川崎重工業 }, { ticker: "3402.T", name: 東レ }, { ticker: "1963.T", name: 日揮HD }]
+    github_keywords: ["hydrogen fuel cell", "electrolysis", "pem fuel cell"]
+    arxiv_keywords: ["hydrogen fuel cell", "water electrolysis", "green hydrogen"]
+
+  - id: solid_state_battery
+    name: 次世代電池（固体電池）
+    layer: 3
+    instruments:
+      global: { etf: { ticker: LIT } }
+      us:
+        etf: { ticker: BATT }
+        stocks: [{ ticker: QS, name: QuantumScape }, { ticker: ENVX, name: Enovix }, { ticker: AMPX, name: Amprius }]
+      jp:
+        stocks: [{ ticker: "6674.T", name: GSユアサ }, { ticker: "6981.T", name: 村田製作所 }, { ticker: "4004.T", name: レゾナック }]
+    github_keywords: ["solid state battery", "battery management", "lithium battery"]
+    arxiv_keywords: ["solid-state battery", "lithium metal anode", "battery electrolyte"]
