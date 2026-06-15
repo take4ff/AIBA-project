@@ -1,10 +1,15 @@
 "use client";
 
-export type Period = "1M" | "3M" | "6M";
+export type Period = "1M" | "3M" | "6M" | "1Y" | "2Y" | "ALL";
 
-// 期間→表示する営業日数（6Mは全期間）
-export const PERIODS: Record<Period, number> = { "1M": 21, "3M": 63, "6M": 9999 };
-const ORDER: Period[] = ["1M", "3M", "6M"];
+// 期間→表示する営業日数（ALLは全期間）
+export const PERIODS: Record<Period, number> = {
+  "1M": 21, "3M": 63, "6M": 126, "1Y": 252, "2Y": 504, "ALL": 999999,
+};
+const LABEL: Record<Period, string> = {
+  "1M": "1M", "3M": "3M", "6M": "6M", "1Y": "1Y", "2Y": "2Y", "ALL": "全期間",
+};
+const ORDER: Period[] = ["1M", "3M", "6M", "1Y", "2Y", "ALL"];
 
 export default function PeriodFilter({
   value,
@@ -22,7 +27,7 @@ export default function PeriodFilter({
           onClick={() => onChange(p)}
           type="button"
         >
-          {p}
+          {LABEL[p]}
         </button>
       ))}
     </div>

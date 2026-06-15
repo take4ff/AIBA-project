@@ -107,6 +107,6 @@ export async function getTickerThemes(): Promise<Map<string, { theme: string; la
 export async function getTickerHistory(ticker: string): Promise<TickerMetric[]> {
   const { data } = await supabaseBrowser.from("ticker_metrics")
     .select("ticker,trade_date,close_price,rsi_14,ma_deviation,overheat")
-    .eq("ticker", ticker).order("trade_date", { ascending: false }).limit(180);
-  return ((data ?? []) as TickerMetric[]).reverse();   // 最新180件を昇順に戻す
+    .eq("ticker", ticker).order("trade_date", { ascending: false }).limit(1000);
+  return ((data ?? []) as TickerMetric[]).reverse();   // 最新分を昇順に戻す
 }
