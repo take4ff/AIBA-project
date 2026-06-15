@@ -104,8 +104,8 @@ def main() -> int:
         i0 = int(idx[0])
         patch: dict[str, Any] = {}
         for col, h in HORIZONS.items():
-            if getattr(s, col) is not None:
-                continue  # 既に評価済み
+            if pd.notna(getattr(s, col)):
+                continue  # 既に評価済み（NaN/None はどちらも未評価扱い）
             j = i0 + h
             if j < len(g):
                 fc = g.loc[j, "close_price"]
