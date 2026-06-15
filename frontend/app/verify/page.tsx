@@ -34,6 +34,19 @@ export default async function VerifyPage() {
   const agg = { ret_1m: aggregate(snaps, "ret_1m"), ret_3m: aggregate(snaps, "ret_3m"), ret_6m: aggregate(snaps, "ret_6m") };
   const hasEval = agg.ret_1m || agg.ret_3m || agg.ret_6m;
 
+  // 記録日ごとに「買い判定 vs 全体」の1ヶ月先リターン平均（時系列グラフ用）
+  const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  const series = snapDates.map((d) => {
+    const rows = snaps.filter((s) => s.snapshot_date === d && s.ret_1m != null);
+    const buy = mean(rows.filter((s) => s.is_buy).map((s) => s.ret_1m as number));
+    const all = mean(rows.map((s) => s.ret_1m as number));
+    return {
+      date: d,
+      buy: buy == null ? null : Math.round(buy * 100) / 100,
+      all: all == null ? null : Math.round(all * 100) / 100,
+    };
+  });
+
   return (
     <main className="container">
       <header className="header">
@@ -102,13 +115,7 @@ export default async function VerifyPage() {
           </div>
         ) : (
           <>
-          <SnapshotChart data={([["1ヶ月", "ret_1m"], ["3ヶ月", "ret_3m"], ["6ヶ月", "ret_6m"]] as const).map(([label, k]) => ({
-            horizon: label,
-            buy: agg[k]?.buyAvg ?? null,
-            all: agg[k]?.allAvg ?? null,
-            win: agg[k]?.win ?? null,
-            n: agg[k]?.buyN ?? 0,
-          }))} />
+          <SnapshotChart data={series} />
           <div className="table-scroll">
             <table className="table">
               <colgroup><col style={{ width: "22%" }} /><col style={{ width: "22%" }} /><col style={{ width: "22%" }} /><col style={{ width: "16%" }} /><col style={{ width: "18%" }} /></colgroup>
