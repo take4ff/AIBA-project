@@ -2,6 +2,7 @@ import { getBacktest, getSnapshots, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import SnapshotChart from "@/components/SnapshotChart";
+import EquityCurve from "@/components/EquityCurve";
 
 export const revalidate = 0;
 
@@ -46,6 +47,19 @@ export default async function VerifyPage() {
       all_1m: horizonAvg(rows, "ret_1m", false), all_3m: horizonAvg(rows, "ret_3m", false), all_6m: horizonAvg(rows, "ret_6m", false),
     };
   });
+
+  // 月次リバランスの疑似エクイティカーブ（100スタート・ret_1mを複利で連結）
+  const equity: { date: string; buy: number; all: number }[] = [];
+  let eb = 100, ea = 100;
+  for (const d of snapDates) {
+    const rows = snaps.filter((s) => s.snapshot_date === d);
+    const ar = horizonAvg(rows, "ret_1m", false);
+    if (ar == null) break;               // 直近の未評価日で打ち切り
+    const br = horizonAvg(rows, "ret_1m", true);  // 買い判定なしの月は現金（0%）
+    eb *= 1 + (br ?? 0) / 100;
+    ea *= 1 + ar / 100;
+    equity.push({ date: d, buy: Math.round(eb * 10) / 10, all: Math.round(ea * 10) / 10 });
+  }
 
   return (
     <main className="container">
@@ -138,6 +152,12 @@ export default async function VerifyPage() {
               </tbody>
             </table>
           </div>
+          {equity.length >= 2 && (
+            <>
+              <h3 className="layer-title" style={{ fontSize: 16, marginTop: 28 }}>疑似エクイティカーブ（月次リバランス）</h3>
+              <EquityCurve data={equity} />
+            </>
+          )}
           </>
         )}
       </section>
