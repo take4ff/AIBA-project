@@ -48,6 +48,7 @@ class Settings:
     supabase_url: str | None = os.getenv("SUPABASE_URL")
     supabase_key: str | None = os.getenv("SUPABASE_KEY")
     github_token: str | None = os.getenv("GITHUB_TOKEN")
+    patentsview_api_key: str | None = os.getenv("PATENTSVIEW_API_KEY")
 
     @property
     def has_supabase(self) -> bool:
