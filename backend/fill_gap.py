@@ -18,7 +18,7 @@ from aiba.sentiment import SentimentSnapshot
 from aiba.technical import fetch_technical_history
 
 log = logging.getLogger("aiba.fillgap")
-WINDOW_START = "2025-12-01"
+WINDOW_START = "2025-01-01"
 PAGE = 1000
 
 

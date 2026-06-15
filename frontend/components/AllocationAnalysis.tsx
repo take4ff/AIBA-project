@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { UserHolding, TickerMetric } from "@/lib/user-portfolio";
 
-type ThemeInfo = { theme: string; label: string; region: string };
+type ThemeInfo = { theme: string; label: string; region: string; name?: string };
 const REGION_LABEL: Record<string, string> = { jp: "日本", us: "米国", global: "グローバル" };
 const PALETTE = ["#2456e6", "#2dd4bf", "#fbbf24", "#f87171", "#a78bfa", "#60a5fa", "#34d399", "#fb923c", "#94a3b8"];
 

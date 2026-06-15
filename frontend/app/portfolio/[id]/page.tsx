@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
-import { getTickerHistory, TickerMetric } from "@/lib/user-portfolio";
+import { getTickerHistory, getTickerThemes, TickerMetric } from "@/lib/user-portfolio";
 import SellChart from "@/components/SellChart";
 import { sellBadge, money, pct } from "@/lib/sell-signal";
 
@@ -13,20 +13,26 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
   const { user, ready } = useAuth();
   const [history, setHistory] = useState<TickerMetric[]>([]);
   const [holding, setHolding] = useState<any>(null);
+  const [uniName, setUniName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     (async () => {
-      const [{ data: h }, hist] = await Promise.all([
+      const [{ data: h }, hist, themes] = await Promise.all([
         supabaseBrowser.from("user_holdings").select("*").eq("ticker", ticker).maybeSingle(),
         getTickerHistory(ticker),
+        getTickerThemes(),
       ]);
       setHolding(h);
       setHistory(hist);
+      setUniName(themes.get(ticker)?.name ?? null);
       setLoading(false);
     })();
   }, [user, ticker]);
+
+  // 社名：ユーザー入力があればそれ、無ければ（=ティッカーのまま）ユニバースの社名で補完
+  const displayName = (holding?.name && holding.name !== ticker) ? holding.name : (uniName ?? ticker);
 
   const latest = history[history.length - 1];
   const close = latest?.close_price ?? null;
@@ -42,7 +48,7 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
       <header className="header">
         <Link className="back-link" href="/portfolio">← ポートフォリオへ</Link>
         <h1>
-          {holding?.name ?? ticker}
+          {displayName}
           <span className="ticker">{ticker}</span>
           <span className={`sell-badge ${badge.cls}`} style={{ marginLeft: 10 }}>{badge.label}</span>
         </h1>

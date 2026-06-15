@@ -20,7 +20,7 @@ export default function PortfolioPage() {
   const [holdings, setHoldings] = useState<UserHolding[]>([]);
   const [metrics, setMetrics] = useState<Map<string, TickerMetric>>(new Map());
   const [funds, setFunds] = useState<Map<string, TickerFundamentals>>(new Map());
-  const [themeMap, setThemeMap] = useState<Map<string, { theme: string; label: string; region: string }>>(new Map());
+  const [themeMap, setThemeMap] = useState<Map<string, { theme: string; label: string; region: string; name: string }>>(new Map());
   const [form, setForm] = useState({ ...EMPTY });
   const [err, setErr] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ ticker: string; name: string; avg_cost: string; shares: string } | null>(null);
@@ -129,7 +129,7 @@ export default function PortfolioPage() {
                               onChange={(ev) => setEdit({ ...edit!, name: ev.target.value })} />
                           ) : (
                             <Link href={`/portfolio/${encodeURIComponent(h.ticker)}`}>
-                              <span className="domain-name">{h.name ?? h.ticker}</span>
+                              <span className="domain-name">{(h.name && h.name !== h.ticker) ? h.name : (themeMap.get(h.ticker)?.name ?? h.ticker)}</span>
                               <span className="ticker">{h.ticker}</span>
                             </Link>
                           )}
