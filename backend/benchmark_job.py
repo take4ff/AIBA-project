@@ -17,7 +17,7 @@ log = logging.getLogger("aiba.benchmark")
 
 # ticker: 表示名（必要なら QQQ / ^GSPC 等を追加可能）
 INDICES = {"ACWI": "全世界株(ACWI)"}
-PERIOD_DAYS = 800  # 約2年強
+PERIOD_DAYS = 1825  # 約5年（定点記録の2022年初〜をカバー）
 
 
 def main() -> int:

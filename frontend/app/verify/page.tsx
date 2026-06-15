@@ -55,12 +55,12 @@ export default async function VerifyPage() {
     for (const b of bench) { if (b.trade_date <= d) c = b.close; else break; }
     return c;
   };
-  const benchOn = bench.length > 0;
   // 閾値別の買いコホート平均1ヶ月先リターン（該当が無い月は現金＝0%）
   const cohortAvg = (rows: SnapshotRow[], th: number) =>
     mean(rows.filter((s) => (s.aiba_score ?? 0) >= th && s.ret_1m != null).map((s) => s.ret_1m as number));
   const equity: { date: string; buy50: number; buy: number; buy70: number; all: number; idx: number | null }[] = [];
   let eb50 = 100, eb = 100, eb70 = 100, ea = 100, ei = 100;
+  let idxStarted = false;
   for (let i = 0; i < snapDates.length; i++) {
     const d = snapDates[i];
     const rows = snaps.filter((s) => s.snapshot_date === d);
@@ -72,10 +72,11 @@ export default async function VerifyPage() {
     ea *= 1 + ar / 100;
     const dn = snapDates[i + 1];
     const c0 = benchClose(d), c1 = dn ? benchClose(dn) : null;
-    if (c0 != null && c1 != null) ei *= c1 / c0;   // 指数を同じ窓で連結
+    // 指数は終値が存在する期間のみ連結。データ前は null（横ばい誤表示を防ぐ）。
+    if (c0 != null) { idxStarted = true; if (c1 != null) ei *= c1 / c0; }
     equity.push({
       date: d, buy50: Math.round(eb50 * 10) / 10, buy: Math.round(eb * 10) / 10, buy70: Math.round(eb70 * 10) / 10,
-      all: Math.round(ea * 10) / 10, idx: benchOn ? Math.round(ei * 10) / 10 : null,
+      all: Math.round(ea * 10) / 10, idx: idxStarted ? Math.round(ei * 10) / 10 : null,
     });
   }
 

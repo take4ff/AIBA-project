@@ -11,31 +11,50 @@ function cutoffDate(): string {
 }
 const clamp = (x: number) => Math.max(0, Math.min(100, x));
 
+const PAGE = 1000;
+/**
+ * Supabase/PostgREST の 1000行上限を回避し、全行をページングで取得する。
+ * `apply` でフィルタ・並び替えを付与できる（query factory 形式）。
+ */
+async function selectAll<T = any>(
+  table: string, columns: string, apply?: (q: any) => any,
+): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    let q = supabase.from(table).select(columns);
+    if (apply) q = apply(q);
+    const { data, error } = await q.range(from, from + PAGE - 1);
+    if (error) { console.error(`fetch error (${table}):`, error.message); break; }
+    out.push(...((data ?? []) as T[]));
+    if (!data || data.length < PAGE) break;
+  }
+  return out;
+}
+
 /** 全ドメインの最新 RankingRow を1回のfetchで構築する（地域・種別すべて）。 */
 async function buildAllRows(): Promise<RankingRow[]> {
-  const [domainsRes, metricsRes, predRes] = await Promise.all([
-    supabase.from("domains").select("id,name,layer,ticker"),
-    supabase
-      .from("daily_metrics")
-      .select("domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price")
-      .gte("trade_date", cutoffDate()),
-    supabase.from("predictions").select("domain_id,as_of_date,buyzone_prob,pred_aiba").gte("as_of_date", cutoffDate()),
+  const [domains, metrics, preds] = await Promise.all([
+    selectAll<any>("domains", "id,name,layer,ticker"),
+    selectAll<any>("daily_metrics",
+      "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price",
+      (q) => q.gte("trade_date", cutoffDate())),
+    selectAll<any>("predictions", "domain_id,as_of_date,buyzone_prob,pred_aiba",
+      (q) => q.gte("as_of_date", cutoffDate())),
   ]);
-  if (domainsRes.error || metricsRes.error) {
-    console.error("data fetch error:", domainsRes.error?.message, metricsRes.error?.message);
+  if (domains.length === 0) {
+    console.error("data fetch error: no domains");
     return [];
   }
-  const domains = domainsRes.data ?? [];
 
   const pred = new Map<string, any>();
-  for (const p of predRes.data ?? []) {
+  for (const p of preds) {
     const cur = pred.get(p.domain_id);
     if (!cur || p.as_of_date > cur.as_of_date) pred.set(p.domain_id, p);
   }
 
   const latest = new Map<string, any>();
   const firstSent = new Map<string, any>();
-  for (const m of metricsRes.data ?? []) {
+  for (const m of metrics) {
     const cur = latest.get(m.domain_id);
     if (!cur || m.trade_date > cur.trade_date) latest.set(m.domain_id, m);
     const f = firstSent.get(m.domain_id);
@@ -146,27 +165,19 @@ export interface SnapshotRow {
   ret_1m: number | null; ret_3m: number | null; ret_6m: number | null; ret_12m: number | null;
 }
 
-/** 定点記録（スコアのスナップショット）。out-of-sample 検証用。 */
+/** 定点記録（スコアのスナップショット）。out-of-sample 検証用。全行ページング取得。 */
 export async function getSnapshots(): Promise<SnapshotRow[]> {
-  const { data } = await supabase
-    .from("score_snapshots").select("snapshot_date,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m");
-  return (data ?? []) as SnapshotRow[];
+  return selectAll<SnapshotRow>("score_snapshots",
+    "snapshot_date,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m");
 }
 
 export interface BenchmarkPoint { trade_date: string; close: number }
 
-/** ベンチマーク指数の日次終値（既定 ACWI）。テーブル未作成時は空配列。 */
+/** ベンチマーク指数の日次終値（既定 ACWI）。全行ページング取得。テーブル未作成時は空配列。 */
 export async function getBenchmark(ticker = "ACWI"): Promise<BenchmarkPoint[]> {
-  const { data, error } = await supabase
-    .from("benchmark_prices")
-    .select("trade_date,close")
-    .eq("ticker", ticker)
-    .order("trade_date", { ascending: true });
-  if (error) {
-    console.error("benchmark fetch error:", error.message);
-    return [];
-  }
-  return (data ?? []).map((r) => ({ trade_date: (r as any).trade_date, close: Number((r as any).close) }));
+  const rows = await selectAll<any>("benchmark_prices", "trade_date,close",
+    (q) => q.eq("ticker", ticker).order("trade_date", { ascending: true }));
+  return rows.map((r) => ({ trade_date: r.trade_date, close: Number(r.close) }));
 }
 
 /** 現在の USD/JPY レート（取得失敗時はフォールバック）。 */
