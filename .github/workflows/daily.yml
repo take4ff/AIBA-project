@@ -36,8 +36,8 @@ jobs:
           # Search APIのレート制限緩和用に、発行したPAT(GH_PAT)を使う。
           # Actions既定の GITHUB_TOKEN は Search API に使えないため別Secretを参照。
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          # 特許センチメント用（未設定なら自動スキップ）。
-          PATENTSVIEW_API_KEY: ${{ secrets.PATENTSVIEW_API_KEY }}
+          # 特許センチメント用（USPTO Open Data Portal。未設定なら自動スキップ）。
+          USPTO_ODP_API_KEY: ${{ secrets.USPTO_ODP_API_KEY }}
         run: python run_daily.py
 
       - name: Run forecast

@@ -25,7 +25,8 @@ WINDOW_DAYS = 30
 GITHUB_SEARCH_URL = "https://api.github.com/search/repositories"
 ARXIV_API_URL = "http://export.arxiv.org/api/query"
 HN_SEARCH_URL = "https://hn.algolia.com/api/v1/search"
-PATENTSVIEW_URL = "https://search.patentsview.org/api/v1/patent/"
+# USPTO Open Data Portal（旧 PatentsView の移行先。2026-03〜）。出願検索エンドポイント。
+USPTO_ODP_SEARCH_URL = "https://api.uspto.gov/api/v1/patent/applications/search"
 REQUEST_TIMEOUT = 20
 NEUTRAL = 50.0
 _OS_NS = "{http://a9.com/-/spec/opensearch/1.1/}"
@@ -260,48 +261,44 @@ def fetch_google_trends_score(keywords: list[str], as_of: datetime | None = None
         return None
 
 
-# ----------------------------- 特許（PatentsView） -----------------------------
+# ----------------------------- 特許（USPTO Open Data Portal） -----------------------------
 def _patent_count(keyword: str, since: datetime, until: datetime) -> int | None:
-    """付与日(patent_date)が期間内かつタイトルに語句を含む特許の総数。
+    """出願日(filingDate)が期間内かつ発明タイトルに語句を含む特許出願の総数。
 
-    PatentsView Search API（無料・APIキー必須）を使う。キー未設定や障害時は None。
+    USPTO Open Data Portal の出願検索 API（要 ODP APIキー）を使う。
+    キー未設定や障害・想定外レスポンスのときは None（平均から除外）。
     """
-    if not settings.patentsview_api_key:
+    if not settings.uspto_api_key:
         return None
-    q = {
-        "_and": [
-            {"_text_phrase": {"patent_title": keyword}},
-            {"_gte": {"patent_date": f"{since:%Y-%m-%d}"}},
-            {"_lte": {"patent_date": f"{until:%Y-%m-%d}"}},
-        ]
-    }
-    params = {
-        "q": json.dumps(q),
-        "f": json.dumps(["patent_id"]),
-        "o": json.dumps({"size": 1}),
+    body = {
+        "q": f'inventionTitle:"{keyword}"',
+        "rangeFilters": [
+            {"field": "filingDate", "valueFrom": f"{since:%Y-%m-%d}", "valueTo": f"{until:%Y-%m-%d}"}
+        ],
+        "pagination": {"offset": 0, "limit": 1},
     }
     try:
-        resp = requests.get(
-            PATENTSVIEW_URL, params=params,
-            headers={"X-Api-Key": settings.patentsview_api_key},
+        resp = requests.post(
+            USPTO_ODP_SEARCH_URL, data=json.dumps(body),
+            headers={"X-API-KEY": settings.uspto_api_key, "Content-Type": "application/json"},
             timeout=REQUEST_TIMEOUT,
         )
         if resp.status_code != 200:
             return None
         data = resp.json()
-        total = data.get("total_hits", data.get("count"))
+        total = data.get("count", data.get("total_hits"))
         return int(total) if total is not None else None
     except (requests.RequestException, ValueError):
         return None
 
 
 def fetch_patents_score(keywords: list[str], as_of: datetime | None = None) -> float | None:
-    """特許付与の熱量（直近30日 vs 前30日の件数増加率）。取得不可は None。
+    """特許出願の熱量（直近30日 vs 前30日の出願件数増加率）。取得不可は None。
 
-    付与は週次（毎週火曜）でやや遅行だが、実装段階の技術が形になる先行～同時指標。
+    出願日(filingDate)ベース。出願は付与より2〜3年早く、研究開発の熱量の先行指標。
     自然言語の語句をタイトル検索に使うため arxiv_keywords を流用する。
     """
-    if not keywords or not settings.patentsview_api_key:
+    if not keywords or not settings.uspto_api_key:
         return None
     start, mid, base = _windows(as_of)
 
@@ -309,7 +306,7 @@ def fetch_patents_score(keywords: list[str], as_of: datetime | None = None) -> f
     ok = False
     for kw in keywords:
         recent = _patent_count(kw, mid, base)
-        time.sleep(1.5)  # Search API は ~45 req/min。礼儀として間隔を空ける
+        time.sleep(1.5)  # ODP のレート制限に配慮して間隔を空ける
         prior = _patent_count(kw, start, mid)
         time.sleep(1.5)
         if recent is None or prior is None:

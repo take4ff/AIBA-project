@@ -48,7 +48,9 @@ class Settings:
     supabase_url: str | None = os.getenv("SUPABASE_URL")
     supabase_key: str | None = os.getenv("SUPABASE_KEY")
     github_token: str | None = os.getenv("GITHUB_TOKEN")
-    patentsview_api_key: str | None = os.getenv("PATENTSVIEW_API_KEY")
+    # USPTO Open Data Portal の APIキー（特許センチメント用）。
+    # PatentsView は 2026-03 に ODP(api.uspto.gov) へ移行。旧 PATENTSVIEW_API_KEY も後方互換で受ける。
+    uspto_api_key: str | None = os.getenv("USPTO_ODP_API_KEY") or os.getenv("PATENTSVIEW_API_KEY")
 
     @property
     def has_supabase(self) -> bool:

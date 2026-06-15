@@ -52,7 +52,7 @@
 
 **インプット**
 - **テクニカル（事実）**：株価・出来高・RSI(14)・移動平均(25)乖離率（`yfinance`）
-- **センチメント（先行）**：GitHub（新規リポジトリ＋**コミット活動量**）× arXiv（論文）× **Hacker News** × **Google Trends** × **特許**（PatentsView・付与件数）の平均増加率（取得できた指標のみ平均）
+- **センチメント（先行）**：GitHub（新規リポジトリ＋**コミット活動量**）× arXiv（論文）× **Hacker News** × **Google Trends** × **特許**（USPTO ODP・出願件数）の平均増加率（取得できた指標のみ平均）
 
 **ロジック**
 - テクニカル割安感＝RSI割安スコアと移動平均乖離スコアの平均
@@ -75,7 +75,7 @@
 運用コストを無料枠に抑えた構成。**重い処理は GitHub Actions、Vercel は表示のみ**。
 
 ```
-yfinance / GitHub / arXiv / Hacker News / Google Trends / PatentsView（特許）
+yfinance / GitHub / arXiv / Hacker News / Google Trends / USPTO ODP（特許）
         │ 収集・スコア計算・予測（Python）
         ▼  ── GitHub Actions（日次cron）
 Supabase (PostgreSQL Free)
@@ -118,7 +118,7 @@ AIBA-project/
 - [x] **スコア妥当性の定点記録・可視化** → `/verify` 定点記録（1/3/6ヶ月の買い当否）
 - [x] **銘柄詳細での決算情報の拡充**：ユニバース個別株もファンダ取得し、PER/予想PER/EPS・売上成長/直近サプライズ/次回決算＋**ルールベースの解釈**（割安/割高・増益/減益・来期見通し・決算接近の注意）を表示
 - [ ] **UI/UX の継続改善**、機能が増えてきたため全体的に整理
-- [x] **特許**をセンチメント源に追加：PatentsView Search API で付与件数の増加率を算出し統合（`PATENTSVIEW_API_KEY` 設定時に有効、未設定なら自動スキップ）
+- [x] **特許**をセンチメント源に追加：USPTO Open Data Portal の出願検索で出願件数（filingDate）の増加率を算出し統合（`USPTO_ODP_API_KEY` 設定時に有効、未設定なら自動スキップ。※旧 PatentsView は 2026-03 に ODP へ移行済み）
 - [ ] 過去の期間増やす、2025年は全て保存
 - [ ] 各スコアの定義を詳細にまとめたページ作成
 
