@@ -88,7 +88,7 @@ export default function PortfolioPage() {
               onChange={(e) => setForm({ ...form, currency: e.target.value as "JPY" | "USD" })}>
               <option value="JPY">JPY</option><option value="USD">USD</option>
             </select>
-            <input className="login-input" type="number" step="any" placeholder="取得単価" value={form.avg_cost}
+            <input className="login-input" type="number" step="any" placeholder="平均取得単価" value={form.avg_cost}
               onChange={(e) => setForm({ ...form, avg_cost: e.target.value })} />
             <input className="login-input" type="number" step="any" placeholder="株数（任意）" value={form.shares}
               onChange={(e) => setForm({ ...form, shares: e.target.value })} />
@@ -102,7 +102,7 @@ export default function PortfolioPage() {
             <div className="table-scroll" style={{ marginTop: 16 }}>
               <table className="table">
                 <thead><tr>
-                  <th>銘柄</th><th className="num">取得単価</th><th className="num">株数</th><th className="num">現在値</th>
+                  <th>銘柄</th><th className="num">平均取得単価</th><th className="num">株数</th><th className="num">現在値</th>
                   <th className="num">損益</th><th className="num">過熱度</th><th>売りシグナル</th>
                   <th>次回決算</th><th>操作</th>
                 </tr></thead>
