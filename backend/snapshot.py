@@ -19,7 +19,7 @@ from aiba.config import settings
 
 log = logging.getLogger("aiba.snapshot")
 BUY = 60.0
-HORIZONS = {"ret_1m": 21, "ret_3m": 63, "ret_6m": 126}  # 営業日
+HORIZONS = {"ret_1m": 21, "ret_3m": 63, "ret_6m": 126, "ret_12m": 252}  # 営業日
 PAGE = 1000
 
 
@@ -71,7 +71,7 @@ def main() -> int:
         log.info("スナップショット記録: %d日分 / %d 行", len(dates), len(rec))
 
     snaps = pd.DataFrame(_fetch_all(client, "score_snapshots",
-                                    "snapshot_date,domain_id,close_price,ret_1m,ret_3m,ret_6m"))
+                                    "snapshot_date,domain_id,close_price,ret_1m,ret_3m,ret_6m,ret_12m"))
     existing_months = set(snaps["snapshot_date"].str[:7]) if not snaps.empty else set()
 
     if args.backfill:
@@ -87,7 +87,7 @@ def main() -> int:
             record([latest_date])
 
     snaps = pd.DataFrame(_fetch_all(client, "score_snapshots",
-                                    "snapshot_date,domain_id,close_price,ret_1m,ret_3m,ret_6m"))
+                                    "snapshot_date,domain_id,close_price,ret_1m,ret_3m,ret_6m,ret_12m"))
 
     # --- 評価（経過した未評価のリターンを埋める）---
     by_dom: dict[str, pd.DataFrame] = {

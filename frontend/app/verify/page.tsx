@@ -10,7 +10,7 @@ const f3 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.to
 const f2 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%");
 
 // 定点ログの集計：買い判定の平均リターン・勝率を horizon 別に
-function aggregate(rows: SnapshotRow[], key: "ret_1m" | "ret_3m" | "ret_6m") {
+function aggregate(rows: SnapshotRow[], key: "ret_1m" | "ret_3m" | "ret_6m" | "ret_12m") {
   const buys = rows.filter((r) => r.is_buy && r[key] != null).map((r) => r[key] as number);
   const all = rows.filter((r) => r[key] != null).map((r) => r[key] as number);
   if (all.length === 0) return null;
@@ -32,19 +32,19 @@ export default async function VerifyPage() {
   const edge = bt && bt.buy_avg_return != null && bt.overall_avg_return != null
     ? bt.buy_avg_return - bt.overall_avg_return : null;
   const snapDates = Array.from(new Set(snaps.map((s) => s.snapshot_date))).sort();
-  const agg = { ret_1m: aggregate(snaps, "ret_1m"), ret_3m: aggregate(snaps, "ret_3m"), ret_6m: aggregate(snaps, "ret_6m") };
-  const hasEval = agg.ret_1m || agg.ret_3m || agg.ret_6m;
+  const agg = { ret_1m: aggregate(snaps, "ret_1m"), ret_3m: aggregate(snaps, "ret_3m"), ret_6m: aggregate(snaps, "ret_6m"), ret_12m: aggregate(snaps, "ret_12m") };
+  const hasEval = agg.ret_1m || agg.ret_3m || agg.ret_6m || agg.ret_12m;
 
   // 記録日ごとに「買い判定 / 全体」の 1/3/6ヶ月先リターン平均（時系列グラフ用）
   const mean = (a: number[]) => (a.length ? Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 100) / 100 : null);
-  const horizonAvg = (rows: SnapshotRow[], k: "ret_1m" | "ret_3m" | "ret_6m", buyOnly: boolean) =>
+  const horizonAvg = (rows: SnapshotRow[], k: "ret_1m" | "ret_3m" | "ret_6m" | "ret_12m", buyOnly: boolean) =>
     mean(rows.filter((s) => (buyOnly ? s.is_buy : true) && s[k] != null).map((s) => s[k] as number));
   const series = snapDates.map((d) => {
     const rows = snaps.filter((s) => s.snapshot_date === d);
     return {
       date: d,
-      buy_1m: horizonAvg(rows, "ret_1m", true), buy_3m: horizonAvg(rows, "ret_3m", true), buy_6m: horizonAvg(rows, "ret_6m", true),
-      all_1m: horizonAvg(rows, "ret_1m", false), all_3m: horizonAvg(rows, "ret_3m", false), all_6m: horizonAvg(rows, "ret_6m", false),
+      buy_1m: horizonAvg(rows, "ret_1m", true), buy_3m: horizonAvg(rows, "ret_3m", true), buy_6m: horizonAvg(rows, "ret_6m", true), buy_12m: horizonAvg(rows, "ret_12m", true),
+      all_1m: horizonAvg(rows, "ret_1m", false), all_3m: horizonAvg(rows, "ret_3m", false), all_6m: horizonAvg(rows, "ret_6m", false), all_12m: horizonAvg(rows, "ret_12m", false),
     };
   });
 
@@ -155,7 +155,7 @@ export default async function VerifyPage() {
                 <th>期間</th><th className="num">買い銘柄 平均</th><th className="num">全体 平均</th><th className="num">買い勝率</th><th className="num">評価件数</th>
               </tr></thead>
               <tbody>
-                {([["1ヶ月", "ret_1m"], ["3ヶ月", "ret_3m"], ["6ヶ月", "ret_6m"]] as const).map(([label, k]) => {
+                {([["1ヶ月", "ret_1m"], ["3ヶ月", "ret_3m"], ["6ヶ月", "ret_6m"], ["12ヶ月", "ret_12m"]] as const).map(([label, k]) => {
                   const a = agg[k];
                   return (
                     <tr key={k}>

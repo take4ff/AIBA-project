@@ -8,19 +8,21 @@ import {
 // 記録日ごとの「買い判定 / 全体平均」の 1/3/6ヶ月先リターン[%]（フラットキー）
 export interface SnapPoint {
   date: string;
-  buy_1m: number | null; buy_3m: number | null; buy_6m: number | null;
-  all_1m: number | null; all_3m: number | null; all_6m: number | null;
+  buy_1m: number | null; buy_3m: number | null; buy_6m: number | null; buy_12m: number | null;
+  all_1m: number | null; all_3m: number | null; all_6m: number | null; all_12m: number | null;
 }
 
 const TOOLTIP = { background: "#fff", border: "1px solid #e6e8ec", borderRadius: 8, color: "#16191f" };
 
 const LINES: { key: keyof SnapPoint; name: string; color: string; dash?: string }[] = [
-  { key: "buy_1m", name: "買い 1ヶ月", color: "#15a34a" },
-  { key: "buy_3m", name: "買い 3ヶ月", color: "#0d9488" },
-  { key: "buy_6m", name: "買い 6ヶ月", color: "#166534" },
+  { key: "buy_1m", name: "買い 1ヶ月", color: "#4ade80" },
+  { key: "buy_3m", name: "買い 3ヶ月", color: "#22c55e" },
+  { key: "buy_6m", name: "買い 6ヶ月", color: "#15a34a" },
+  { key: "buy_12m", name: "買い 12ヶ月", color: "#166534" },
   { key: "all_1m", name: "ユニバース平均 1ヶ月", color: "#cbd5e1", dash: "4 3" },
   { key: "all_3m", name: "ユニバース平均 3ヶ月", color: "#94a3b8", dash: "4 3" },
   { key: "all_6m", name: "ユニバース平均 6ヶ月", color: "#64748b", dash: "4 3" },
+  { key: "all_12m", name: "ユニバース平均 12ヶ月", color: "#475569", dash: "4 3" },
 ];
 
 export default function SnapshotChart({ data }: { data: SnapPoint[] }) {
