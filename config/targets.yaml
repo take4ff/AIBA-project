@@ -90,7 +90,7 @@ domains:
         etf: { ticker: "1624.T", name: "機械(TOPIX-17)" }
         stocks: [{ ticker: "6954.T", name: ファナック }, { ticker: "6506.T", name: 安川電機 }, { ticker: "6645.T", name: オムロン }, { ticker: "6324.T", name: ハーモニック・ドライブ }, { ticker: "6273.T", name: SMC }]
       row:
-        stocks: [{ ticker: ABB, name: ABB（スイス） }]
+        stocks: [{ ticker: "ABBN.SW", name: ABB（スイス） }]
     github_keywords: ["edge ai", "ros2", "tinyml"]
     arxiv_keywords: ["edge inference", "robot learning"]
 
