@@ -23,8 +23,9 @@ async function getHistory(id: string) {
     .from("daily_metrics")
     .select("trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price")
     .eq("domain_id", id)
-    .order("trade_date", { ascending: true })
+    .order("trade_date", { ascending: false })   // 最新180件を取得し…
     .limit(180);
+  if (data) data.reverse();                        // …表示用に昇順へ戻す
 
   if (error) console.error("history fetch error:", error.message);
 
@@ -37,7 +38,7 @@ async function getHistory(id: string) {
       .from("domains").select("name,ticker").eq("id", etfId).single();
     const { data: etfHist } = await supabase
       .from("daily_metrics").select("trade_date,aiba_score")
-      .eq("domain_id", etfId).order("trade_date", { ascending: true }).limit(180);
+      .eq("domain_id", etfId).order("trade_date", { ascending: false }).limit(180);
     if (etfDom) {
       const aibaByDate: Record<string, number> = {};
       for (const r of etfHist ?? []) if (r.aiba_score != null) aibaByDate[r.trade_date] = Number(r.aiba_score);
