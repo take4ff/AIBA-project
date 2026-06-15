@@ -160,10 +160,21 @@ export async function getBacktest(): Promise<BacktestRun | null> {
   return (data?.[0] as BacktestRun) ?? null;
 }
 
-/** バックテスト結果の全履歴（run_date昇順）。IC推移グラフ用。 */
+/** バックテスト結果の全履歴（run_date昇順）。 */
 export async function getBacktestHistory(horizon = 21): Promise<BacktestRun[]> {
   return selectAll<BacktestRun>("backtest_runs", "*",
     (q) => q.eq("horizon", horizon).order("run_date", { ascending: true }));
+}
+
+export interface ICMonth {
+  month: string;
+  ic_aiba: number | null; ic_technical: number | null; ic_sentiment: number | null;
+}
+
+/** 月次クロスセクションIC（過去〜現在）。IC推移グラフ用。テーブル未作成時は空。 */
+export async function getICMonthly(): Promise<ICMonth[]> {
+  return selectAll<ICMonth>("ic_monthly", "month,ic_aiba,ic_technical,ic_sentiment",
+    (q) => q.order("month", { ascending: true }));
 }
 
 export interface SnapshotRow {

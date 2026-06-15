@@ -1,4 +1,4 @@
-import { getBacktest, getBacktestHistory, getSnapshots, getBenchmark, SnapshotRow } from "@/lib/data";
+import { getBacktest, getICMonthly, getSnapshots, getBenchmark, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import SnapshotChart from "@/components/SnapshotChart";
@@ -30,9 +30,9 @@ export default async function VerifyPage() {
   if (!isSupabaseConfigured) {
     return <main className="container"><div className="notice">Supabase の環境変数が未設定です。</div></main>;
   }
-  const [bt, btHist, snaps, bench] = await Promise.all([getBacktest(), getBacktestHistory(), getSnapshots(), getBenchmark("ACWI")]);
-  const icHistory = btHist.map((r) => ({
-    run_date: r.run_date, ic_aiba: r.ic_aiba, ic_technical: r.ic_technical, ic_sentiment: r.ic_sentiment,
+  const [bt, icMonthly, snaps, bench] = await Promise.all([getBacktest(), getICMonthly(), getSnapshots(), getBenchmark("ACWI")]);
+  const icHistory = icMonthly.map((r) => ({
+    date: r.month, ic_aiba: r.ic_aiba, ic_technical: r.ic_technical, ic_sentiment: r.ic_sentiment,
   }));
   const edge = bt && bt.buy_avg_return != null && bt.overall_avg_return != null
     ? bt.buy_avg_return - bt.overall_avg_return : null;

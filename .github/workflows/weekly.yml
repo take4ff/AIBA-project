@@ -34,3 +34,10 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
         run: python candidates_job.py
+
+      - name: Monthly cross-sectional IC
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python ic_monthly_job.py

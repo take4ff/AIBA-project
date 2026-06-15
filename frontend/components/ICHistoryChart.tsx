@@ -7,7 +7,7 @@ import {
 import ClickableLegend from "@/components/ClickableLegend";
 
 export interface ICPoint {
-  run_date: string;
+  date: string;
   ic_aiba: number | null;
   ic_technical: number | null;
   ic_sentiment: number | null;
@@ -25,7 +25,7 @@ export default function ICHistoryChart({ data }: { data: ICPoint[] }) {
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
           <CartesianGrid stroke="#e6e8ec" strokeDasharray="3 3" />
-          <XAxis dataKey="run_date" stroke="#71767f" fontSize={11} />
+          <XAxis dataKey="date" stroke="#71767f" fontSize={11} />
           <YAxis stroke="#71767f" fontSize={12} tickFormatter={(v: number) => v.toFixed(2)} />
           <ReferenceLine y={0} stroke="#cbd2da" />
           <Tooltip contentStyle={TOOLTIP}
@@ -37,7 +37,7 @@ export default function ICHistoryChart({ data }: { data: ICPoint[] }) {
         </LineChart>
       </ResponsiveContainer>
       <p style={{ color: "#71767f", fontSize: 12, marginTop: 4, textAlign: "center" }}>
-        クロスセクションICの推移（日次バッチで1点ずつ蓄積）。0より上で先行性あり。先行性が時間を通じて持続するかを評価。
+        月次クロスセクションICの推移（各月の銘柄横断ICの月内平均）。0より上で先行性あり。先行性が時間を通じて持続するかを評価。
       </p>
     </div>
   );
