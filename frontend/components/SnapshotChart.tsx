@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from "recharts";
+import ClickableLegend from "@/components/ClickableLegend";
 
 // 記録日ごとの「買い判定 / 全体平均」の 1/3/6ヶ月先リターン[%]（フラットキー）
 export interface SnapPoint {
@@ -40,12 +41,7 @@ export default function SnapshotChart({ data }: { data: SnapPoint[] }) {
           <ReferenceLine y={0} stroke="#cbd2da" />
           <Tooltip contentStyle={TOOLTIP}
             formatter={(v: number, name: string) => [v == null ? "—" : `${v.toFixed(2)}%`, name]} />
-          <Legend
-            onClick={(o: any) => toggle(String(o.dataKey))}
-            wrapperStyle={{ cursor: "pointer", fontSize: 12 }}
-            formatter={(value: string, entry: any) => (
-              <span style={{ textDecoration: hidden[entry?.dataKey] ? "line-through" : "none", opacity: hidden[entry?.dataKey] ? 0.4 : 1 }}>{value}</span>
-            )} />
+          <Legend content={(p: any) => <ClickableLegend {...p} hidden={hidden} onToggle={toggle} />} />
           {LINES.map((l) => (
             <Line key={l.key} type="monotone" dataKey={l.key} name={l.name} stroke={l.color}
               strokeWidth={l.key.startsWith("buy") ? 2.4 : 1.4} strokeDasharray={l.dash}

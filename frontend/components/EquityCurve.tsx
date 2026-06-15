@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from "recharts";
+import ClickableLegend from "@/components/ClickableLegend";
 
 // 月次リバランスの疑似エクイティカーブ（100スタート）
 export interface EquityPoint {
@@ -39,12 +40,7 @@ export default function EquityCurve({ data }: { data: EquityPoint[] }) {
           <YAxis stroke="#71767f" fontSize={12} domain={["auto", "auto"]} />
           <ReferenceLine y={100} stroke="#cbd2da" />
           <Tooltip contentStyle={TOOLTIP} formatter={(v: number, name: string) => [v?.toFixed(1), name]} />
-          <Legend
-            onClick={(o: any) => toggle(String(o.dataKey))}
-            wrapperStyle={{ cursor: "pointer", fontSize: 12 }}
-            formatter={(value: string, entry: any) => (
-              <span style={{ textDecoration: hidden[entry?.dataKey] ? "line-through" : "none", opacity: hidden[entry?.dataKey] ? 0.4 : 1 }}>{value}</span>
-            )} />
+          <Legend content={(p: any) => <ClickableLegend {...p} hidden={hidden} onToggle={toggle} />} />
           {LINES.map((l) => (
             <Line key={l.key} type="monotone" dataKey={l.key} name={l.name} stroke={l.color}
               strokeWidth={l.width} strokeDasharray={l.dash} dot={false} connectNulls hide={!!hidden[l.key]} />
