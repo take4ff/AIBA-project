@@ -23,7 +23,7 @@ domains:
         stocks: [{ ticker: NVDA, name: NVIDIA }, { ticker: AMD, name: AMD }, { ticker: AVGO, name: Broadcom }, { ticker: ARM, name: Arm }, { ticker: TSM, name: TSMC }, { ticker: ASML, name: ASML }, { ticker: MU, name: Micron }, { ticker: QCOM, name: Qualcomm }, { ticker: LRCX, name: Lam Research }]
       jp:
         etf: { ticker: "2644.T", name: "Global X 日本半導体" }
-        stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }]
+        stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }, { ticker: "2802.T", name: 味の素（ABF基板材料） }]
     github_keywords: ["cuda", "gpu kernel", "tensorrt"]
     arxiv_keywords: ["GPU accelerator", "AI chip"]
 
