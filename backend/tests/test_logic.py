@@ -30,7 +30,20 @@ def test_ma_deviation_score():
 def test_rsi_penalty():
     assert rsi_penalty(50) == 0
     assert rsi_penalty(40) == 0
-    assert rsi_penalty(70) == 10            # (70-50)*0.5
+    assert rsi_penalty(70) == 10            # (70-50)*0.5（トレンドなし）
+
+
+def test_rsi_penalty_dynamic_threshold():
+    from aiba.score import rsi_penalty_threshold
+    # 横ばい/弱トレンドは基準50のまま
+    assert rsi_penalty_threshold(0.0) == 50.0
+    assert rsi_penalty_threshold(2.0) == 50.0
+    # 強い上昇トレンドは基準が上がり、同じRSIでも減点が小さくなる
+    assert rsi_penalty_threshold(10.0) > 50.0
+    assert rsi_penalty(70, trend_strength=10.0) < rsi_penalty(70, trend_strength=0.0)
+    # 上限70でクランプ（RSI70は無罰）
+    assert rsi_penalty_threshold(100.0) == 70.0
+    assert rsi_penalty(70, trend_strength=100.0) == 0.0
 
 
 def test_compute_aiba_score_ordering_and_bounds():

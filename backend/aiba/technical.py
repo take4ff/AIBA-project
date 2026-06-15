@@ -12,6 +12,7 @@ import yfinance as yf
 
 RSI_PERIOD = 14
 MA_PERIOD = 25
+MA_SLOPE_LOOKBACK = 20  # MAの傾きを測る営業日窓（トレンド判定用）
 # 指標算出に十分な期間を確保（休場日を見込んで多めに取得）
 LOOKBACK_DAYS = 120
 
@@ -25,6 +26,7 @@ class TechnicalSnapshot:
     volume: int
     rsi_14: float
     ma_deviation: float  # 移動平均乖離率 [%]（正=平均より上、負=平均より下）
+    trend_strength: float = 0.0  # MA(25)の傾き [%]（正=上昇トレンド。動的RSI閾値に使用）
 
 
 def compute_rsi(close: pd.Series, period: int = RSI_PERIOD) -> pd.Series:
@@ -50,6 +52,14 @@ def compute_ma_deviation(close: pd.Series, period: int = MA_PERIOD) -> pd.Series
     return (close - ma) / ma * 100.0
 
 
+def compute_ma_slope(close: pd.Series, period: int = MA_PERIOD,
+                     lookback: int = MA_SLOPE_LOOKBACK) -> pd.Series:
+    """MA(period) の lookback営業日での変化率 [%]（トレンドの強さ・向き）。"""
+    ma = close.rolling(window=period, min_periods=period).mean()
+    prev = ma.shift(lookback)
+    return (ma - prev) / prev * 100.0
+
+
 def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
     """価格DataFrameから日次のテクニカルスナップショット列を生成する。"""
     if isinstance(df.columns, pd.MultiIndex):
@@ -61,12 +71,14 @@ def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
 
     rsi = compute_rsi(close)
     dev = compute_ma_deviation(close)
+    slope = compute_ma_slope(close)
 
     snaps: list[TechnicalSnapshot] = []
     for idx in close.index:
         r, d = rsi.loc[idx], dev.loc[idx]
         if pd.isna(r) or pd.isna(d):
             continue  # 指標算出に必要な履歴が足りない序盤はスキップ
+        s = slope.loc[idx]
         snaps.append(
             TechnicalSnapshot(
                 trade_date=idx.date(),
@@ -74,6 +86,7 @@ def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
                 volume=int(df["Volume"].loc[idx]),
                 rsi_14=round(float(r), 2),
                 ma_deviation=round(float(d), 4),
+                trend_strength=0.0 if pd.isna(s) else round(float(s), 4),
             )
         )
     return snaps
@@ -121,12 +134,14 @@ def fetch_technical(ticker: str) -> TechnicalSnapshot | None:
 
     rsi = compute_rsi(close)
     dev = compute_ma_deviation(close)
+    slope = compute_ma_slope(close)
 
     last_idx = close.index[-1]
     rsi_val = rsi.loc[last_idx]
     dev_val = dev.loc[last_idx]
     if pd.isna(rsi_val) or pd.isna(dev_val):
         return None
+    slope_val = slope.loc[last_idx]
 
     return TechnicalSnapshot(
         trade_date=last_idx.date(),
@@ -134,4 +149,5 @@ def fetch_technical(ticker: str) -> TechnicalSnapshot | None:
         volume=int(df["Volume"].loc[last_idx]),
         rsi_14=round(float(rsi_val), 2),
         ma_deviation=round(float(dev_val), 4),
+        trend_strength=0.0 if pd.isna(slope_val) else round(float(slope_val), 4),
     )

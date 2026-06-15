@@ -99,6 +99,9 @@ export default function RankingTable({
                       <span className="div-badge" title="センチメント上昇 × 株価が出遅れ＝仕込み好機（乖離）">🔀 乖離</span>
                     )}
                     {stance && <span className={`stance-badge ${stance.cls}`} title={stance.reason}>{stance.icon} {stance.label}</span>}
+                    {r.momentum_score >= 65 && (
+                      <span className="mom-badge" title="順張りモメンタム：MAより上・RSI強い・直近上昇。勢いに乗る視点（AIBAの逆張りと対）">🚀 順張り{r.momentum_score}</span>
+                    )}
                     {showTheme && <span className="row2-theme">{r.theme_name}</span>}
                   </span>
                 </Link>

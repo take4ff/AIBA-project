@@ -70,6 +70,12 @@ async function buildAllRows(): Promise<RankingRow[]> {
     const comboScore = Math.round(0.5 * aiba + 0.5 * sentMomentum);
     const closePast = past?.close_price ?? m.close_price;
     const priceTrend = closePast ? Math.round(((m.close_price - closePast) / closePast) * 1000) / 10 : 0;
+    // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
+    const rsi = m.rsi_14 ?? 50;
+    const maPos = clamp(50 + (m.ma_deviation ?? 0) * 3);
+    const rsiMom = clamp(rsi - Math.max(0, rsi - 80) * 2);   // 高RSI=勢い、80超は過熱で減衰
+    const priceMom = clamp(50 + priceTrend * 2);
+    const momentumScore = Math.round((maPos + rsiMom + priceMom) / 3);
     rows.push({
       layer: d.layer,
       region: p.region,
@@ -91,6 +97,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
       price_trend: priceTrend,
       divergence: sentimentTrend > 1 && priceTrend < 2,
       combo_score: comboScore,
+      momentum_score: momentumScore,
       order_key: etfScore.get(`${p.region}|${p.theme}`) ?? aiba,
     });
   }

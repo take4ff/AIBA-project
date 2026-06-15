@@ -23,8 +23,13 @@ LAYER_WEIGHTS: dict[int, tuple[float, float]] = {
     3: (0.30, 0.70),  # 未来の開拓地: センチメントの熱量を重視
 }
 
-# RSI過熱ペナルティ係数（RSIが50を1超えるごとに減点する点数）
+# RSI過熱ペナルティ係数（RSIが基準を1超えるごとに減点する点数）
 RSI_PENALTY_COEFF = 0.5
+# RSI過熱ペナルティの基準値。トレンドに応じてこの値から引き上げる（動的閾値）。
+RSI_PENALTY_BASE = 50.0
+RSI_PENALTY_MAX_THRESHOLD = 70.0   # 強い上昇トレンド時の上限
+TREND_THRESHOLD_GAIN = 2.0         # トレンド強度1%あたり閾値を何点上げるか
+TREND_DEADZONE = 2.0               # この%以下の傾きは「トレンドなし」とみなす
 # 移動平均乖離率→割安スコア変換の感度（乖離±10%で約73/27点）
 MA_DEV_SENSITIVITY = 0.1
 
@@ -49,11 +54,22 @@ def technical_score(tech: TechnicalSnapshot) -> float:
     return round(_clamp(score), 2)
 
 
-def rsi_penalty(rsi: float) -> float:
-    """RSI50超の過熱に対する減点。"""
-    if rsi <= 50.0:
+def rsi_penalty_threshold(trend_strength: float = 0.0) -> float:
+    """過熱ペナルティを課すRSI基準値（動的閾値）。
+
+    強い上昇トレンド（MAの傾きが大）ほど基準を引き上げ、トレンド相場での
+    機会損失（早すぎる過熱減点）を抑える。横ばい/下落では基準は50のまま。
+    """
+    extra = max(0.0, (trend_strength - TREND_DEADZONE)) * TREND_THRESHOLD_GAIN
+    return min(RSI_PENALTY_MAX_THRESHOLD, RSI_PENALTY_BASE + extra)
+
+
+def rsi_penalty(rsi: float, trend_strength: float = 0.0) -> float:
+    """RSIが（動的）基準を超えた過熱に対する減点。"""
+    threshold = rsi_penalty_threshold(trend_strength)
+    if rsi <= threshold:
         return 0.0
-    return (rsi - 50.0) * RSI_PENALTY_COEFF
+    return (rsi - threshold) * RSI_PENALTY_COEFF
 
 
 @dataclass
@@ -75,7 +91,7 @@ def compute_aiba_score(
     s_score = sent.sentiment_score
 
     base = w_tech * t_score + w_sent * s_score
-    final = _clamp(base - rsi_penalty(tech.rsi_14))
+    final = _clamp(base - rsi_penalty(tech.rsi_14, tech.trend_strength))
 
     return ScoreResult(
         technical_score=t_score,

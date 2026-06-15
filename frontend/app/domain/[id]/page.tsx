@@ -116,6 +116,21 @@ export default async function DomainPage({ params }: { params: { id: string } })
   const guide = buyGuide(closes);
   const cur = region === "jp" ? "JPY" : "USD";
 
+  // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
+  const clampM = (x: number) => Math.max(0, Math.min(100, x));
+  let momentum: number | null = null;
+  if (latest && latest.rsi_14 != null && latest.ma_deviation != null) {
+    const validCloses = closes.filter((c): c is number => c != null);
+    const past = validCloses.length > 21 ? validCloses[validCloses.length - 21] : validCloses[0];
+    const last = validCloses[validCloses.length - 1];
+    const priceTrend = past ? ((last - past) / past) * 100 : 0;
+    const maPos = clampM(50 + latest.ma_deviation * 3);
+    const rsiMom = clampM(latest.rsi_14 - Math.max(0, latest.rsi_14 - 80) * 2);
+    const priceMom = clampM(50 + priceTrend * 2);
+    momentum = Math.round((maPos + rsiMom + priceMom) / 3);
+  }
+  const momentumLabel = (m: number) => (m >= 70 ? "強い上昇基調（順張り好機）" : m >= 55 ? "上昇基調" : m >= 45 ? "中立" : "下降基調（順張り不向き）");
+
   // 健康度レーダー（各スコアを0-100で）
   const clamp = (x: number) => Math.max(0, Math.min(100, x));
   const radar: RadarPoint[] = [];
@@ -200,6 +215,15 @@ export default async function DomainPage({ params }: { params: { id: string } })
           {" / "}押し目買い目安 <span style={{ color: "#15a34a", fontWeight: 700 }}>{money(guide.pullback, cur)}</span>
           {" / "}下値支持(60日安値) {money(guide.support, cur)}
           <span className="forecast-note">（現在 {money(guide.current, cur)}）</span>
+        </p>
+      )}
+      {momentum != null && (
+        <p className="forecast-line">
+          🚀 順張りモメンタム：<span className="date">{momentum}</span>
+          <span style={{ marginLeft: 8, fontWeight: 700, color: momentum >= 55 ? "#15a34a" : momentum < 45 ? "#dc2626" : "var(--muted)" }}>
+            {momentumLabel(momentum)}
+          </span>
+          <span className="forecast-note">（AIBA＝押し目/逆張りと対の「勢いに乗る」視点。MA上・RSI強・直近上昇で高い）</span>
         </p>
       )}
       {radar.length >= 3 && (
