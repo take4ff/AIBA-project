@@ -1,6 +1,7 @@
 import { getBacktest, getSnapshots, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
+import SnapshotChart from "@/components/SnapshotChart";
 
 export const revalidate = 0;
 
@@ -100,6 +101,14 @@ export default async function VerifyPage() {
               : "蓄積中：評価は記録から1ヶ月以上経過後に表示されます。"}
           </div>
         ) : (
+          <>
+          <SnapshotChart data={([["1ヶ月", "ret_1m"], ["3ヶ月", "ret_3m"], ["6ヶ月", "ret_6m"]] as const).map(([label, k]) => ({
+            horizon: label,
+            buy: agg[k]?.buyAvg ?? null,
+            all: agg[k]?.allAvg ?? null,
+            win: agg[k]?.win ?? null,
+            n: agg[k]?.buyN ?? 0,
+          }))} />
           <div className="table-scroll">
             <table className="table">
               <colgroup><col style={{ width: "22%" }} /><col style={{ width: "22%" }} /><col style={{ width: "22%" }} /><col style={{ width: "16%" }} /><col style={{ width: "18%" }} /></colgroup>
@@ -122,6 +131,7 @@ export default async function VerifyPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
     </main>
