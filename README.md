@@ -136,39 +136,15 @@ AIBA-project/
 - [ ] **CSVエクスポート**（ランキング/ポートフォリオ）
 
 
-## supabase warning
-Leaked Password Protection Disabled
-SECURITY
+## セキュリティ：パスワード保護
 
-Entity
+Supabase の lint「Leaked Password Protection Disabled」への対応。
+組み込み機能は Pro 以上限定のため、**Free 枠ではクライアント側で同等の保護を自前実装**（[`frontend/lib/password.ts`](./frontend/lib/password.ts)）。
 
-Auth
-Issue
-
-Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.
-Description
-
-Leaked password protection is currently disabled.
-
-
-Summary of the lint issue
-Leaked Password Protection Disabled (Auth) means your Supabase Auth configuration is currently not rejecting passwords known to be compromised. Supabase can check proposed passwords against the HaveIBeenPwned (Pwned Passwords) API, but right now that protection is off.
-
-Why this matters
-If leaked/compromised passwords are allowed, attackers can more easily attempt credential stuffing or reuse passwords from previous breaches.
-
-Suggested fixes
-Enable “Prevent the use of leaked passwords” in Supabase Auth settings
-
-In the Supabase Dashboard, go to the Auth settings for password strength and turn on leaked password protection.
-Note: Supabase’s docs state this feature is available on the Pro Plan and above.
-If you’re on Free/other unsupported tiers
-
-Upgrade to Pro+ to enable this specific control.
-In the meantime, mitigate risk by strengthening other password policies (minimum length + required character sets), also available in Auth settings.
-After enabling, verify the behavior
-
-Try signing up (or setting/changing a password) with a known compromised password pattern and confirm Auth rejects it with a weak/leaked-password related error.
+- **漏洩チェック**：新規登録時に **HaveIBeenPwned Pwned Passwords range API**（k-匿名性・SHA-1先頭5桁のみ送信、本体は送らない・APIキー不要）で照合し、漏洩済みパスワードを拒否。
+- **強度ポリシー**：10文字以上＋（英大/英小/数字/記号の）3種類以上を必須化。
+- ネットワーク失敗時はフェイルオープン（登録を妨げない）。
+- 将来 Pro へ上げた場合は Supabase Auth 設定で公式機能を有効化すれば二重で担保。
 
 ---
 

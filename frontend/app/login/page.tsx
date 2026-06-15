@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { passwordPolicyError, isPwnedPassword } from "@/lib/password";
 
 export default function LoginPage() {
   const { user, signOut, signIn, signUp } = useAuth();
@@ -23,6 +24,13 @@ export default function LoginPage() {
       if (error) setError(error);
       else window.location.href = "/";
     } else {
+      const policy = passwordPolicyError(password);
+      if (policy) { setError(policy); setBusy(false); return; }
+      if (await isPwnedPassword(password)) {
+        setError("このパスワードは過去の漏洩データに多数含まれています。別のパスワードを使用してください。");
+        setBusy(false);
+        return;
+      }
       const { error, needsConfirm } = await signUp(email.trim(), password);
       if (error) setError(error);
       else if (needsConfirm) setInfo("確認メールを送信しました。メール内のリンクで認証後、ログインしてください。");
@@ -50,9 +58,15 @@ export default function LoginPage() {
         <form className="login-form" onSubmit={submit}>
           <input type="email" required placeholder="you@example.com" value={email}
             onChange={(e) => setEmail(e.target.value)} className="login-input" autoComplete="email" />
-          <input type="password" required minLength={6} placeholder="パスワード（6文字以上）" value={password}
+          <input type="password" required minLength={mode === "signup" ? 10 : 6}
+            placeholder={mode === "signup" ? "パスワード（10文字以上・3種類以上）" : "パスワード"} value={password}
             onChange={(e) => setPassword(e.target.value)} className="login-input"
             autoComplete={mode === "login" ? "current-password" : "new-password"} />
+          {mode === "signup" && (
+            <p style={{ color: "var(--muted)", fontSize: 12, margin: "-4px 0 0" }}>
+              10文字以上、英大文字・小文字・数字・記号のうち3種類以上。漏洩済みパスワードは登録できません。
+            </p>
+          )}
           <button className="kind-active login-submit" disabled={busy} type="submit">
             {busy ? "処理中…" : mode === "login" ? "ログイン" : "新規登録"}
           </button>
