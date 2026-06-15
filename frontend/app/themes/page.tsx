@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllRows } from "@/lib/data";
+import { getAllRows, getCandidates } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { parseDomainId } from "@/lib/regions";
 import { LAYER_META } from "@/lib/types";
@@ -26,7 +26,7 @@ export default async function ThemesPage() {
     );
   }
 
-  const rows = await getAllRows();
+  const [rows, candidates] = await Promise.all([getAllRows(), getCandidates()]);
   // テーマごとの代表＝global ETF 行（センチメントはテーマ共通）
   const cards: ThemeCard[] = [];
   for (const r of rows) {
@@ -89,9 +89,40 @@ export default async function ThemesPage() {
         </section>
       ))}
 
+      {candidates.length > 0 && (
+        <section className="layer">
+          <h2 className="layer-title">🌱 新興テーマ候補（ユニバース未採用）</h2>
+          <p className="layer-subtitle">
+            まだ銘柄を採用していないが、関連ワードの研究熱量が高まりつつある領域。熱量順（50=横ばい・50超=加速）。
+          </p>
+          <div className="themes-grid">
+            {candidates.map((c) => (
+              <div key={c.candidate_id} className="theme-card theme-card-static">
+                <div className="tc-head">
+                  <span className="tc-name">{c.name}</span>
+                  {(c.heat_score ?? 0) > 55 && <span className="tc-rising">🔥 加速中</span>}
+                </div>
+                <div className="tc-metrics">
+                  <span className="combo-pill" style={{ background: scoreColor(c.heat_score) }} title="研究熱量（センチメント）">
+                    熱量 {fmt(c.heat_score)}
+                  </span>
+                  <span className="tc-cand-badge">候補</span>
+                </div>
+                <div className="theme-tags">
+                  {(c.keywords ?? []).map((k) => (
+                    <span key={k} className="theme-tag">{k}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <p className="guide-note" style={{ marginTop: 16 }}>
         ※ 熱量＝GitHub/arXiv/HN/Trends等の関連ワード活動量から算出したセンチメント（50=横ばい）。
-        傾き ↑=加速 / ↓=減速。カードをクリックすると業界ページ（ETF＋個別株のAIBA比較）へ。
+        傾き ↑=加速 / ↓=減速。採用済みテーマのカードをクリックすると業界ページ（ETF＋個別株のAIBA比較）へ。
+        新興テーマ候補は熱量が高まれば監視ユニバースへ昇格します。
       </p>
     </main>
   );

@@ -62,6 +62,14 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python fundamentals_job.py
 
+      - name: Emerging theme candidates (heat)
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: python candidates_job.py
+
       - name: Backtest (save results)
         working-directory: backend
         env:

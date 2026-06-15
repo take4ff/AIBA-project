@@ -158,6 +158,26 @@ export async function getUsdJpy(): Promise<number> {
   }
 }
 
+export interface CandidateTheme {
+  candidate_id: string;
+  name: string;
+  keywords: string[] | null;
+  heat_score: number | null;
+}
+
+/** 新興テーマ候補（ユニバース未採用）を熱量降順で。テーブル未作成時は空配列。 */
+export async function getCandidates(): Promise<CandidateTheme[]> {
+  const { data, error } = await supabase
+    .from("candidate_themes")
+    .select("candidate_id,name,keywords,heat_score")
+    .order("heat_score", { ascending: false });
+  if (error) {
+    console.error("candidates fetch error:", error.message);
+    return [];
+  }
+  return (data ?? []) as CandidateTheme[];
+}
+
 /** スクリーナー用：全ドメインの最新行（フィルタはクライアント側で行う）。 */
 export async function getAllRows(): Promise<RankingRow[]> {
   return (await buildAllRows()).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));

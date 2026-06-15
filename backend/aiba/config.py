@@ -109,4 +109,23 @@ def group_by_theme(domains: list[Domain]) -> dict[str, list[Domain]]:
     return groups
 
 
+@dataclass(frozen=True)
+class Candidate:
+    """新興テーマ候補（ユニバース未採用・熱量のみ実測）。"""
+
+    id: str
+    name: str
+    keywords: list[str] = field(default_factory=list)
+
+
+def load_candidates(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Candidate]:
+    """targets.yaml の candidates: を読み込む。"""
+    with open(path, "r", encoding="utf-8") as f:
+        raw = yaml.safe_load(f)
+    return [
+        Candidate(id=c["id"], name=c["name"], keywords=list(c.get("keywords", [])))
+        for c in raw.get("candidates", [])
+    ]
+
+
 settings = Settings()

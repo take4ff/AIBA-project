@@ -191,3 +191,42 @@ domains:
         stocks: [{ ticker: "6674.T", name: GSユアサ }, { ticker: "6981.T", name: 村田製作所 }, { ticker: "4004.T", name: レゾナック }]
     github_keywords: ["solid state battery", "battery management", "lithium battery"]
     arxiv_keywords: ["solid-state battery", "lithium metal anode", "battery electrolyte"]
+
+# =============================================================================
+# 新興テーマ候補（ユニバース未採用）
+# -----------------------------------------------------------------------------
+# まだ銘柄を採用していないが「これから伸びてきそう」な領域。
+# candidates_job.py が keywords の研究熱量（増加率）を実測し、/themes に熱量順で表示。
+# 有望化したら上の domains に昇格させる。
+# =============================================================================
+candidates:
+  - id: neuromorphic
+    name: ニューロモーフィック・コンピューティング
+    keywords: ["neuromorphic computing", "spiking neural network"]
+  - id: photonic_computing
+    name: フォトニック・コンピューティング
+    keywords: ["photonic computing", "silicon photonics"]
+  - id: bci
+    name: ブレイン・コンピュータ・インターフェース
+    keywords: ["brain computer interface", "neural interface"]
+  - id: ai_agents
+    name: 自律型AIエージェント
+    keywords: ["ai agent", "agentic ai"]
+  - id: humanoid_robots
+    name: ヒューマノイド・ロボット
+    keywords: ["humanoid robot", "bipedal robot"]
+  - id: carbon_capture
+    name: 二酸化炭素回収（DAC）
+    keywords: ["direct air capture", "carbon capture"]
+  - id: perovskite_solar
+    name: ペロブスカイト太陽電池
+    keywords: ["perovskite solar cell", "tandem solar cell"]
+  - id: longevity
+    name: 長寿命・抗老化
+    keywords: ["longevity", "senolytics"]
+  - id: sixg
+    name: 6G通信
+    keywords: ["6G wireless", "terahertz communication"]
+  - id: evtol
+    name: 空飛ぶクルマ（eVTOL）
+    keywords: ["eVTOL", "urban air mobility"]
