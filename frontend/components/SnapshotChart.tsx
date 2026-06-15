@@ -18,9 +18,9 @@ const LINES: { key: keyof SnapPoint; name: string; color: string; dash?: string 
   { key: "buy_1m", name: "買い 1ヶ月", color: "#15a34a" },
   { key: "buy_3m", name: "買い 3ヶ月", color: "#0d9488" },
   { key: "buy_6m", name: "買い 6ヶ月", color: "#166534" },
-  { key: "all_1m", name: "全体 1ヶ月", color: "#cbd5e1", dash: "4 3" },
-  { key: "all_3m", name: "全体 3ヶ月", color: "#94a3b8", dash: "4 3" },
-  { key: "all_6m", name: "全体 6ヶ月", color: "#64748b", dash: "4 3" },
+  { key: "all_1m", name: "ユニバース平均 1ヶ月", color: "#cbd5e1", dash: "4 3" },
+  { key: "all_3m", name: "ユニバース平均 3ヶ月", color: "#94a3b8", dash: "4 3" },
+  { key: "all_6m", name: "ユニバース平均 6ヶ月", color: "#64748b", dash: "4 3" },
 ];
 
 export default function SnapshotChart({ data }: { data: SnapPoint[] }) {

@@ -153,6 +153,22 @@ export async function getSnapshots(): Promise<SnapshotRow[]> {
   return (data ?? []) as SnapshotRow[];
 }
 
+export interface BenchmarkPoint { trade_date: string; close: number }
+
+/** ベンチマーク指数の日次終値（既定 ACWI）。テーブル未作成時は空配列。 */
+export async function getBenchmark(ticker = "ACWI"): Promise<BenchmarkPoint[]> {
+  const { data, error } = await supabase
+    .from("benchmark_prices")
+    .select("trade_date,close")
+    .eq("ticker", ticker)
+    .order("trade_date", { ascending: true });
+  if (error) {
+    console.error("benchmark fetch error:", error.message);
+    return [];
+  }
+  return (data ?? []).map((r) => ({ trade_date: (r as any).trade_date, close: Number((r as any).close) }));
+}
+
 /** 現在の USD/JPY レート（取得失敗時はフォールバック）。 */
 export async function getUsdJpy(): Promise<number> {
   try {

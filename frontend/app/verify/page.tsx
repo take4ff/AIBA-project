@@ -1,4 +1,4 @@
-import { getBacktest, getSnapshots, SnapshotRow } from "@/lib/data";
+import { getBacktest, getSnapshots, getBenchmark, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import SnapshotChart from "@/components/SnapshotChart";
@@ -28,7 +28,7 @@ export default async function VerifyPage() {
   if (!isSupabaseConfigured) {
     return <main className="container"><div className="notice">Supabase の環境変数が未設定です。</div></main>;
   }
-  const [bt, snaps] = await Promise.all([getBacktest(), getSnapshots()]);
+  const [bt, snaps, bench] = await Promise.all([getBacktest(), getSnapshots(), getBenchmark("ACWI")]);
   const edge = bt && bt.buy_avg_return != null && bt.overall_avg_return != null
     ? bt.buy_avg_return - bt.overall_avg_return : null;
   const snapDates = Array.from(new Set(snaps.map((s) => s.snapshot_date))).sort();
@@ -49,16 +49,30 @@ export default async function VerifyPage() {
   });
 
   // 月次リバランスの疑似エクイティカーブ（100スタート・ret_1mを複利で連結）
-  const equity: { date: string; buy: number; all: number }[] = [];
-  let eb = 100, ea = 100;
-  for (const d of snapDates) {
+  // ベンチマーク（インデックス放置）も同じ「各アンカー→翌アンカー」窓の収益で連結し、比較可能にする。
+  const benchClose = (d: string): number | null => {
+    let c: number | null = null;
+    for (const b of bench) { if (b.trade_date <= d) c = b.close; else break; }
+    return c;
+  };
+  const benchOn = bench.length > 0;
+  const equity: { date: string; buy: number; all: number; idx: number | null }[] = [];
+  let eb = 100, ea = 100, ei = 100;
+  for (let i = 0; i < snapDates.length; i++) {
+    const d = snapDates[i];
     const rows = snaps.filter((s) => s.snapshot_date === d);
     const ar = horizonAvg(rows, "ret_1m", false);
     if (ar == null) break;               // 直近の未評価日で打ち切り
     const br = horizonAvg(rows, "ret_1m", true);  // 買い判定なしの月は現金（0%）
     eb *= 1 + (br ?? 0) / 100;
     ea *= 1 + ar / 100;
-    equity.push({ date: d, buy: Math.round(eb * 10) / 10, all: Math.round(ea * 10) / 10 });
+    const dn = snapDates[i + 1];
+    const c0 = benchClose(d), c1 = dn ? benchClose(dn) : null;
+    if (c0 != null && c1 != null) ei *= c1 / c0;   // 指数を同じ窓で連結
+    equity.push({
+      date: d, buy: Math.round(eb * 10) / 10, all: Math.round(ea * 10) / 10,
+      idx: benchOn ? Math.round(ei * 10) / 10 : null,
+    });
   }
 
   return (
