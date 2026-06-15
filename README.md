@@ -106,10 +106,11 @@ AIBA-project/
 │   ├── backfill.py              #   過去数ヶ月のバックフィル
 │   └── tests/                   #   pytest（CI: .github/workflows/test.yml）
 ├── frontend/                    # Next.js ダッシュボード
-└── .github/workflows/{daily,test}.yml
+└── .github/workflows/{daily,weekly,test}.yml
 ```
 
-日次ジョブの流れ：`run_daily → predict → portfolio_job → check_data → notify`。
+日次ジョブの流れ：`run_daily → predict → portfolio_job → fundamentals_job → backtest → snapshot → check_data → notify`（timeout 45分）。
+週次ジョブ：`candidates_job`（新興テーマ候補の熱量。日々変わらないため週1回で日次の負荷を軽減）。
 
 ---
 

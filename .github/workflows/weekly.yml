@@ -1,0 +1,36 @@
+name: AIBA Weekly Batch
+
+on:
+  schedule:
+    # 新興テーマ候補の熱量は日々大きく変わらないため週1回（月曜 JST 早朝）。
+    - cron: "0 22 * * 0"  # 日曜 22:00 UTC = 月曜 07:00 JST
+  workflow_dispatch: {}
+
+concurrency:
+  group: aiba-weekly
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Emerging theme candidates (heat)
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: python candidates_job.py
