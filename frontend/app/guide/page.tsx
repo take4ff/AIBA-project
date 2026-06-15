@@ -33,11 +33,11 @@ export default function GuidePage() {
         <ul className="def-list">
           <li><strong>コア（放置）</strong>：全世界株などのインデックス投資。資産の土台として基本ほったらかし。</li>
           <li><strong>サテライト（長期成長枠）</strong>：AIBAで見つけた次世代技術テーマを少額トッピング。<strong>長期で保有</strong>し成長を取りに行く。</li>
-          <li><strong>AIBAの役割</strong>：センチメント先行 × 株価出遅れの<strong>乖離</strong>から「長期の初動・押し目」を拾う。狙いは“安く仕込んで長く持つ”。</li>
+          <li><strong>AIBAの役割</strong>：センチメント先行 × 株価出遅れの<strong>乖離</strong>から<strong>「入口（押し目）のタイミング」</strong>を計る。狙いは“安く仕込む”。そこから先は長期保有でテーマの成長を取りに行く。</li>
         </ul>
         <p className="guide-note">
-          ※ 検証では買いシグナルの優位は<strong>3〜6ヶ月で拡大</strong>（6ヶ月で買い +52% vs 全体 +34%・勝率82%／<a className="back-link" href="/verify">検証</a>）。
-          短期（1ヶ月）はほぼ互角で、<strong>長期保有ほど相性が良い</strong>傾向。頻繁な確認は不要です。
+          ※ レジーム拡張(2022〜2026)の検証では、買いシグナルの<strong>安定した優位は「1ヶ月（押し目の入口）」</strong>（買い +5.4% vs 全体 +2.6%・勝率61%／<a className="back-link" href="/verify">検証</a>）。
+          中〜長期では明確な優位は確認できず＝<strong>AIBAは“入口を計る”道具</strong>。長期保有はシグナルが長期を当てるからではなく、<strong>テーマの構造的成長</strong>を取りに行くためのもの。日々の確認は不要です。
         </p>
       </section>
 

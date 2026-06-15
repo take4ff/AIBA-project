@@ -193,11 +193,11 @@ export default async function DomainPage({ params }: { params: { id: string } })
           </p>
         )}
         {prediction && (
-          <p className="forecast-line forecast-sub">
-            🔮 1ヶ月先（短期の参考）：買い場入り確率{" "}
+          <p className="forecast-line">
+            🔮 1ヶ月先（入口の目安）：買い場入り確率{" "}
             <span className="date">{Math.round((prediction.buyzone_prob ?? 0) * 100)}%</span>
             {" / "}予測AIBA <span className="date">{fmt(prediction.pred_aiba)}</span>
-            <span className="forecast-note">（{prediction.horizon_days}営業日先。本ツールは長期保有向け＝下の長期トレンドを重視）</span>
+            <span className="forecast-note">（{prediction.horizon_days}営業日先。検証上AIBAが最も有効な“入口”の時間軸。保有はテーマ成長を長期で）</span>
           </p>
         )}
       </header>
