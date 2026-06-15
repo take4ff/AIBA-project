@@ -21,3 +21,6 @@ out/
 
 # Claude Code ローカル作業ファイル
 .claude/
+
+# 個人用メモ（面接・説明の予行カンペ。非公開）
+NOTES.private.md
