@@ -34,16 +34,16 @@ export default async function VerifyPage() {
   const agg = { ret_1m: aggregate(snaps, "ret_1m"), ret_3m: aggregate(snaps, "ret_3m"), ret_6m: aggregate(snaps, "ret_6m") };
   const hasEval = agg.ret_1m || agg.ret_3m || agg.ret_6m;
 
-  // 記録日ごとに「買い判定 vs 全体」の1ヶ月先リターン平均（時系列グラフ用）
-  const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  // 記録日ごとに「買い判定 / 全体」の 1/3/6ヶ月先リターン平均（時系列グラフ用）
+  const mean = (a: number[]) => (a.length ? Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 100) / 100 : null);
+  const horizonAvg = (rows: SnapshotRow[], k: "ret_1m" | "ret_3m" | "ret_6m", buyOnly: boolean) =>
+    mean(rows.filter((s) => (buyOnly ? s.is_buy : true) && s[k] != null).map((s) => s[k] as number));
   const series = snapDates.map((d) => {
-    const rows = snaps.filter((s) => s.snapshot_date === d && s.ret_1m != null);
-    const buy = mean(rows.filter((s) => s.is_buy).map((s) => s.ret_1m as number));
-    const all = mean(rows.map((s) => s.ret_1m as number));
+    const rows = snaps.filter((s) => s.snapshot_date === d);
     return {
       date: d,
-      buy: buy == null ? null : Math.round(buy * 100) / 100,
-      all: all == null ? null : Math.round(all * 100) / 100,
+      buy_1m: horizonAvg(rows, "ret_1m", true), buy_3m: horizonAvg(rows, "ret_3m", true), buy_6m: horizonAvg(rows, "ret_6m", true),
+      all_1m: horizonAvg(rows, "ret_1m", false), all_3m: horizonAvg(rows, "ret_3m", false), all_6m: horizonAvg(rows, "ret_6m", false),
     };
   });
 
