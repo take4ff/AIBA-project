@@ -23,7 +23,7 @@ from aiba.score import technical_score
 from aiba.technical import _snapshots_from_df
 
 log = logging.getLogger("aiba.portfolio")
-MONTHS = 6
+MONTHS = 48  # 保有銘柄のチャート用に約4年分の履歴を保持
 
 
 def _num(v: Any) -> float | None:
