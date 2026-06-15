@@ -36,6 +36,7 @@
 - **地域タブ**（Global / 米国 / 日本）× **業界ETF / 個別株トグル**。ランキングは最新株価＋各スコアを併記
 - **🧭 テーマ一覧** `/themes`：全テーマを階層別に俯瞰（研究熱量＋業界AIBA）＋**🌱 新興テーマ候補**を熱量実測で動的提示
 - **業界ページ** `/theme/<テーマ>/<地域>`：業界ETF＋有名個別株をAIBA順に比較
+- **📊 検証** `/verify`：IC・買い優位・**定点記録の時系列**＋**疑似エクイティカーブ**（AIBA買い vs ユニバース等ウェイト vs 全世界株ACWI放置）
 - **📖 スコア定義** `/guide`：全指標の計算式・層別重み・見方
 - **☆ ウォッチリスト**（ログイン・本人のみ）、**スコアの見方ガイド**
 - **乖離アラート通知**（任意・Slack）、**運用監視**（日次品質チェック）
@@ -107,7 +108,8 @@ AIBA-project/
 │   ├── user_portfolio.sql       #   user_holdings / ticker_metrics / ticker_fundamentals
 │   ├── backtest.sql             #   バックテスト結果
 │   ├── snapshots.sql            #   スコア定点記録（out-of-sample 評価）
-│   └── candidates.sql           #   新興テーマ候補の熱量
+│   ├── candidates.sql           #   新興テーマ候補の熱量
+│   └── benchmark.sql            #   ベンチマーク指数の終値（ACWI 等）
 ├── backend/                     # データ収集・スコア・予測（Python）
 │   ├── aiba/{config,technical,sentiment,score,forecast,db,pipeline}.py
 │   ├── run_daily.py             #   日次スコア
@@ -115,6 +117,7 @@ AIBA-project/
 │   ├── portfolio_job.py         #   保有ティッカーの過熱度・ファンダ
 │   ├── fundamentals_job.py      #   ユニバース個別株のファンダ
 │   ├── candidates_job.py        #   新興テーマ候補の熱量（週次）
+│   ├── benchmark_job.py         #   ベンチマーク指数（ACWI）の終値取得
 │   ├── backtest.py              #   IC・買い優位の算出（--save）
 │   ├── snapshot.py              #   定点記録の記録＋評価（--backfill）
 │   ├── notify.py                #   Slack 日次アラート（任意）
@@ -125,7 +128,7 @@ AIBA-project/
 └── .github/workflows/{daily,weekly,test}.yml
 ```
 
-日次ジョブの流れ：`run_daily → predict → portfolio_job → fundamentals_job → backtest → snapshot → check_data → notify`（timeout 45分）。
+日次ジョブの流れ：`run_daily → predict → portfolio_job → fundamentals_job → benchmark → backtest → snapshot → check_data → notify`（timeout 45分）。
 週次ジョブ：`candidates_job`（新興テーマ候補の熱量。日々変わらないため週1回で日次の負荷を軽減）。
 
 ---
@@ -175,6 +178,13 @@ Supabase の lint「Leaked Password Protection Disabled」への対応。
 - **6ヶ月**：買い判定 **+52.20%**（全体 +33.72% / 勝率82% / n=142）→ **優位 +18.5pt**
 - **示唆**：通年サンプルでは**中期（3〜6ヶ月）ほど買い優位が拡大**。直近窓のみで見えた「1ヶ月特化・3ヶ月劣後」は期間バイアスだった可能性。
 - ※注意：2025年は強い上昇相場で**絶対リターンは高め**、AIBAは2025分が**粗い30日センチメント**で算出、月次アンカーは**先行期間が重複**（独立試行でない）。相対優位（買い vs 全体）として読むこと。`/verify`（📊検証）で常時更新・確認可能。
+
+### 2026-06 疑似エクイティカーブ（月次リバランス・100スタート）
+`/verify` に時系列グラフを追加（定点記録の推移＋エクイティカーブ）。各記録日の買い判定を1ヶ月保有→翌月入替で複利連結し、ベンチと比較。
+- **最終値**：AIBA買い **163** ／ 監視ユニバース等ウェイト **160** ／ 全世界株ACWI放置 **133**。
+- **示唆**：全面高の2025では **AIBA買いはテック等ウェイトとほぼ互角**（途中まで劣後し終盤で逆転）＝**“選別”の付加価値は限定的**。一方、**テック系は全世界株を明確に上回り**「2025テックの強さ」を裏づけ。
+- **解釈**：AIBAは押し目・逆張り＋乖離型で、**全面高モメンタム相場では不利／分散・調整局面でこそ有利**な想定。今後ばらつきが拡大すれば選別の価値が出るかを定点記録で継続検証する。
+- ※重複・取引コスト未考慮の概算。ベンチは ACWI（全世界株）。
 
 ## とある方からのフィードバック・改善案
 
