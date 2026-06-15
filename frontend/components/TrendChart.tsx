@@ -107,6 +107,7 @@ export default function TrendChart({
           <Line yAxisId="price" type="monotone" dataKey="bb_lower" name="BB下限" stroke={C.tech} strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.5} dot={false} connectNulls hide={!!hidden.bb_lower} />
 
           <Area yAxisId="price" type="monotone" dataKey="close_price" name="株価" stroke={C.price} strokeWidth={2} fill="url(#priceFill)" dot={false} hide={!!hidden.close_price} />
+          <Line yAxisId="price" type="monotone" dataKey="ma200" name="200日線(長期)" stroke="#d97706" strokeWidth={1.6} dot={false} connectNulls hide={!!hidden.ma200} />
 
           <Line yAxisId="score" type="monotone" dataKey="aiba_score" name="AIBA" stroke={C.aiba} strokeWidth={2.8} dot={false} hide={!!hidden.aiba_score} />
           {etfCompare && (

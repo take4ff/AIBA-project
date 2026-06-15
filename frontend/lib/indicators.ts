@@ -78,6 +78,51 @@ export function buyGuide(closes: (number | null)[], maPeriod = 25): BuyGuide {
   return { current, fair: r(ma), pullback: r(ma - sd), support: r(support) };
 }
 
+/** 200日移動平均の系列（不足区間は null）。長期トレンド表示用。 */
+export function sma(closes: (number | null)[], period = 200): (number | null)[] {
+  const out: (number | null)[] = [];
+  for (let i = 0; i < closes.length; i++) {
+    const win = closes.slice(Math.max(0, i - period + 1), i + 1).filter((x): x is number => x != null);
+    if (win.length < period) { out.push(null); continue; }
+    out.push(Math.round((win.reduce((a, b) => a + b, 0) / period) * 100) / 100);
+  }
+  return out;
+}
+
+export interface LongTerm {
+  ma200: number | null;
+  dev200: number | null;     // 200日MAからの乖離 [%]
+  rangePct: number | null;   // 52週レンジ内の位置 0(安値)〜100(高値)
+  zone: "長期の買い場" | "やや割安" | "中立" | "やや割高" | "割高" | null;
+}
+
+/** 長期トレンド/長期押し目の判定（200日MA乖離＋52週レンジ位置）。 */
+export function longTerm(closes: (number | null)[]): LongTerm {
+  const vals = closes.filter((x): x is number => x != null);
+  const last = vals.length ? vals[vals.length - 1] : null;
+  let ma200: number | null = null;
+  let dev200: number | null = null;
+  if (vals.length >= 200 && last != null) {
+    ma200 = vals.slice(-200).reduce((a, b) => a + b, 0) / 200;
+    dev200 = (last - ma200) / ma200 * 100;
+  }
+  let rangePct: number | null = null;
+  if (vals.length >= 120 && last != null) {        // 約半年以上あれば近似的に算出
+    const win = vals.slice(-252);
+    const lo = Math.min(...win), hi = Math.max(...win);
+    if (hi > lo) rangePct = ((last - lo) / (hi - lo)) * 100;
+  }
+  let zone: LongTerm["zone"] = null;
+  if (dev200 != null) {
+    zone = dev200 <= -12 ? "長期の買い場"
+      : dev200 <= -3 ? "やや割安"
+      : dev200 <= 8 ? "中立"
+      : dev200 <= 20 ? "やや割高" : "割高";
+  }
+  const r = (x: number | null) => x == null ? null : Math.round(x * 100) / 100;
+  return { ma200: r(ma200), dev200: r(dev200), rangePct: rangePct == null ? null : Math.round(rangePct), zone };
+}
+
 export function macdLabel(s: MacdState | null): string {
   if (!s) return "—（履歴不足）";
   const tone = s.bullish ? "強気" : "弱気";

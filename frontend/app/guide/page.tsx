@@ -23,6 +23,24 @@ export default function GuidePage() {
 
       <NavTabs active="guide" />
 
+      {/* 運用の考え方（コア・サテライト） */}
+      <section className="layer def-section">
+        <h2 className="layer-title">🧭 このツールの使い方（コア・サテライト戦略）</h2>
+        <p>
+          AIBAは<strong>本業優先・放置/長期保有</strong>を前提に、次世代技術テーマを<strong>サテライト（長期の成長枠）</strong>として育てるためのツールです。
+          短期売買の道具ではありません。
+        </p>
+        <ul className="def-list">
+          <li><strong>コア（放置）</strong>：全世界株などのインデックス投資。資産の土台として基本ほったらかし。</li>
+          <li><strong>サテライト（長期成長枠）</strong>：AIBAで見つけた次世代技術テーマを少額トッピング。<strong>長期で保有</strong>し成長を取りに行く。</li>
+          <li><strong>AIBAの役割</strong>：センチメント先行 × 株価出遅れの<strong>乖離</strong>から「長期の初動・押し目」を拾う。狙いは“安く仕込んで長く持つ”。</li>
+        </ul>
+        <p className="guide-note">
+          ※ 検証では買いシグナルの優位は<strong>3〜6ヶ月で拡大</strong>（6ヶ月で買い +52% vs 全体 +34%・勝率82%／<a className="back-link" href="/verify">検証</a>）。
+          短期（1ヶ月）はほぼ互角で、<strong>長期保有ほど相性が良い</strong>傾向。頻繁な確認は不要です。
+        </p>
+      </section>
+
       {/* AIBAスコア */}
       <section className="layer def-section">
         <h2 className="layer-title">AIBAスコア（0–100）— 総合「買い時度」</h2>
@@ -90,6 +108,17 @@ RSI勢い  = clamp(RSI − max(0, RSI−80) × 2)   ← 80超は過熱で減衰
           <li><strong>センチメント傾き ↑↓</strong>：直近のセンチメント変化。↑=熱量上昇（将来の伸びの先行サイン）、↓=減速、→=横ばい。</li>
           <li><strong>🔀乖離</strong>：センチメント（先行指標）が上昇しているのに株価がまだ追いついていない状態（傾き&gt;1 かつ 株価変化&lt;2%）。本システムが狙う<strong>仕込み好機</strong>のサイン。</li>
         </ul>
+      </section>
+
+      {/* 長期トレンド（放置・長期保有向け） */}
+      <section className="layer def-section">
+        <h2 className="layer-title">長期トレンド指標（放置・長期保有向け）</h2>
+        <p>短期のRSI/25日線に対し、<strong>長期の押し目</strong>を見るための指標。銘柄詳細とチャート（200日線）に表示。</p>
+        <ul className="def-list">
+          <li><strong>200日移動平均乖離 [%]</strong>：長期トレンドからの位置。<strong>マイナスが大きいほど長期の押し目</strong>（−12%以下＝長期の買い場、−3〜+8%＝中立、+20%超＝割高）。</li>
+          <li><strong>52週レンジ内の位置</strong>：直近1年の安値0〜高値100。低いほど長期の値ごろ感。</li>
+        </ul>
+        <p className="guide-note">数ヶ月に一度の「真の長期買い場」を捉える狙い。日々のRSI変動に一喜一憂せず、200日線割れ等の長期サインを重視。</p>
       </section>
 
       {/* 補助テクニカル */}

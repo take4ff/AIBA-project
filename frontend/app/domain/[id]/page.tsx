@@ -4,7 +4,7 @@ import { MetricHistoryRow } from "@/lib/types";
 import TrendChart from "@/components/TrendChart";
 import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
-import { bollinger, macdState, macdLabel, buyGuide } from "@/lib/indicators";
+import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm } from "@/lib/indicators";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
@@ -106,14 +106,17 @@ export default async function DomainPage({ params }: { params: { id: string } })
   // 補助テクニカル（表示のみ）: ボリンジャーバンドを重ね、MACD状態を表示
   const closes = history.map((h) => h.close_price);
   const bb = bollinger(closes);
+  const ma200series = sma(closes, 200);
   const chartData = history.map((h, i) => ({
     ...h,
     bb_upper: bb.upper[i],
     bb_lower: bb.lower[i],
+    ma200: ma200series[i],
     etf_aiba: compare?.aibaByDate[h.trade_date] ?? null,
   }));
   const macd = macdState(closes);
   const guide = buyGuide(closes);
+  const lt = longTerm(closes);
   const cur = region === "jp" ? "JPY" : "USD";
 
   // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
@@ -190,11 +193,11 @@ export default async function DomainPage({ params }: { params: { id: string } })
           </p>
         )}
         {prediction && (
-          <p className="forecast-line">
-            🔮 1ヶ月先予測：買い場入り確率{" "}
+          <p className="forecast-line forecast-sub">
+            🔮 1ヶ月先（短期の参考）：買い場入り確率{" "}
             <span className="date">{Math.round((prediction.buyzone_prob ?? 0) * 100)}%</span>
-            {" / "}予測AIBAスコア <span className="date">{fmt(prediction.pred_aiba)}</span>
-            <span className="forecast-note">（{prediction.horizon_days}営業日先・平均回帰＋確率モデル）</span>
+            {" / "}予測AIBA <span className="date">{fmt(prediction.pred_aiba)}</span>
+            <span className="forecast-note">（{prediction.horizon_days}営業日先。本ツールは長期保有向け＝下の長期トレンドを重視）</span>
           </p>
         )}
       </header>
@@ -215,6 +218,17 @@ export default async function DomainPage({ params }: { params: { id: string } })
           {" / "}押し目買い目安 <span style={{ color: "#15a34a", fontWeight: 700 }}>{money(guide.pullback, cur)}</span>
           {" / "}下値支持(60日安値) {money(guide.support, cur)}
           <span className="forecast-note">（現在 {money(guide.current, cur)}）</span>
+        </p>
+      )}
+      {lt.dev200 != null && (
+        <p className="forecast-line">
+          🛰️ 長期トレンド：200日線乖離 <span className="date">{lt.dev200 >= 0 ? "+" : ""}{lt.dev200}%</span>
+          {lt.rangePct != null && <> ／ 52週レンジ位置 <span className="date">{lt.rangePct}%</span></>}
+          {" → "}
+          <span style={{ fontWeight: 700, color: lt.zone === "長期の買い場" || lt.zone === "やや割安" ? "#15a34a" : lt.zone === "割高" ? "#dc2626" : "var(--muted)" }}>
+            {lt.zone}
+          </span>
+          <span className="forecast-note">（長期保有の目安。200日線を下回るほど長期の押し目）</span>
         </p>
       )}
       {momentum != null && (
