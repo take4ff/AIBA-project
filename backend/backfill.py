@@ -7,9 +7,11 @@
 
 使い方:
     python backfill.py --months 6                 # 全ドメイン・過去6ヶ月
+    python backfill.py --since 2025-01-01          # 暦の期間を明示（2025年〜今日）
+    python backfill.py --since 2025-01-01 --until 2025-12-31  # 2025年だけ
     python backfill.py --months 3 --only quantum_computing   # テーマ指定
-    python backfill.py --months 6 --sentiment-every-days 14
-    python backfill.py --months 6 --no-sentiment  # テクニカルのみ高速
+    python backfill.py --since 2025-01-01 --sentiment-every-days 14
+    python backfill.py --since 2025-01-01 --no-sentiment  # テクニカルのみ高速
 """
 from __future__ import annotations
 
@@ -69,15 +71,16 @@ def sentiment_for(d: date, timeline: list[tuple[date, SentimentSnapshot]]) -> Se
 
 
 def backfill_region(
-    domain: Domain, months: int, timeline: list[tuple[date, SentimentSnapshot]]
+    domain: Domain, fetch_months: int, window: tuple[date, date],
+    timeline: list[tuple[date, SentimentSnapshot]],
 ) -> list[dict[str, Any]]:
-    snaps: list[TechnicalSnapshot] = fetch_technical_history(domain.ticker, months)
+    snaps: list[TechnicalSnapshot] = fetch_technical_history(domain.ticker, fetch_months)
     if not snaps:
         log.warning("[%s] 価格履歴が取得できませんでした。スキップ。", domain.id)
         return []
 
-    cutoff = date.today() - timedelta(days=months * 31)
-    snaps = [s for s in snaps if s.trade_date >= cutoff]
+    since, until = window
+    snaps = [s for s in snaps if since <= s.trade_date <= until]
     if not snaps:
         return []
 
@@ -120,7 +123,12 @@ def write_batched(records: list[dict[str, Any]]) -> None:
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ap = argparse.ArgumentParser()
-    ap.add_argument("--months", type=int, default=6)
+    ap.add_argument("--months", type=int, default=6,
+                    help="今日から遡る月数（--since 指定時は無視）")
+    ap.add_argument("--since", type=str, default=None,
+                    help="開始日 YYYY-MM-DD（例: 2025-01-01。暦の期間を明示指定）")
+    ap.add_argument("--until", type=str, default=None,
+                    help="終了日 YYYY-MM-DD（既定: 今日）")
     ap.add_argument("--sentiment-every-days", type=int, default=30)
     ap.add_argument("--no-sentiment", action="store_true",
                     help="センチメントを取得せず中立(50)で埋める（高速）")
@@ -135,17 +143,30 @@ def main() -> int:
 
     upsert_domains(domains_master(domains))
 
-    start = date.today() - timedelta(days=args.months * 31)
-    end = date.today()
+    # 対象期間の決定：--since 指定なら暦の明示範囲、なければ今日から --months ヶ月
+    today = date.today()
+    until = date.fromisoformat(args.until) if args.until else today
+    if args.since:
+        since = date.fromisoformat(args.since)
+    else:
+        since = today - timedelta(days=args.months * 31)
+    if since > until:
+        raise SystemExit(f"--since ({since}) が --until ({until}) より後です。")
+
+    # yfinance は今日を終点に遡るため、since に届くだけの月数を確保して取得後に窓で絞る
+    fetch_months = max(args.months, (today - since).days // 31 + 2)
+    window = (since, until)
+    log.info("対象期間: %s 〜 %s（取得 %dヶ月分から抽出）", since, until, fetch_months)
+
     total = 0
     for theme_id, group in group_by_theme(domains).items():
         # センチメントはテーマで1回だけ算出し、全地域で共有
         timeline = build_sentiment_timeline(
             theme_id, group[0].github_keywords, group[0].arxiv_keywords,
-            start, end, args.sentiment_every_days, not args.no_sentiment,
+            since, until, args.sentiment_every_days, not args.no_sentiment,
         )
         for domain in group:
-            records = backfill_region(domain, args.months, timeline)
+            records = backfill_region(domain, fetch_months, window, timeline)
             if records:
                 write_batched(records)
                 total += len(records)
