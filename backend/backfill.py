@@ -52,10 +52,17 @@ def build_sentiment_timeline(
     if anchors[-1] != end:
         anchors.append(end)
 
+    from dataclasses import replace
+
     timeline: list[tuple[date, SentimentSnapshot]] = []
+    prev = NEUTRAL_SENT.sentiment_score  # 直前アンカーの統合値（forward-fill用）
     for i, a in enumerate(anchors, 1):
         log.info("  [%s] センチメント %d/%d (as_of=%s)", theme_id, i, len(anchors), a)
-        timeline.append((a, fetch_sentiment(gh_kw, ax_kw, as_of=_to_utc(a))))
+        snap = fetch_sentiment(gh_kw, ax_kw, as_of=_to_utc(a))
+        if snap.sentiment_score is None:  # 有効信号不足 → 直前アンカー値で補完
+            snap = replace(snap, sentiment_score=prev)
+        prev = snap.sentiment_score
+        timeline.append((a, snap))
     return timeline
 
 

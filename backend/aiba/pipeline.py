@@ -10,11 +10,12 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from typing import Any
 
 from .config import Domain, group_by_theme, load_domains
 from .score import compute_aiba_score
-from .sentiment import SentimentSnapshot, fetch_sentiment
+from .sentiment import NEUTRAL, SentimentSnapshot, fetch_sentiment
 from .technical import fetch_technical
 
 logger = logging.getLogger("aiba.pipeline")
@@ -50,16 +51,28 @@ def process_domain(domain: Domain, sent: SentimentSnapshot) -> dict[str, Any] | 
     }
 
 
-def run_pipeline(domains: list[Domain] | None = None) -> list[dict[str, Any]]:
-    """全ドメインを処理してレコードのリストを返す。"""
+def run_pipeline(
+    domains: list[Domain] | None = None,
+    last_sentiment: dict[str, float] | None = None,
+) -> list[dict[str, Any]]:
+    """全ドメインを処理してレコードのリストを返す。
+
+    last_sentiment: テーマ別の直近センチメント（forward-fill用）。当日の有効信号が
+    少なすぎて統合値が None になった場合に、この前回値で埋める（無ければ中立50）。
+    """
     if domains is None:
         domains = load_domains()
+    last_sentiment = last_sentiment or {}
 
     records: list[dict[str, Any]] = []
     for theme_id, group in group_by_theme(domains).items():
         # センチメントはテーマで1回だけ取得して地域間で共有
         logger.info("[%s] センチメント指標を取得中（地域共通）", theme_id)
         sent = fetch_sentiment(group[0].github_keywords, group[0].arxiv_keywords)
+        if sent.sentiment_score is None:  # 有効信号<MIN_SIGNALS → 前回値でフォワードフィル
+            ff = last_sentiment.get(theme_id, NEUTRAL)
+            logger.warning("[%s] 有効信号が不足。センチメントを前回値 %.2f で補完", theme_id, ff)
+            sent = replace(sent, sentiment_score=ff)
         for domain in group:
             try:
                 record = process_domain(domain, sent)

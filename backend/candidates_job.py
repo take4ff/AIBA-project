@@ -36,10 +36,11 @@ def main() -> int:
     for c in candidates:
         # キーワードは自然言語。GitHub/arXiv 双方の検索に流用する。
         snap = fetch_sentiment(c.keywords, c.keywords)
-        log.info("[%s] 熱量=%.2f", c.id, snap.sentiment_score)
+        heat = 50.0 if snap.sentiment_score is None else snap.sentiment_score  # 信号不足は中立
+        log.info("[%s] 熱量=%.2f", c.id, heat)
         rows.append({
             "candidate_id": c.id, "name": c.name, "keywords": c.keywords,
-            "heat_score": round(snap.sentiment_score, 2), "updated_at": now,
+            "heat_score": round(heat, 2), "updated_at": now,
         })
 
     client.table("candidate_themes").upsert(rows, on_conflict="candidate_id").execute()

@@ -33,11 +33,19 @@ NEUTRAL = 50.0
 _OS_NS = "{http://a9.com/-/spec/opensearch/1.1/}"
 
 
+# 統合時の重み。GitHub/arXiv は「研究熱量の本体」として高く、HN/Trends/特許は
+# ノイズが大きく単独支配しやすいため補助として低く扱う（単一ソース過大評価の抑制）。
+WEIGHT_CORE = 1.0   # github / arxiv
+WEIGHT_SUPP = 0.4   # hackernews / trends / patents
+# 有効信号がこの数未満の日は統合値を出さず None（呼び出し側でフォワードフィル）。
+MIN_SIGNALS = 2
+
+
 @dataclass
 class SentimentSnapshot:
     github_score: float | None   # 0-100（増加率ベース。取得不可は None）
     arxiv_score: float | None    # 0-100
-    sentiment_score: float       # 統合 0-100（利用可能な指標の平均）
+    sentiment_score: float | None  # 統合 0-100（加重平均。有効信号<MIN_SIGNALS は None）
     hackernews_score: float | None = None  # 0-100（HN注目ストーリー増加率）
     trends_score: float | None = None      # 0-100（Google Trends 検索関心の増加率）
     patents_score: float | None = None     # 0-100（特許公開件数の増加率・EPO OPS）
@@ -53,6 +61,21 @@ def _growth_to_score(recent: int, prior: int) -> float:
     x = math.log(ratio)
     score = 100.0 / (1.0 + math.exp(-1.5 * x))  # 比≈2倍で約75点
     return round(score, 4)
+
+
+# 増加率は母数が小さいと1〜2件の差で乱高下する（例: 直近2件 vs 前期0件→比3→84点）。
+# 十分な活動量がある時のみ採用し、足りなければ None（＝信頼できない信号として除外）。
+MIN_GROWTH_EVENTS = 10  # 直近+前期の合計がこれ未満なら除外
+MIN_GROWTH_PRIOR = 2    # 前期がこれ未満（特に0件）だと比が爆発するため除外
+
+
+def _growth_score_guarded(recent_total: int, prior_total: int, ok: bool) -> float | None:
+    """十分なボリュームがある時だけ増加率スコアを返す。低ボリュームは None。"""
+    if not ok:
+        return None
+    if recent_total + prior_total < MIN_GROWTH_EVENTS or prior_total < MIN_GROWTH_PRIOR:
+        return None
+    return _growth_to_score(recent_total, prior_total)
 
 
 def _windows(as_of: datetime | None) -> tuple[datetime, datetime, datetime]:
@@ -181,7 +204,7 @@ def fetch_arxiv_score(keywords: list[str], as_of: datetime | None = None) -> flo
         prior_total += prior
         ok = True
 
-    return _growth_to_score(recent_total, prior_total) if ok else None
+    return _growth_score_guarded(recent_total, prior_total, ok)
 
 
 # ----------------------------- Hacker News -----------------------------
@@ -227,7 +250,7 @@ def fetch_hackernews_score(keywords: list[str], as_of: datetime | None = None) -
         prior_total += prior
         ok = True
 
-    return _growth_to_score(recent_total, prior_total) if ok else None
+    return _growth_score_guarded(recent_total, prior_total, ok)
 
 
 # ----------------------------- Google Trends -----------------------------
@@ -352,7 +375,7 @@ def fetch_patents_score(keywords: list[str], as_of: datetime | None = None) -> f
         prior_total += prior
         ok = True
 
-    return _growth_to_score(recent_total, prior_total) if ok else None
+    return _growth_score_guarded(recent_total, prior_total, ok)
 
 
 def fetch_sentiment(
@@ -371,8 +394,16 @@ def fetch_sentiment(
     gt = fetch_google_trends_score(arxiv_keywords, as_of)
     pt = fetch_patents_score(arxiv_keywords, as_of)
 
-    available = [s for s in (gh, ax, hn, gt, pt) if s is not None]
-    combined = round(sum(available) / len(available), 2) if available else NEUTRAL
+    # 本体(GitHub/arXiv)と補助(HN/Trends/特許)を重み付けし、取得できた指標のみで加重平均。
+    weighted = [(s, w) for s, w in (
+        (gh, WEIGHT_CORE), (ax, WEIGHT_CORE),
+        (hn, WEIGHT_SUPP), (gt, WEIGHT_SUPP), (pt, WEIGHT_SUPP),
+    ) if s is not None]
+    # 有効信号が少なすぎる日は単一ソースの極値を刻まないよう None（後段でフォワードフィル）。
+    if len(weighted) < MIN_SIGNALS:
+        combined = None
+    else:
+        combined = round(sum(s * w for s, w in weighted) / sum(w for _, w in weighted), 2)
     return SentimentSnapshot(
         github_score=gh, arxiv_score=ax, sentiment_score=combined,
         hackernews_score=hn, trends_score=gt, patents_score=pt,

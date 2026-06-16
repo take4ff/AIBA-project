@@ -17,6 +17,32 @@ from aiba.db import upsert_domains, write_metrics
 from aiba.pipeline import domains_master, run_pipeline
 
 
+def _last_sentiment_by_theme(domains) -> dict[str, float]:
+    """テーマ別の直近センチメント（非null）を取得する（forward-fill用）。"""
+    if not settings.has_supabase:
+        return {}
+    from supabase import create_client
+
+    client = create_client(settings.supabase_url, settings.supabase_key)
+    dom2theme = {d.id: d.theme_id for d in domains}
+    rows = (
+        client.table("daily_metrics")
+        .select("domain_id,trade_date,sentiment_score")
+        .not_.is_("sentiment_score", "null")
+        .order("trade_date", desc=True)
+        .limit(2000)
+        .execute()
+        .data
+        or []
+    )
+    out: dict[str, float] = {}
+    for r in rows:  # trade_date 降順なのでテーマ初出が最新
+        theme = dom2theme.get(r["domain_id"])
+        if theme and theme not in out and r["sentiment_score"] is not None:
+            out[theme] = float(r["sentiment_score"])
+    return out
+
+
 def main() -> int:
     logging.basicConfig(
         level=logging.INFO,
@@ -29,7 +55,8 @@ def main() -> int:
 
     upsert_domains(domains_master(domains))
 
-    records = run_pipeline(domains)
+    last_sent = _last_sentiment_by_theme(domains)
+    records = run_pipeline(domains, last_sentiment=last_sent)
     if not records:
         log.error("有効なレコードが0件でした。書き込みを中止します。")
         return 1

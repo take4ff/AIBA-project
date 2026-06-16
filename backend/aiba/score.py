@@ -88,7 +88,8 @@ def compute_aiba_score(
     w_tech, w_sent = LAYER_WEIGHTS.get(layer, (0.5, 0.5))
 
     t_score = technical_score(tech)
-    s_score = sent.sentiment_score
+    # 有効信号不足で統合値が None の場合は中立扱い（呼び出し側で前回値補完が原則）。
+    s_score = 50.0 if sent.sentiment_score is None else sent.sentiment_score
 
     base = w_tech * t_score + w_sent * s_score
     final = _clamp(base - rsi_penalty(tech.rsi_14, tech.trend_strength))
