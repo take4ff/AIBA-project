@@ -54,11 +54,12 @@ def metrics_for(ticker: str) -> list[dict[str, Any]]:
             "rsi_14": s.rsi_14, "ma_deviation": s.ma_deviation,
             "overheat": round(100 - technical_score(s), 2),
         })
-    if not rows:  # 新規上場等で履歴不足でも最新終値だけは残す
-        close = df["Close"].dropna()
-        if not close.empty:
-            rows.append({"ticker": ticker, "trade_date": close.index[-1].date(),
-                         "close_price": float(close.iloc[-1]),
+    if not rows:  # 新規上場等で履歴不足：指標は出せないが終値は取得できた全期間ぶん残す
+        for idx, v in df["Close"].dropna().items():
+            if pd.Timestamp(idx) < cutoff:
+                continue
+            rows.append({"ticker": ticker, "trade_date": idx.date(),
+                         "close_price": float(v),
                          "rsi_14": None, "ma_deviation": None, "overheat": None})
     return rows
 
