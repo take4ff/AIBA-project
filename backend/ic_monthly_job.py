@@ -29,6 +29,7 @@ def main() -> int:
 
     df = add_forward_return(load(client), HORIZON)
     df = df.copy()
+    df["trade_date"] = df["trade_date"].astype(str).str.slice(0, 10)  # datetime/str 両対応で正規化
     df["ym"] = df["trade_date"].str[:7]
 
     rows = []
