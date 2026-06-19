@@ -34,9 +34,17 @@ export interface TickerFundamentals {
 }
 
 export async function getHoldings(): Promise<UserHolding[]> {
-  const { data } = await supabaseBrowser
+  // 投信カラム（is_fund/acquired_on/principal）が未マイグレーションでも保有表示が壊れないよう、
+  // 取得に失敗したら基本カラムのみで再取得する。
+  const full = await supabaseBrowser
     .from("user_holdings")
     .select("ticker,name,currency,avg_cost,shares,is_fund,acquired_on,principal")
+    .order("created_at", { ascending: true });
+  if (!full.error) return (full.data ?? []) as UserHolding[];
+
+  const { data } = await supabaseBrowser
+    .from("user_holdings")
+    .select("ticker,name,currency,avg_cost,shares")
     .order("created_at", { ascending: true });
   return (data ?? []) as UserHolding[];
 }
@@ -44,18 +52,28 @@ export async function getHoldings(): Promise<UserHolding[]> {
 export async function addHolding(h: UserHolding): Promise<string | null> {
   const { data: u } = await supabaseBrowser.auth.getUser();
   if (!u.user) return "ログインが必要です";
-  const { error } = await supabaseBrowser.from("user_holdings").insert({
+  const base = {
     user_id: u.user.id,
     ticker: h.ticker,
     name: h.name,
     currency: h.currency,
     avg_cost: h.avg_cost,
     shares: h.shares,
+  };
+  const { error } = await supabaseBrowser.from("user_holdings").insert({
+    ...base,
     is_fund: h.is_fund ?? false,
     acquired_on: h.acquired_on ?? null,
     principal: h.principal ?? null,
   });
-  return error?.message ?? null;
+  if (!error) return null;
+  // 投信カラム未マイグレーション時：投信は不可、株/ETFは基本カラムで登録
+  if (/is_fund|acquired_on|principal/.test(error.message)) {
+    if (h.is_fund) return "投信機能のDB更新が未適用です。db/user_portfolio.sql のマイグレーションを実行してください。";
+    const retry = await supabaseBrowser.from("user_holdings").insert(base);
+    return retry.error?.message ?? null;
+  }
+  return error.message;
 }
 
 export async function updateHolding(ticker: string, patch: Partial<UserHolding>): Promise<string | null> {
