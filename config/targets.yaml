@@ -231,11 +231,11 @@ domains:
       global: { etf: { ticker: DTCR } }
       us:
         etf: { ticker: SRVR }
-        stocks: [{ ticker: EQIX, name: Equinix }, { ticker: DLR, name: Digital Realty }, { ticker: IRM, name: Iron Mountain }, { ticker: MARA, name: MARA Holdings }]
+        stocks: [{ ticker: EQIX, name: Equinix }, { ticker: DLR, name: Digital Realty }, { ticker: IRM, name: Iron Mountain }, { ticker: MARA, name: MARA Holdings }, { ticker: CRWV, name: CoreWeave }, { ticker: NBIS, name: Nebius }, { ticker: APLD, name: Applied Digital }]
       jp:
         stocks: [{ ticker: "3774.T", name: IIJ }, { ticker: "3776.T", name: ブロードバンドタワー }]
       row:
-        stocks: [{ ticker: GDS, name: GDS（中国） }]
+        stocks: [{ ticker: GDS, name: GDS（中国） }, { ticker: VNET, name: 21Vianet（中国） }]
     github_keywords: ["data center", "infrastructure as code", "server provisioning"]
     arxiv_keywords: ["data center networking", "datacenter energy", "server consolidation"]
 
