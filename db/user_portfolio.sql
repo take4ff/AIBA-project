@@ -19,6 +19,16 @@ create table if not exists user_holdings (
     primary key (user_id, ticker)
 );
 
+-- 投資信託（基準価額の無料安定APIが無いため、同じ指数を追う代用ETFで評価する）。
+--   ticker      = 代用ETF/指数のティッカー（スコア・シグナル・チャートはこれで算出）
+--   name        = 投信の表示名
+--   is_fund     = 投信フラグ（true で「投信(代用)」表示・評価ロジック切替）
+--   acquired_on = 取得日（代用ETFのこの日からのリターンで評価額・損益を概算）
+--   principal   = 取得額（投資元本・通貨建て総額）。shares は口数（任意・表示用）
+alter table user_holdings add column if not exists is_fund     boolean not null default false;
+alter table user_holdings add column if not exists acquired_on date;
+alter table user_holdings add column if not exists principal   numeric(18, 4);
+
 alter table user_holdings enable row level security;
 drop policy if exists "own holdings select" on user_holdings;
 create policy "own holdings select" on user_holdings for select using (auth.uid() = user_id);

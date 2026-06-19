@@ -6,20 +6,25 @@ import { useAuth } from "@/components/AuthProvider";
 import NavTabs from "@/components/NavTabs";
 import {
   UserHolding, TickerMetric, TickerFundamentals,
-  getHoldings, getTickerData, getTickerThemes, addHolding, updateHolding, deleteHolding,
+  getHoldings, getTickerData, getTickerThemes, getFundAcqCloses, addHolding, updateHolding, deleteHolding,
 } from "@/lib/user-portfolio";
 import { assessSell, assessStopLoss, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
 
-const EMPTY = { ticker: "", name: "", currency: "JPY" as "JPY" | "USD", avg_cost: "", shares: "" };
+const EMPTY = {
+  kind: "stock" as "stock" | "fund",
+  ticker: "", name: "", currency: "JPY" as "JPY" | "USD", avg_cost: "", shares: "",
+  acquired_on: "", principal: "",
+};
 
 export default function PortfolioPage() {
   const { user, ready } = useAuth();
   const [holdings, setHoldings] = useState<UserHolding[]>([]);
   const [metrics, setMetrics] = useState<Map<string, TickerMetric>>(new Map());
   const [funds, setFunds] = useState<Map<string, TickerFundamentals>>(new Map());
+  const [fundAcq, setFundAcq] = useState<Map<string, number>>(new Map());  // 投信: 代用ETFの取得日終値
   const [themeMap, setThemeMap] = useState<Map<string, { theme: string; label: string; region: string; name: string }>>(new Map());
   const [form, setForm] = useState({ ...EMPTY });
   const [err, setErr] = useState<string | null>(null);
@@ -43,6 +48,9 @@ export default function PortfolioPage() {
     setMetrics(metrics);
     setFunds(funds);
     setThemeMap(tm);
+    // 投信は代用ETFの取得日終値を取り、リターンで評価
+    const fundList = hs.filter((h) => h.is_fund && h.acquired_on).map((h) => ({ ticker: h.ticker, acquired_on: h.acquired_on as string }));
+    setFundAcq(fundList.length ? await getFundAcqCloses(fundList) : new Map());
   }, []);
 
   useEffect(() => { if (user) reload(); }, [user, reload]);
@@ -52,10 +60,15 @@ export default function PortfolioPage() {
     setErr(null);
     const ticker = form.ticker.trim();
     if (!ticker) return;
+    const isFund = form.kind === "fund";
+    if (isFund && !form.acquired_on) { setErr("投信は取得日を入力してください（代用ETFのリターンで評価します）。"); return; }
     const msg = await addHolding({
       ticker, name: form.name.trim() || ticker, currency: form.currency,
-      avg_cost: form.avg_cost ? Number(form.avg_cost) : null,
+      avg_cost: !isFund && form.avg_cost ? Number(form.avg_cost) : null,
       shares: form.shares ? Number(form.shares) : null,
+      is_fund: isFund,
+      acquired_on: isFund ? form.acquired_on : null,
+      principal: isFund && form.principal ? Number(form.principal) : null,
     });
     if (msg) setErr(msg);
     else { setForm({ ...EMPTY }); reload(); }
@@ -90,18 +103,35 @@ export default function PortfolioPage() {
       ) : (
         <>
           <form className="pf-add" onSubmit={onAdd}>
-            <input className="login-input" placeholder="ティッカー（例: NVDA / 8035.T）" value={form.ticker}
+            <select className="login-input" value={form.kind}
+              onChange={(e) => setForm({ ...form, kind: e.target.value as "stock" | "fund" })}>
+              <option value="stock">株/ETF</option><option value="fund">投信</option>
+            </select>
+            <input className="login-input" placeholder={form.kind === "fund" ? "代用ETF/指数（例: VOO / 1655.T）" : "ティッカー（例: NVDA / 8035.T）"} value={form.ticker}
               onChange={(e) => setForm({ ...form, ticker: e.target.value })} />
-            <input className="login-input" placeholder="銘柄名（任意）" value={form.name}
+            <input className="login-input" placeholder={form.kind === "fund" ? "投信名（例: eMAXIS Slim 米国株式）" : "銘柄名（任意）"} value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <select className="login-input" value={form.currency}
               onChange={(e) => setForm({ ...form, currency: e.target.value as "JPY" | "USD" })}>
               <option value="JPY">JPY</option><option value="USD">USD</option>
             </select>
-            <input className="login-input" type="number" step="any" placeholder="平均取得単価" value={form.avg_cost}
-              onChange={(e) => setForm({ ...form, avg_cost: e.target.value })} />
-            <input className="login-input" type="number" step="any" placeholder="株数（任意）" value={form.shares}
-              onChange={(e) => setForm({ ...form, shares: e.target.value })} />
+            {form.kind === "fund" ? (
+              <>
+                <input className="login-input" type="date" title="取得日" value={form.acquired_on}
+                  onChange={(e) => setForm({ ...form, acquired_on: e.target.value })} />
+                <input className="login-input" type="number" step="any" placeholder="取得額（投資元本）" value={form.principal}
+                  onChange={(e) => setForm({ ...form, principal: e.target.value })} />
+                <input className="login-input" type="number" step="any" placeholder="口数（任意）" value={form.shares}
+                  onChange={(e) => setForm({ ...form, shares: e.target.value })} />
+              </>
+            ) : (
+              <>
+                <input className="login-input" type="number" step="any" placeholder="平均取得単価" value={form.avg_cost}
+                  onChange={(e) => setForm({ ...form, avg_cost: e.target.value })} />
+                <input className="login-input" type="number" step="any" placeholder="株数（任意）" value={form.shares}
+                  onChange={(e) => setForm({ ...form, shares: e.target.value })} />
+              </>
+            )}
             <button className="kind-active login-submit" type="submit">追加</button>
           </form>
           {err && <p style={{ color: "#dc2626", fontSize: 13 }}>{err}</p>}
@@ -131,7 +161,11 @@ export default function PortfolioPage() {
                     const m = metrics.get(h.ticker);
                     const f = funds.get(h.ticker);
                     const close = m?.close_price ?? null;
-                    const ret = h.avg_cost && close ? ((close - h.avg_cost) / h.avg_cost) * 100 : null;
+                    // 投信は代用ETFの取得日→現在のリターンで損益を概算。株/ETFは取得単価比。
+                    const acq = h.is_fund ? fundAcq.get(h.ticker) ?? null : null;
+                    const ret = h.is_fund
+                      ? (acq && close ? ((close - acq) / acq) * 100 : null)
+                      : (h.avg_cost && close ? ((close - h.avg_cost) / h.avg_cost) * 100 : null);
                     const a = assessSell({
                       overheat: m?.overheat ?? null,
                       forward_pe: f?.forward_pe, trailing_pe: f?.trailing_pe,
@@ -149,15 +183,17 @@ export default function PortfolioPage() {
                           ) : (
                             <Link href={`/portfolio/${encodeURIComponent(h.ticker)}`}>
                               <span className="domain-name">{(h.name && h.name !== h.ticker) ? h.name : (themeMap.get(h.ticker)?.name ?? h.ticker)}</span>
-                              <span className="ticker">{h.ticker}</span>
+                              <span className="ticker">{h.is_fund ? `投信 ・ 代用 ${h.ticker}` : h.ticker}</span>
                             </Link>
                           )}
                         </td>
                         <td className="num">
-                          {editing ? (
+                          {editing && !h.is_fund ? (
                             <input className="login-input" style={{ padding: "4px 6px", width: 90 }} type="number" step="any"
                               value={edit!.avg_cost} onChange={(ev) => setEdit({ ...edit!, avg_cost: ev.target.value })} />
-                          ) : money(h.avg_cost, h.currency)}
+                          ) : h.is_fund
+                            ? <span title="取得額（投資元本）">{money(h.principal ?? null, h.currency)}</span>
+                            : money(h.avg_cost, h.currency)}
                         </td>
                         <td className="num">
                           {editing ? (
@@ -203,7 +239,11 @@ export default function PortfolioPage() {
 
           <p className="guide-note" style={{ marginTop: 14 }}>
             ※ 監視ユニバースの銘柄は追加後すぐにスコア（過熱度・売りシグナル）が表示されます。ユニバース外の銘柄は翌営業日の日次バッチで反映、決算・PER等も同様。
-            売りシグナル＝テクニカル過熱＋ファンダ（割高/減益）＋決算接近。投信（基準価額）は対象外、上場ETF/個別株のティッカーを登録してください。
+            売りシグナル＝テクニカル過熱＋ファンダ（割高/減益）＋決算接近。
+          </p>
+          <p className="guide-note">
+            ※ <strong>投信</strong>は基準価額の無料安定APIが無いため、<strong>同じ指数を追う代用ETF/指数</strong>で評価します（例: eMAXIS Slim 米国株式→VOO等）。
+            インデックス投信なら指数が同じなのでスコア・シグナルは妥当。損益・評価は<strong>代用ETFの取得日からのリターンで概算</strong>（手数料・為替ヘッジ・分配金の差は未考慮）。口数は記録用です。
           </p>
           <p className="guide-note">
             ※ <strong>🔻 損切り検討</strong>＝取得単価からの下落率が損切りラインを超えた状態。過熱度ベースの売りシグナルは

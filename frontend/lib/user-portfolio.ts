@@ -3,11 +3,14 @@
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export interface UserHolding {
-  ticker: string;
+  ticker: string;            // 個別株/ETFはそのティッカー。投信は代用ETF/指数のティッカー
   name: string | null;
   currency: "JPY" | "USD";
   avg_cost: number | null;
-  shares: number | null;
+  shares: number | null;     // 株数（投信のときは口数・任意）
+  is_fund?: boolean;         // 投信フラグ
+  acquired_on?: string | null;  // 取得日（投信の評価に使用）
+  principal?: number | null;    // 取得額（投信の投資元本）
 }
 
 export interface TickerMetric {
@@ -33,7 +36,7 @@ export interface TickerFundamentals {
 export async function getHoldings(): Promise<UserHolding[]> {
   const { data } = await supabaseBrowser
     .from("user_holdings")
-    .select("ticker,name,currency,avg_cost,shares")
+    .select("ticker,name,currency,avg_cost,shares,is_fund,acquired_on,principal")
     .order("created_at", { ascending: true });
   return (data ?? []) as UserHolding[];
 }
@@ -48,6 +51,9 @@ export async function addHolding(h: UserHolding): Promise<string | null> {
     currency: h.currency,
     avg_cost: h.avg_cost,
     shares: h.shares,
+    is_fund: h.is_fund ?? false,
+    acquired_on: h.acquired_on ?? null,
+    principal: h.principal ?? null,
   });
   return error?.message ?? null;
 }
@@ -113,6 +119,55 @@ export async function getTickerData(tickers: string[]): Promise<{
   const funds = new Map<string, TickerFundamentals>();
   for (const r of (f ?? []) as TickerFundamentals[]) funds.set(r.ticker, r);
   return { metrics, funds };
+}
+
+/**
+ * 投信の取得日における代用ETFの終値を取得（取得日以前で最も新しい終値）。
+ * ticker_metrics（保有ティッカーの履歴）を優先し、無ければ daily_metrics（ユニバース）で補完。
+ * 返り値: 代用ticker → 取得日終値。これと最新終値の比でリターンを概算する。
+ */
+export async function getFundAcqCloses(
+  funds: { ticker: string; acquired_on: string }[],
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  if (funds.length === 0) return out;
+  const tickers = [...new Set(funds.map((f) => f.ticker))];
+  const minDate = funds.reduce((a, f) => (f.acquired_on < a ? f.acquired_on : a), funds[0].acquired_on);
+
+  // 1) ticker_metrics（代用ETFの履歴）
+  const byTicker = new Map<string, { d: string; c: number }[]>();
+  const { data: tm } = await supabaseBrowser.from("ticker_metrics")
+    .select("ticker,trade_date,close_price").in("ticker", tickers).gte("trade_date", minDate);
+  for (const r of tm ?? []) {
+    if ((r as any).close_price == null) continue;
+    const arr = byTicker.get((r as any).ticker) ?? [];
+    arr.push({ d: (r as any).trade_date, c: Number((r as any).close_price) });
+    byTicker.set((r as any).ticker, arr);
+  }
+  // 2) ユニバースの daily_metrics で不足分を補完
+  const missing = tickers.filter((t) => !byTicker.has(t));
+  if (missing.length) {
+    const { data: doms } = await supabaseBrowser.from("domains").select("id,ticker").in("ticker", missing);
+    const tickerByDomain = new Map<string, string>();
+    for (const d of doms ?? []) tickerByDomain.set((d as any).id, (d as any).ticker);
+    if (tickerByDomain.size) {
+      const { data: dm } = await supabaseBrowser.from("daily_metrics")
+        .select("domain_id,trade_date,close_price").in("domain_id", [...tickerByDomain.keys()]).gte("trade_date", minDate);
+      for (const r of dm ?? []) {
+        if ((r as any).close_price == null) continue;
+        const tk = tickerByDomain.get((r as any).domain_id)!;
+        const arr = byTicker.get(tk) ?? [];
+        arr.push({ d: (r as any).trade_date, c: Number((r as any).close_price) });
+        byTicker.set(tk, arr);
+      }
+    }
+  }
+  // 取得日以前で最も新しい終値を選ぶ
+  for (const f of funds) {
+    const arr = (byTicker.get(f.ticker) ?? []).filter((x) => x.d <= f.acquired_on).sort((a, b) => (a.d < b.d ? 1 : -1));
+    if (arr.length) out.set(f.ticker, arr[0].c);
+  }
+  return out;
 }
 
 /** ticker → テーマ（slug/表示名）・地域。ユニバース外は未登録。配分分析用。 */
