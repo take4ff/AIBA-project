@@ -117,7 +117,7 @@ export default function PortfolioPage() {
           )}
 
           {holdings.length === 0 ? (
-            <div className="notice" style={{ marginTop: 12 }}>銘柄を追加してください。指標は翌日の日次バッチで反映されます。</div>
+            <div className="notice" style={{ marginTop: 12 }}>銘柄を追加してください。監視ユニバースの銘柄は即時にスコアが表示され、ユニバース外は翌営業日の日次バッチで反映されます。</div>
           ) : (
             <div className="table-scroll" style={{ marginTop: 16 }}>
               <table className="table">
@@ -202,8 +202,8 @@ export default function PortfolioPage() {
           )}
 
           <p className="guide-note" style={{ marginTop: 14 }}>
-            ※ 過熱度・決算・PER等は翌営業日の日次バッチで反映。売りシグナル＝テクニカル過熱＋ファンダ（割高/減益）＋決算接近。
-            投信（基準価額）は対象外、上場ETF/個別株のティッカーを登録してください。
+            ※ 監視ユニバースの銘柄は追加後すぐにスコア（過熱度・売りシグナル）が表示されます。ユニバース外の銘柄は翌営業日の日次バッチで反映、決算・PER等も同様。
+            売りシグナル＝テクニカル過熱＋ファンダ（割高/減益）＋決算接近。投信（基準価額）は対象外、上場ETF/個別株のティッカーを登録してください。
           </p>
           <p className="guide-note">
             ※ <strong>🔻 損切り検討</strong>＝取得単価からの下落率が損切りラインを超えた状態。過熱度ベースの売りシグナルは

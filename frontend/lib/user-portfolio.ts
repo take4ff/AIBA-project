@@ -79,6 +79,37 @@ export async function getTickerData(tickers: string[]): Promise<{
     const cur = metrics.get(r.ticker);
     if (!cur || r.trade_date > cur.trade_date) metrics.set(r.ticker, r);
   }
+
+  // ticker_metrics（日次バッチ生成・翌営業日反映）が未生成の銘柄は、
+  // ユニバースに存在すれば daily_metrics から即時補完する（追加直後でもスコア表示）。
+  const missing = tickers.filter((t) => !metrics.has(t));
+  if (missing.length) {
+    const { data: doms } = await supabaseBrowser.from("domains").select("id,ticker").in("ticker", missing);
+    const tickerByDomain = new Map<string, string>();
+    for (const d of doms ?? []) tickerByDomain.set((d as any).id, (d as any).ticker);
+    const domainIds = [...tickerByDomain.keys()];
+    if (domainIds.length) {
+      const { data: dm } = await supabaseBrowser.from("daily_metrics")
+        .select("domain_id,trade_date,close_price,rsi_14,ma_deviation,technical_score")
+        .in("domain_id", domainIds).gte("trade_date", cutoff);
+      const latest = new Map<string, any>();
+      for (const r of dm ?? []) {
+        const cur = latest.get(r.domain_id);
+        if (!cur || r.trade_date > cur.trade_date) latest.set(r.domain_id, r);
+      }
+      for (const [domId, r] of latest) {
+        const tk = tickerByDomain.get(domId)!;
+        const cur = metrics.get(tk);
+        if (cur && cur.trade_date >= r.trade_date) continue;  // ticker側が新しければ尊重
+        metrics.set(tk, {
+          ticker: tk, trade_date: r.trade_date, close_price: r.close_price,
+          rsi_14: r.rsi_14, ma_deviation: r.ma_deviation,
+          overheat: r.technical_score != null ? Math.round((100 - r.technical_score) * 100) / 100 : null,
+        });
+      }
+    }
+  }
+
   const funds = new Map<string, TickerFundamentals>();
   for (const r of (f ?? []) as TickerFundamentals[]) funds.set(r.ticker, r);
   return { metrics, funds };
