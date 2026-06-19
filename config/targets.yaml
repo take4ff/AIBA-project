@@ -208,6 +208,37 @@ domains:
     github_keywords: ["solid state battery", "battery management", "lithium battery"]
     arxiv_keywords: ["solid-state battery", "lithium metal anode", "battery electrolyte"]
 
+  # ---------------- 常時需要（ディフェンシブ成長） ----------------
+  - id: cybersecurity
+    name: サイバーセキュリティ
+    layer: 2
+    instruments:
+      global: { etf: { ticker: CIBR } }
+      us:
+        etf: { ticker: HACK }
+        stocks: [{ ticker: CRWD, name: CrowdStrike }, { ticker: PANW, name: Palo Alto Networks }, { ticker: ZS, name: Zscaler }, { ticker: FTNT, name: Fortinet }, { ticker: S, name: SentinelOne }]
+      jp:
+        stocks: [{ ticker: "4704.T", name: トレンドマイクロ }, { ticker: "3692.T", name: FFRIセキュリティ }, { ticker: "2326.T", name: デジタルアーツ }]
+      row:
+        stocks: [{ ticker: CHKP, name: チェック・ポイント（イスラエル） }]
+    github_keywords: ["cybersecurity", "vulnerability scanner", "zero trust"]
+    arxiv_keywords: ["network security", "intrusion detection", "malware detection"]
+
+  - id: data_center
+    name: データセンター
+    layer: 2
+    instruments:
+      global: { etf: { ticker: DTCR } }
+      us:
+        etf: { ticker: SRVR }
+        stocks: [{ ticker: EQIX, name: Equinix }, { ticker: DLR, name: Digital Realty }, { ticker: IRM, name: Iron Mountain }]
+      jp:
+        stocks: [{ ticker: "3774.T", name: IIJ }, { ticker: "3776.T", name: ブロードバンドタワー }]
+      row:
+        stocks: [{ ticker: GDS, name: GDS（中国） }]
+    github_keywords: ["data center", "infrastructure as code", "server provisioning"]
+    arxiv_keywords: ["data center networking", "datacenter energy", "server consolidation"]
+
 # =============================================================================
 # 新興テーマ候補（ユニバース未採用）
 # -----------------------------------------------------------------------------
