@@ -219,5 +219,19 @@ export async function getTickerHistory(ticker: string): Promise<TickerMetric[]> 
   const { data } = await supabaseBrowser.from("ticker_metrics")
     .select("ticker,trade_date,close_price,rsi_14,ma_deviation,overheat")
     .eq("ticker", ticker).order("trade_date", { ascending: false }).limit(1000);
-  return ((data ?? []) as TickerMetric[]).reverse();   // 最新分を昇順に戻す
+  const rows = ((data ?? []) as TickerMetric[]).reverse();   // 最新分を昇順に戻す
+  if (rows.length) return rows;
+
+  // ticker_metrics 未生成（追加直後など）でも、ユニバース銘柄なら daily_metrics の履歴で代替。
+  const { data: doms } = await supabaseBrowser.from("domains").select("id,ticker").eq("ticker", ticker).limit(1);
+  const domId = (doms ?? [])[0]?.id;
+  if (!domId) return rows;
+  const { data: dm } = await supabaseBrowser.from("daily_metrics")
+    .select("trade_date,close_price,rsi_14,ma_deviation,technical_score")
+    .eq("domain_id", domId).order("trade_date", { ascending: false }).limit(1000);
+  return ((dm ?? []) as any[]).reverse().map((r) => ({
+    ticker, trade_date: r.trade_date, close_price: r.close_price, rsi_14: r.rsi_14,
+    ma_deviation: r.ma_deviation,
+    overheat: r.technical_score != null ? Math.round((100 - r.technical_score) * 100) / 100 : null,
+  }));
 }

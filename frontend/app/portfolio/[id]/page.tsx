@@ -6,6 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { getTickerHistory, getTickerThemes, TickerMetric } from "@/lib/user-portfolio";
 import SellChart from "@/components/SellChart";
+import TechSummary from "@/components/TechSummary";
 import { sellBadge, money, pct } from "@/lib/sell-signal";
 
 export default function HoldingPage({ params }: { params: { id: string } }) {
@@ -70,7 +71,10 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
       ) : history.length === 0 ? (
         <div className="notice">指標データがまだありません（翌営業日の日次バッチで反映されます）。</div>
       ) : (
-        <SellChart data={chartData} currency={currency} />
+        <>
+          <SellChart data={chartData} currency={currency} />
+          <TechSummary closes={history.map((m) => m.close_price)} rsi={latest?.rsi_14 ?? null} />
+        </>
       )}
     </main>
   );

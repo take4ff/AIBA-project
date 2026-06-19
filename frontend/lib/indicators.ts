@@ -271,6 +271,14 @@ export function technicalSummary(closes: (number | null)[], rsi: number | null):
     const v2: Verdict = price <= bl ? "買い" : price >= bu ? "売り" : "中立";
     push("ボリンジャー(2σ)", v2, price <= bl ? "−2σ以下＝売られすぎ" : price >= bu ? "+2σ以上＝買われすぎ" : "バンド内＝中立", "オシレーター");
   }
+  // ストキャスティクス(14)・終値ベース近似。80超=買われすぎ(売り)、20未満=売られすぎ(買い)
+  if (v.length >= 14 && price != null) {
+    const w = v.slice(-14);
+    const lo = Math.min(...w), hi = Math.max(...w);
+    const k = hi > lo ? ((price - lo) / (hi - lo)) * 100 : 50;
+    const v2: Verdict = k < 20 ? "買い" : k > 80 ? "売り" : "中立";
+    push("ストキャス(14)", v2, `%K ${Math.round(k)}（${k < 20 ? "売られすぎ" : k > 80 ? "買われすぎ" : "中立"}）`, "オシレーター");
+  }
 
   const buy = signals.filter((s) => s.verdict === "買い").length;
   const sell = signals.filter((s) => s.verdict === "売り").length;
