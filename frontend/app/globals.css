@@ -195,6 +195,7 @@ a { color: inherit; text-decoration: none; }
 .sb-hold { color: #34d399; background: rgba(52,211,153,0.14); border: 1px solid rgba(52,211,153,0.35); }
 .sb-none { color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); }
 .sb-event { color: #c084fc; background: rgba(192,132,252,0.14); border: 1px solid rgba(192,132,252,0.35); }
+.sb-stop { color: #fff; background: #dc2626; border: 1px solid #b91c1c; }
 
 /* ---------- レイヤー見出し ---------- */
 .layer { margin-top: 40px; }

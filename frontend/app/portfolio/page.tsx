@@ -8,7 +8,7 @@ import {
   UserHolding, TickerMetric, TickerFundamentals,
   getHoldings, getTickerData, getTickerThemes, addHolding, updateHolding, deleteHolding,
 } from "@/lib/user-portfolio";
-import { assessSell, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
+import { assessSell, assessStopLoss, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -24,6 +24,14 @@ export default function PortfolioPage() {
   const [form, setForm] = useState({ ...EMPTY });
   const [err, setErr] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ ticker: string; name: string; avg_cost: string; shares: string } | null>(null);
+  const [stopPct, setStopPct] = useState(20);  // 損切りライン[%]（取得単価からの下落率）
+
+  // 損切りラインは端末に保存して次回も維持
+  useEffect(() => {
+    const v = Number(localStorage.getItem("aiba_stop_pct"));
+    if (v > 0) setStopPct(v);
+  }, []);
+  useEffect(() => { localStorage.setItem("aiba_stop_pct", String(stopPct)); }, [stopPct]);
 
   const reload = useCallback(async () => {
     const hs = await getHoldings();
@@ -98,6 +106,16 @@ export default function PortfolioPage() {
           </form>
           {err && <p style={{ color: "#dc2626", fontSize: 13 }}>{err}</p>}
 
+          {holdings.length > 0 && (
+            <label className="pf-stop" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, marginTop: 8 }}>
+              損切りライン：取得単価から
+              <input className="login-input" type="number" min={1} max={90} step={1} value={stopPct}
+                onChange={(ev) => setStopPct(Math.max(1, Math.min(90, Number(ev.target.value) || 0)))}
+                style={{ width: 64, padding: "4px 6px" }} />
+              ％下落で「🔻 損切り検討」を表示
+            </label>
+          )}
+
           {holdings.length === 0 ? (
             <div className="notice" style={{ marginTop: 12 }}>銘柄を追加してください。指標は翌日の日次バッチで反映されます。</div>
           ) : (
@@ -120,6 +138,7 @@ export default function PortfolioPage() {
                       eps_growth: f?.eps_growth, next_earnings_date: f?.next_earnings_date,
                     });
                     const e = earningsLabel(f?.next_earnings_date ?? null);
+                    const sl = assessStopLoss(ret, stopPct);
                     const editing = edit?.ticker === h.ticker;
                     return (
                       <tr key={h.ticker}>
@@ -147,11 +166,14 @@ export default function PortfolioPage() {
                           ) : (h.shares ?? "—")}
                         </td>
                         <td className="num">{money(close, h.currency)}</td>
-                        <td className="num" style={{ color: ret == null ? undefined : ret >= 0 ? "#15a34a" : "#dc2626" }}>{pct(ret)}</td>
+                        <td className="num" style={{ color: ret == null ? undefined : ret >= 0 ? "#15a34a" : "#dc2626", fontWeight: sl.triggered ? 700 : 400 }}>{pct(ret)}</td>
                         <td className="num">
                           {m?.overheat == null ? "—" : <span className="combo-pill" style={{ background: overheatColor(m.overheat) }}>{Math.round(m.overheat)}</span>}
                         </td>
-                        <td><span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span></td>
+                        <td>
+                          <span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span>
+                          {sl.triggered && <span className="sell-badge sb-stop" title={sl.tooltip} style={{ marginLeft: 6 }}>{sl.label}</span>}
+                        </td>
                         <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon && <ConceptIcon name="warn" size={12} />} {e.text}</td>
                         <td>
                           {editing ? (
@@ -180,6 +202,11 @@ export default function PortfolioPage() {
           <p className="guide-note" style={{ marginTop: 14 }}>
             ※ 過熱度・決算・PER等は翌営業日の日次バッチで反映。売りシグナル＝テクニカル過熱＋ファンダ（割高/減益）＋決算接近。
             投信（基準価額）は対象外、上場ETF/個別株のティッカーを登録してください。
+          </p>
+          <p className="guide-note">
+            ※ <strong>🔻 損切り検討</strong>＝取得単価からの下落率が損切りラインを超えた状態。過熱度ベースの売りシグナルは
+            <strong>高値圏（売り時）を捉える一方、株価下落は「🟢継続」となり塩漬けを見逃す</strong>ため、含み損ベースの独立基準として併設。
+            機械的な損切りはテーマの構造的成長を取りに行く長期保有方針とは相反するので、方針に応じて目安としてご利用ください（取得単価未入力の銘柄は判定対象外）。
           </p>
         </>
       )}

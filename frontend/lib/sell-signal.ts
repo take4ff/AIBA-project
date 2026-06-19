@@ -71,6 +71,33 @@ export interface SellAssessment {
   tooltip: string;
 }
 
+// 損切りライン：取得単価からの下落率がしきい値以上で「損切り検討」。
+// 過熱度ベースの売りシグナルは高値圏を捉えるため、株価下落（塩漬け）を取りこぼす。
+// その穴を埋める、含み損ベースの独立した売り基準。
+export interface StopLossAssessment {
+  triggered: boolean;
+  lossPct: number | null;   // 含み損益[%]（マイナス=損失）
+  label: string;
+  tooltip: string;
+}
+
+export function assessStopLoss(ret: number | null, thresholdPct: number): StopLossAssessment {
+  if (ret == null || !(thresholdPct > 0)) {
+    return { triggered: false, lossPct: ret, label: "", tooltip: "" };
+  }
+  const triggered = ret <= -thresholdPct;
+  return {
+    triggered,
+    lossPct: ret,
+    label: triggered ? `🔻 損切り検討 ${ret.toFixed(0)}%` : "",
+    tooltip: triggered
+      ? `取得単価から ${Math.abs(ret).toFixed(1)}% 下落（損切りライン −${thresholdPct}%）。`
+        + `過熱度ベースの売りシグナルは下落局面を捉えないため、塩漬け回避の独立基準。`
+        + `長期保有方針（テーマの構造的成長を取りに行く）なら無視可。`
+      : "",
+  };
+}
+
 // 売りシグナルの総合評価（過熱度＋ファンダ＋決算接近）。
 export function assessSell(p: {
   overheat: number | null;
