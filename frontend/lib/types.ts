@@ -12,6 +12,7 @@ export interface RankingRow {
   ticker: string;
   trade_date: string;
   aiba_score: number | null;
+  prev_aiba: number | null;      // 前営業日のAIBA（順位変動の算出用）
   technical_score: number | null;
   sentiment_score: number | null;
   rsi_14: number | null;

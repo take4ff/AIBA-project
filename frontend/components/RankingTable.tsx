@@ -21,6 +21,15 @@ function rowHref(r: RankingRow, linkMode: "auto" | "domain"): string {
   return `/domain/${r.domain_id}`;
 }
 
+// 前日順位との差バッジ（＋=上昇 / −=下降 / 0=変わらず / null=前日データなし＝NEW）
+function RankDelta({ d }: { d: number | null | undefined }) {
+  if (d === undefined) return null;
+  if (d === null) return <span className="rank-delta new" title="前営業日はランク外（新規）">NEW</span>;
+  if (d > 0) return <span className="rank-delta up" title={`前日比 ${d}ランク上昇`}>▲{d}</span>;
+  if (d < 0) return <span className="rank-delta down" title={`前日比 ${-d}ランク下降`}>▼{-d}</span>;
+  return <span className="rank-delta flat" title="前日比 変わらず">±0</span>;
+}
+
 export default function RankingTable({
   rows,
   showTheme = false,
@@ -28,6 +37,7 @@ export default function RankingTable({
   showRegion = false,
   displayCurrency,
   usdjpy,
+  rankDelta,
 }: {
   rows: RankingRow[];
   showTheme?: boolean;
@@ -35,6 +45,7 @@ export default function RankingTable({
   showRegion?: boolean;
   displayCurrency?: "JPY" | "USD";   // 指定時は全行をこの通貨に換算表示
   usdjpy?: number;                   // 換算用 USD/JPY レート
+  rankDelta?: Record<string, number | null>;  // domain_id → 前日順位との差（指定時のみ表示）
 }) {
   return (
     <div className="table-scroll">
@@ -88,7 +99,7 @@ export default function RankingTable({
           if (displayCurrency) currency = displayCurrency;
           return (
             <tr key={r.domain_id}>
-              <td className="rank"><StarButton domainId={r.domain_id} />{i + 1}</td>
+              <td className="rank"><StarButton domainId={r.domain_id} />{i + 1}{rankDelta && <RankDelta d={rankDelta[r.domain_id]} />}</td>
               <td>
                 <Link href={rowHref(r, linkMode)}>
                   <span className="name-line">

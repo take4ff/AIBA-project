@@ -61,6 +61,15 @@ async function buildAllRows(): Promise<RankingRow[]> {
     if (!f || m.trade_date < f.trade_date) firstSent.set(m.domain_id, m);
   }
 
+  // 前営業日（最新日より前で最も新しい日）の行＝順位変動の比較用
+  const prevDay = new Map<string, any>();
+  for (const m of metrics) {
+    const lt = latest.get(m.domain_id);
+    if (!lt || m.trade_date >= lt.trade_date) continue;
+    const cur = prevDay.get(m.domain_id);
+    if (!cur || m.trade_date > cur.trade_date) prevDay.set(m.domain_id, m);
+  }
+
   // 地域×テーマごとの業界ETFスコア（並び順キー）
   const etfScore = new Map<string, number>();
   for (const [id, m] of latest) {
@@ -105,6 +114,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
       ticker: d.ticker,
       trade_date: m.trade_date,
       aiba_score: m.aiba_score,
+      prev_aiba: prevDay.get(id)?.aiba_score ?? null,
       technical_score: m.technical_score,
       sentiment_score: m.sentiment_score,
       rsi_14: m.rsi_14,

@@ -44,6 +44,17 @@ export default async function PickupPage({
   const tradeDate = rows.map((r) => r.trade_date).filter(Boolean).sort().at(-1);
   const sym = cur === "JPY" ? "¥" : "$";
 
+  // 前日順位との差：同じ候補集合を「前営業日のAIBA」で並べ替えた順位と当日順位を比較
+  const prevRank = new Map<string, number>();
+  [...rows].filter((r) => r.prev_aiba != null)
+    .sort((a, b) => (b.prev_aiba ?? 0) - (a.prev_aiba ?? 0))
+    .forEach((r, i) => prevRank.set(r.domain_id, i + 1));
+  const rankDelta: Record<string, number | null> = {};
+  rows.forEach((r, i) => {
+    const pr = prevRank.get(r.domain_id);
+    rankDelta[r.domain_id] = pr == null ? null : pr - (i + 1); // ＋=上昇
+  });
+
   return (
     <main className="container">
       <header className="header">
@@ -78,7 +89,7 @@ export default async function PickupPage({
         <div className="notice" style={{ marginTop: 20 }}>条件に合う候補がありません。</div>
       ) : (
         <section className="layer">
-          <RankingTable rows={rows} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} />
+          <RankingTable rows={rows} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} rankDelta={rankDelta} />
         </section>
       )}
     </main>

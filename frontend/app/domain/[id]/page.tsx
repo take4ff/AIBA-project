@@ -87,7 +87,40 @@ async function getHistory(id: string) {
     }
   }
 
-  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals, fairValue };
+  // 業界平均（同テーマ・同地域の個別株の最新スコア平均）＝レーダー比較用
+  let peerAgg: { aiba: number | null; technical: number | null; sentiment: number | null; rsi: number | null; maDev: number | null; n: number } | null = null;
+  {
+    const { data: peerDoms } = await supabase.from("domains").select("id");
+    const peerIds = (peerDoms ?? []).map((d: any) => d.id).filter((pid: string) => {
+      const p = parseDomainId(pid);
+      return p.theme === theme && p.region === region && p.kind === "stock" && pid !== id;
+    });
+    if (peerIds.length) {
+      const cutoff = new Date(Date.now() - 45 * 86_400_000).toISOString().slice(0, 10);
+      const { data: pm } = await supabase
+        .from("daily_metrics")
+        .select("domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation")
+        .in("domain_id", peerIds).gte("trade_date", cutoff);
+      const latestByDom = new Map<string, any>();
+      for (const m of pm ?? []) {
+        const c = latestByDom.get(m.domain_id);
+        if (!c || m.trade_date > c.trade_date) latestByDom.set(m.domain_id, m);
+      }
+      const peers = [...latestByDom.values()];
+      const avg = (key: string) => {
+        const vals = peers.map((r) => r[key]).filter((v: any) => v != null).map(Number);
+        return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+      };
+      if (peers.length) {
+        peerAgg = {
+          aiba: avg("aiba_score"), technical: avg("technical_score"), sentiment: avg("sentiment_score"),
+          rsi: avg("rsi_14"), maDev: avg("ma_deviation"), n: peers.length,
+        };
+      }
+    }
+  }
+
+  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals, fairValue, peerAgg };
 }
 
 export default async function DomainPage({ params }: { params: { id: string } }) {
@@ -100,7 +133,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
     );
   }
 
-  const { dom, history, prediction, compare, fundamentals, fairValue } = await getHistory(params.id);
+  const { dom, history, prediction, compare, fundamentals, fairValue, peerAgg } = await getHistory(params.id);
   const latest = history[history.length - 1];
   const { region } = parseDomainId(params.id);
 
@@ -138,14 +171,16 @@ export default async function DomainPage({ params }: { params: { id: string } })
   // 健康度レーダー（各スコアを0-100で）
   const clamp = (x: number) => Math.max(0, Math.min(100, x));
   const radar: RadarPoint[] = [];
+  // 各軸の業界平均（同テーマ・同地域の個別株平均）。peerAgg が無ければ undefined。
+  const dipScore = (mad: number) => Math.round(clamp(100 / (1 + Math.exp(0.1 * mad))));
   if (latest) {
-    if (latest.aiba_score != null) radar.push({ axis: "AIBA", value: Math.round(latest.aiba_score) });
-    if (latest.technical_score != null) radar.push({ axis: "割安(テク)", value: Math.round(latest.technical_score) });
-    if (latest.sentiment_score != null) radar.push({ axis: "熱量", value: Math.round(latest.sentiment_score) });
-    if (latest.rsi_14 != null) radar.push({ axis: "非過熱", value: Math.round(clamp(100 - latest.rsi_14)) });
+    if (latest.aiba_score != null) radar.push({ axis: "AIBA", value: Math.round(latest.aiba_score), avg: peerAgg?.aiba != null ? Math.round(peerAgg.aiba) : undefined });
+    if (latest.technical_score != null) radar.push({ axis: "割安(テク)", value: Math.round(latest.technical_score), avg: peerAgg?.technical != null ? Math.round(peerAgg.technical) : undefined });
+    if (latest.sentiment_score != null) radar.push({ axis: "熱量", value: Math.round(latest.sentiment_score), avg: peerAgg?.sentiment != null ? Math.round(peerAgg.sentiment) : undefined });
+    if (latest.rsi_14 != null) radar.push({ axis: "非過熱", value: Math.round(clamp(100 - latest.rsi_14)), avg: peerAgg?.rsi != null ? Math.round(clamp(100 - peerAgg.rsi)) : undefined });
     // 押し目度：移動平均より下ほど高い
     if (latest.ma_deviation != null) {
-      radar.push({ axis: "押し目度", value: Math.round(clamp(100 / (1 + Math.exp(0.1 * latest.ma_deviation)))) });
+      radar.push({ axis: "押し目度", value: dipScore(latest.ma_deviation), avg: peerAgg?.maDev != null ? dipScore(peerAgg.maDev) : undefined });
     }
     // 業績（ファンダがあれば）
     if (fundamentals && (fundamentals.eps_growth != null || fundamentals.revenue_growth != null)) {
@@ -244,7 +279,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       {radar.length >= 3 && (
         <section className="layer">
           <h2 className="layer-title">健康度（スコア・レーダー）</h2>
-          <HealthRadar data={radar} />
+          <HealthRadar data={radar} showAvg={peerAgg != null} avgLabel={peerAgg != null ? `業界平均(n=${peerAgg.n})` : undefined} />
         </section>
       )}
       {history.length > 0 && (
