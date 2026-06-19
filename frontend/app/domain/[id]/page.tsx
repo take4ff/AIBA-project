@@ -280,6 +280,13 @@ export default async function DomainPage({ params }: { params: { id: string } })
         <section className="layer">
           <h2 className="layer-title">健康度（スコア・レーダー）</h2>
           <HealthRadar data={radar} showAvg={peerAgg != null} avgLabel={peerAgg != null ? `業界平均(n=${peerAgg.n})` : undefined} />
+          {peerAgg != null && (
+            <p className="guide-note" style={{ marginTop: 4 }}>
+              グレーは<strong>同テーマ・同地域の個別株 {peerAgg.n} 銘柄の最新スコア平均</strong>（業界平均）。各軸とも外側ほど良好なので、
+              <strong>青がグレーより外側＝業界平均より優れた軸</strong>です。例：「割安(テク)」「押し目度」が平均より外なら相対的に売られすぎ/押し目、「熱量」が外なら研究の注目度が業界より高い。
+              ※最新断面の単純平均で、サンプルが少ない（n小）テーマは振れやすい点に注意。
+            </p>
+          )}
         </section>
       )}
       {history.length > 0 && (
