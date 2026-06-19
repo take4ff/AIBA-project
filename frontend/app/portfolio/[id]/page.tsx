@@ -7,6 +7,7 @@ import { supabaseBrowser } from "@/lib/supabase-browser";
 import { getTickerHistory, getTickerThemes, TickerMetric } from "@/lib/user-portfolio";
 import SellChart from "@/components/SellChart";
 import TechSummary from "@/components/TechSummary";
+import HoldingHorizons from "@/components/HoldingHorizons";
 import { sellBadge, money, pct } from "@/lib/sell-signal";
 
 export default function HoldingPage({ params }: { params: { id: string } }) {
@@ -73,6 +74,7 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
       ) : (
         <>
           <SellChart data={chartData} currency={currency} />
+          <HoldingHorizons closes={history.map((m) => m.close_price)} rsi={latest?.rsi_14 ?? null} overheat={latest?.overheat ?? null} />
           <TechSummary closes={history.map((m) => m.close_price)} rsi={latest?.rsi_14 ?? null} />
         </>
       )}

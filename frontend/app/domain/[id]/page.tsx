@@ -6,6 +6,7 @@ import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
 import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm, downsideProfile } from "@/lib/indicators";
 import TechSummary from "@/components/TechSummary";
+import HoldingHorizons from "@/components/HoldingHorizons";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
@@ -153,6 +154,10 @@ export default async function DomainPage({ params }: { params: { id: string } })
   const guide = buyGuide(closes);
   const lt = longTerm(closes);
   const ds = downsideProfile(closes);
+  // 保有期間別判定用：過熱度（=100−テクニカル）とセンチメント傾き（直近−約1ヶ月前）
+  const hhOverheat = latest?.technical_score != null ? Math.round((100 - latest.technical_score) * 100) / 100 : null;
+  const sentSeries = history.map((h) => h.sentiment_score).filter((x): x is number => x != null);
+  const hhSentTrend = sentSeries.length >= 2 ? Math.round((sentSeries[sentSeries.length - 1] - sentSeries[Math.max(0, sentSeries.length - 21)]) * 10) / 10 : null;
   const cur = region === "jp" ? "JPY" : "USD";
 
   // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
@@ -315,6 +320,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
         <p className="forecast-line" style={{ marginTop: 0 }}><ConceptIcon name="macd" size={14} /> MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
       )}
 
+      <HoldingHorizons closes={closes} rsi={latest?.rsi_14 ?? null} overheat={hhOverheat} sentimentTrend={hhSentTrend} />
       <TechSummary closes={closes} rsi={latest?.rsi_14 ?? null} />
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>

@@ -288,3 +288,77 @@ export function technicalSummary(closes: (number | null)[], rsi: number | null):
     diff >= 3 ? "買い寄り" : diff >= 1 ? "やや買い" : diff <= -3 ? "売り寄り" : diff <= -1 ? "やや売り" : "中立";
   return { signals, buy, sell, neutral, overall };
 }
+
+// ----------------------------- 保有期間別の売り/継続判定 -----------------------------
+export type HVerdict = "売り" | "中立" | "継続";
+export interface HorizonDecision {
+  label: string;            // 短期 / 中期 / 長期
+  period: string;           // 〜1ヶ月 等
+  verdict: HVerdict;
+  sell: number; hold: number;
+  reasons: string[];        // 各指標の根拠（売り/継続）
+}
+
+/**
+ * 保有期間別（短期〜1ヶ月 / 中期1〜6ヶ月 / 長期半年〜）に「売り / 継続」を判定する。
+ * 期間ごとに適した指標群でシグナルを集計し、売り票 > 継続票 なら「売り」とする。
+ *   短期: 過熱度・RSI・ストキャス・ボリンジャー・MACD
+ *   中期: MACD・一目均衡表・25/75日MA
+ *   長期: 200日MA・52週レンジ・一目の雲・センチメント傾き
+ * overheat / sentimentTrend は無ければ（ポートフォリオ詳細等）その指標を除外する。
+ */
+export function holdingHorizons(
+  closes: (number | null)[],
+  rsi: number | null,
+  overheat: number | null,
+  sentimentTrend: number | null,
+): HorizonDecision[] {
+  const v = closes.filter((x): x is number => x != null);
+  const price = v.length ? v[v.length - 1] : null;
+  if (price == null || v.length < 20) return [];
+
+  const maN = (n: number) => (v.length >= n ? v.slice(-n).reduce((a, b) => a + b, 0) / n : null);
+  const ma25 = maN(25), ma75 = maN(75), ma200 = maN(200);
+  const macd = macdState(closes);
+  const ich = ichimoku(closes);
+  const bb = bollinger(closes);
+  const bu = bb.upper.at(-1) ?? null, bl = bb.lower.at(-1) ?? null;
+  const lt = longTerm(closes);
+
+  type Vote = { v: "sell" | "hold"; reason: string } | null;
+  const build = (label: string, period: string, votes: Vote[]): HorizonDecision => {
+    const vv = votes.filter((x): x is { v: "sell" | "hold"; reason: string } => x != null);
+    const sell = vv.filter((x) => x.v === "sell").length;
+    const hold = vv.filter((x) => x.v === "hold").length;
+    const verdict: HVerdict = sell > hold ? "売り" : hold > sell ? "継続" : "中立";
+    return { label, period, verdict, sell, hold, reasons: vv.map((x) => `${x.v === "sell" ? "▲" : "▼"}${x.reason}`) };
+  };
+
+  // 短期（〜1ヶ月）
+  const short = build("短期", "〜1ヶ月", [
+    overheat == null ? null : overheat >= 60 ? { v: "sell", reason: `過熱度${Math.round(overheat)}（高値圏）` }
+      : overheat <= 45 ? { v: "hold", reason: `過熱度${Math.round(overheat)}（落ち着き）` } : null,
+    rsi == null ? null : rsi > 70 ? { v: "sell", reason: "RSI買われすぎ" } : rsi < 30 ? { v: "hold", reason: "RSI売られすぎ（押し目）" } : null,
+    (() => { if (v.length < 14) return null; const w = v.slice(-14); const lo = Math.min(...w), hi = Math.max(...w); const k = hi > lo ? ((price - lo) / (hi - lo)) * 100 : 50; return k > 80 ? { v: "sell" as const, reason: "ストキャス買われすぎ" } : k < 20 ? { v: "hold" as const, reason: "ストキャス売られすぎ" } : null; })(),
+    bu != null && bl != null ? (price >= bu ? { v: "sell", reason: "ボリンジャー+2σ超" } : price <= bl ? { v: "hold", reason: "ボリンジャー−2σ以下" } : null) : null,
+    macd ? (macd.bullish ? { v: "hold", reason: "MACD強気" } : { v: "sell", reason: "MACD弱気" }) : null,
+  ]);
+
+  // 中期（1〜6ヶ月）
+  const mid = build("中期", "1〜6ヶ月", [
+    macd ? (macd.bullish ? { v: "hold", reason: "MACD強気" } : { v: "sell", reason: "MACD弱気" }) : null,
+    ich.verdict === "売り" ? { v: "sell", reason: `一目 ${ich.cloud}・${ich.tk}` } : ich.verdict === "買い" ? { v: "hold", reason: `一目 ${ich.cloud}・${ich.tk}` } : null,
+    ma25 != null ? (price >= ma25 ? { v: "hold", reason: "25日線の上" } : { v: "sell", reason: "25日線の下" }) : null,
+    ma75 != null ? (price >= ma75 ? { v: "hold", reason: "75日線の上" } : { v: "sell", reason: "75日線の下" }) : null,
+  ]);
+
+  // 長期（半年〜）
+  const long = build("長期", "半年〜", [
+    ma200 != null ? (price >= ma200 ? { v: "hold", reason: "200日線の上（長期上昇）" } : { v: "sell", reason: "200日線割れ（長期下降）" }) : null,
+    lt.rangePct == null ? null : lt.rangePct >= 80 ? { v: "hold", reason: "52週高値圏（上昇基調）" } : lt.rangePct <= 20 ? { v: "sell", reason: "52週安値圏（下降基調）" } : null,
+    ich.cloud === "雲の上" ? { v: "hold", reason: "一目 雲の上" } : ich.cloud === "雲の下" ? { v: "sell", reason: "一目 雲の下" } : null,
+    sentimentTrend == null ? null : sentimentTrend > 1 ? { v: "hold", reason: "研究熱量が上昇" } : sentimentTrend < -1 ? { v: "sell", reason: "研究熱量が低下" } : null,
+  ]);
+
+  return [short, mid, long];
+}
