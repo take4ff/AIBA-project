@@ -171,8 +171,10 @@ export default function PortfolioPage() {
                           {m?.overheat == null ? "—" : <span className="combo-pill" style={{ background: overheatColor(m.overheat) }}>{Math.round(m.overheat)}</span>}
                         </td>
                         <td>
-                          <span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span>
-                          {sl.triggered && <span className="sell-badge sb-stop" title={sl.tooltip} style={{ marginLeft: 6 }}>{sl.label}</span>}
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                            <span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span>
+                            {sl.triggered && <span className="sell-badge sb-stop" title={sl.tooltip}>{sl.label}</span>}
+                          </div>
                         </td>
                         <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon && <ConceptIcon name="warn" size={12} />} {e.text}</td>
                         <td>
