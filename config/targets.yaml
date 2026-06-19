@@ -184,7 +184,7 @@ domains:
     name: 水素・燃料電池
     layer: 3
     instruments:
-      global: { etf: { ticker: HDRO } }
+      global: { etf: { ticker: HTWO.L } }  # 旧HDROは上場廃止 → L&G水素経済(グローバル)へ
       us:
         etf: { ticker: HYDR }
         stocks: [{ ticker: PLUG, name: Plug Power }, { ticker: BE, name: Bloom Energy }, { ticker: BLDP, name: Ballard Power }, { ticker: FCEL, name: FuelCell Energy }]
