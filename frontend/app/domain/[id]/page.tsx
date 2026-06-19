@@ -4,7 +4,7 @@ import { MetricHistoryRow } from "@/lib/types";
 import TrendChart from "@/components/TrendChart";
 import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
-import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm, downsideProfile } from "@/lib/indicators";
+import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm, downsideProfile, technicalSummary } from "@/lib/indicators";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
@@ -152,6 +152,8 @@ export default async function DomainPage({ params }: { params: { id: string } })
   const guide = buyGuide(closes);
   const lt = longTerm(closes);
   const ds = downsideProfile(closes);
+  const tech = technicalSummary(closes, latest?.rsi_14 ?? null);
+  const vColor = (v: "買い" | "売り" | "中立") => (v === "買い" ? "#15a34a" : v === "売り" ? "#dc2626" : "var(--muted)");
   const cur = region === "jp" ? "JPY" : "USD";
 
   // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
@@ -312,6 +314,35 @@ export default async function DomainPage({ params }: { params: { id: string } })
       )}
       {history.length > 0 && (
         <p className="forecast-line" style={{ marginTop: 0 }}><ConceptIcon name="macd" size={14} /> MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
+      )}
+
+      {tech.signals.length >= 3 && (
+        <section className="layer">
+          <h2 className="layer-title">テクニカル総合判定（買い・売り目安の網羅）</h2>
+          <p className="layer-subtitle">
+            主要指標の現在のシグナルを一覧化。総合：
+            <span style={{ fontWeight: 800, marginLeft: 6, color: tech.overall.includes("買") ? "#15a34a" : tech.overall.includes("売") ? "#dc2626" : "var(--muted)" }}>{tech.overall}</span>
+            <span style={{ marginLeft: 8, color: "var(--muted)" }}>（買い {tech.buy}・中立 {tech.neutral}・売り {tech.sell}）</span>
+          </p>
+          {(["トレンド", "オシレーター"] as const).map((grp) => (
+            <div key={grp} style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{grp}系{grp === "オシレーター" ? "（売られすぎ＝押し目／買われすぎ＝売り）" : "（順張りの方向）"}</div>
+              <div className="tech-grid">
+                {tech.signals.filter((s) => s.group === grp).map((s) => (
+                  <div key={s.name} className="tech-sig" title={s.detail}>
+                    <span className="tech-sig-name">{s.name}</span>
+                    <span className="tech-sig-verdict" style={{ color: vColor(s.verdict) }}>{s.verdict}</span>
+                    <span className="tech-sig-detail">{s.detail}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <p className="guide-note" style={{ marginTop: 10 }}>
+            ※ トレンド系（移動平均25/200・MACD・一目均衡表）は順張りの方向、オシレーター系（RSI・ボリンジャー）は逆張り（押し目/過熱）の目安。
+            指標は終値ベースの目安で、売買を保証するものではありません。
+          </p>
+        </section>
       )}
       {history.length === 0 ? (
         <div className="notice">この領域の時系列データがまだありません。</div>

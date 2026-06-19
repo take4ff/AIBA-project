@@ -192,3 +192,91 @@ export function macdLabel(s: MacdState | null): string {
     : s.cross === "dead" ? "・直近デッドクロス↓" : "";
   return `ヒストグラム ${s.hist >= 0 ? "+" : ""}${s.hist}（${tone}${cross}）`;
 }
+
+// ----------------------------- 一目均衡表 -----------------------------
+export interface Ichimoku {
+  tenkan: number | null;   // 転換線(9)
+  kijun: number | null;    // 基準線(26)
+  spanA: number | null;    // 先行スパンA
+  spanB: number | null;    // 先行スパンB(52)
+  cloud: "雲の上" | "雲の中" | "雲の下" | null;
+  tk: "好転" | "逆転" | "中立" | null;  // 転換線 vs 基準線
+  verdict: "買い" | "売り" | "中立" | null;
+}
+
+/** 一目均衡表（終値ベースの近似。高値/安値を持たないため close を代用）。 */
+export function ichimoku(closes: (number | null)[]): Ichimoku {
+  const v = closes.filter((x): x is number => x != null);
+  const empty: Ichimoku = { tenkan: null, kijun: null, spanA: null, spanB: null, cloud: null, tk: null, verdict: null };
+  if (v.length < 52) return empty;
+  const mid = (n: number) => { const w = v.slice(-n); return (Math.max(...w) + Math.min(...w)) / 2; };
+  const tenkan = mid(9), kijun = mid(26);
+  const spanA = (tenkan + kijun) / 2, spanB = mid(52);
+  const price = v[v.length - 1];
+  const top = Math.max(spanA, spanB), bot = Math.min(spanA, spanB);
+  const cloud = price > top ? "雲の上" : price < bot ? "雲の下" : "雲の中";
+  const tk = tenkan > kijun ? "好転" : tenkan < kijun ? "逆転" : "中立";
+  const verdict = cloud === "雲の上" && tk === "好転" ? "買い"
+    : cloud === "雲の下" && tk === "逆転" ? "売り" : "中立";
+  const r = (x: number) => Math.round(x * 100) / 100;
+  return { tenkan: r(tenkan), kijun: r(kijun), spanA: r(spanA), spanB: r(spanB), cloud, tk, verdict };
+}
+
+// ----------------------------- テクニカル総合判定 -----------------------------
+export type Verdict = "買い" | "売り" | "中立";
+export interface TechSignal { name: string; verdict: Verdict; detail: string; group: "トレンド" | "オシレーター"; }
+export interface TechSummary {
+  signals: TechSignal[];
+  buy: number; sell: number; neutral: number;
+  overall: "買い寄り" | "やや買い" | "中立" | "やや売り" | "売り寄り";
+}
+
+/**
+ * 移動平均(25/200)・MACD・一目均衡表（トレンド系）＋ RSI・ボリンジャー（オシレーター系）を
+ * それぞれ 買い/売り/中立 に評価し、総合の傾きを返す。買い場/売り場の目安を一覧で網羅する。
+ */
+export function technicalSummary(closes: (number | null)[], rsi: number | null): TechSummary {
+  const v = closes.filter((x): x is number => x != null);
+  const price = v.length ? v[v.length - 1] : null;
+  const signals: TechSignal[] = [];
+  const push = (name: string, verdict: Verdict, detail: string, group: TechSignal["group"]) =>
+    signals.push({ name, verdict, detail, group });
+
+  // トレンド系
+  const g = buyGuide(closes);
+  if (price != null && g.fair != null) {
+    push("移動平均(25日)", price >= g.fair ? "買い" : "売り",
+      price >= g.fair ? "株価が25日線の上＝短期上昇基調" : "株価が25日線の下＝短期下降基調", "トレンド");
+  }
+  const lt = longTerm(closes);
+  if (lt.dev200 != null) {
+    push("移動平均(200日)", lt.dev200 >= 0 ? "買い" : "売り",
+      `200日線乖離 ${lt.dev200 >= 0 ? "+" : ""}${lt.dev200}%＝長期${lt.dev200 >= 0 ? "上昇" : "下降"}基調`, "トレンド");
+  }
+  const macd = macdState(closes);
+  if (macd) push("MACD", macd.bullish ? "買い" : "売り",
+    macdLabel(macd), "トレンド");
+  const ich = ichimoku(closes);
+  if (ich.verdict) push("一目均衡表", ich.verdict,
+    `${ich.cloud}・転換/基準=${ich.tk}`, "トレンド");
+
+  // オシレーター系（売られすぎ＝押し目＝買い、買われすぎ＝売り）
+  if (rsi != null) {
+    const v2: Verdict = rsi < 30 ? "買い" : rsi > 70 ? "売り" : "中立";
+    push("RSI(14)", v2, `RSI ${Math.round(rsi)}（${rsi < 30 ? "売られすぎ" : rsi > 70 ? "買われすぎ" : "中立"}）`, "オシレーター");
+  }
+  const bb = bollinger(closes);
+  const bu = bb.upper.at(-1), bl = bb.lower.at(-1);
+  if (price != null && bu != null && bl != null) {
+    const v2: Verdict = price <= bl ? "買い" : price >= bu ? "売り" : "中立";
+    push("ボリンジャー(2σ)", v2, price <= bl ? "−2σ以下＝売られすぎ" : price >= bu ? "+2σ以上＝買われすぎ" : "バンド内＝中立", "オシレーター");
+  }
+
+  const buy = signals.filter((s) => s.verdict === "買い").length;
+  const sell = signals.filter((s) => s.verdict === "売り").length;
+  const neutral = signals.filter((s) => s.verdict === "中立").length;
+  const diff = buy - sell;
+  const overall: TechSummary["overall"] =
+    diff >= 3 ? "買い寄り" : diff >= 1 ? "やや買い" : diff <= -3 ? "売り寄り" : diff <= -1 ? "やや売り" : "中立";
+  return { signals, buy, sell, neutral, overall };
+}

@@ -242,6 +242,14 @@ a { color: inherit; text-decoration: none; }
 .rank-delta.flat { color: var(--navy-muted); font-weight: 600; }
 .rank-delta.new { color: #2456e6; }
 
+/* テクニカル総合判定 */
+.tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.tech-sig { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+.tech-sig-name { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.tech-sig-verdict { font-weight: 800; font-size: 13px; }
+.tech-sig-detail { font-size: 11px; color: var(--muted); margin-left: auto; text-align: right; }
+.table .tech-sig { background: rgba(255,255,255,0.04); border-color: var(--navy-border); }
+
 /* テーブル内の文字（ネイビー上で読みやすく） */
 .domain-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: var(--ink); }
 .table .domain-name { color: #fff; }
