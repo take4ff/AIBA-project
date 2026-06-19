@@ -33,10 +33,10 @@ NEUTRAL = 50.0
 _OS_NS = "{http://a9.com/-/spec/opensearch/1.1/}"
 
 
-# 統合時の重み。GitHub/arXiv は「研究熱量の本体」として高く、HN/Trends/特許は
+# 統合時の重み。GitHub/arXiv は「研究熱量の本体」として高く、HN/Trends/特許/ニュースは
 # ノイズが大きく単独支配しやすいため補助として低く扱う（単一ソース過大評価の抑制）。
 WEIGHT_CORE = 1.0   # github / arxiv
-WEIGHT_SUPP = 0.4   # hackernews / trends / patents
+WEIGHT_SUPP = 0.4   # hackernews / trends / patents / news
 # 有効信号がこの数未満の日は統合値を出さず None（呼び出し側でフォワードフィル）。
 MIN_SIGNALS = 2
 
@@ -49,6 +49,7 @@ class SentimentSnapshot:
     hackernews_score: float | None = None  # 0-100（HN注目ストーリー増加率）
     trends_score: float | None = None      # 0-100（Google Trends 検索関心の増加率）
     patents_score: float | None = None     # 0-100（特許公開件数の増加率・EPO OPS）
+    news_score: float | None = None        # 0-100（ニュース報道量の増加率・GDELT）
 
 
 def _growth_to_score(recent: int, prior: int) -> float:
@@ -378,14 +379,67 @@ def fetch_patents_score(keywords: list[str], as_of: datetime | None = None) -> f
     return _growth_score_guarded(recent_total, prior_total, ok)
 
 
+# ----------------------------- ニュース報道量（GDELT） -----------------------------
+GDELT_DOC_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+
+
+def _gdelt_daily(query: str, since: datetime, until: datetime) -> list[dict] | None:
+    """GDELT DOC 2.0 の日次記事量（timelinevolraw）。取得不可は None。"""
+    params = {
+        "query": query, "mode": "timelinevolraw", "format": "json",
+        "startdatetime": since.strftime("%Y%m%d%H%M%S"),
+        "enddatetime": until.strftime("%Y%m%d%H%M%S"),
+    }
+    try:
+        resp = requests.get(GDELT_DOC_URL, params=params, timeout=REQUEST_TIMEOUT,
+                            headers={"User-Agent": "aiba/1.0"})
+        if resp.status_code != 200 or not resp.text.lstrip().startswith("{"):
+            return None
+        tl = resp.json().get("timeline", [])
+        return tl[0].get("data", []) if tl else None
+    except (requests.RequestException, ValueError):
+        return None
+
+
+def fetch_news_score(keywords: list[str], as_of: datetime | None = None) -> float | None:
+    """キーワードのニュース報道量（増加率）。直近30日 vs 前30日の記事数比。取得不可は None。
+
+    GDELT は無料・キー不要だが「5秒に1回」のレート制限があるため待機を入れる。
+    """
+    if not keywords:
+        return None
+    start, mid, base = _windows(as_of)
+    # GDELT は OR 複合クエリを "larger query" として強く制限(429)するため、
+    # テーマを代表する主要キーワード1語（フレーズ）で問い合わせる。
+    query = f'"{keywords[0]}"'
+    data = _gdelt_daily(query, start, base)
+    time.sleep(5)  # GDELT のレート制限（1req/5s）に配慮
+    if not data:
+        return None
+    mid_day = mid.strftime("%Y%m%d")
+    recent = prior = 0
+    ok = False
+    for pt in data:
+        v = pt.get("value")
+        day = str(pt.get("date", ""))[:8]  # 'YYYYMMDDThhmmssZ' → 'YYYYMMDD'
+        if v is None or len(day) < 8:
+            continue
+        if day >= mid_day:
+            recent += v
+        else:
+            prior += v
+        ok = True
+    return _growth_score_guarded(recent, prior, ok)
+
+
 def fetch_sentiment(
     github_keywords: list[str],
     arxiv_keywords: list[str],
     as_of: datetime | None = None,
 ) -> SentimentSnapshot:
-    """GitHub・arXiv・Hacker News・Google Trends・特許 の熱量を統合する。
+    """GitHub・arXiv・Hacker News・Google Trends・特許・ニュース の熱量を統合する。
 
-    HN/Trends/特許 はタイトル・検索語が自然文のため arxiv_keywords（自然言語）を流用。
+    HN/Trends/特許/ニュース はタイトル・検索語が自然文のため arxiv_keywords（自然言語）を流用。
     取得できた指標のみの平均をとる（失敗した指標は中立で薄めず除外）。
     """
     gh = fetch_github_score(github_keywords, as_of)
@@ -393,11 +447,12 @@ def fetch_sentiment(
     hn = fetch_hackernews_score(arxiv_keywords, as_of)
     gt = fetch_google_trends_score(arxiv_keywords, as_of)
     pt = fetch_patents_score(arxiv_keywords, as_of)
+    nw = fetch_news_score(arxiv_keywords, as_of)
 
-    # 本体(GitHub/arXiv)と補助(HN/Trends/特許)を重み付けし、取得できた指標のみで加重平均。
+    # 本体(GitHub/arXiv)と補助(HN/Trends/特許/ニュース)を重み付けし、取得できた指標のみで加重平均。
     weighted = [(s, w) for s, w in (
         (gh, WEIGHT_CORE), (ax, WEIGHT_CORE),
-        (hn, WEIGHT_SUPP), (gt, WEIGHT_SUPP), (pt, WEIGHT_SUPP),
+        (hn, WEIGHT_SUPP), (gt, WEIGHT_SUPP), (pt, WEIGHT_SUPP), (nw, WEIGHT_SUPP),
     ) if s is not None]
     # 有効信号が少なすぎる日は単一ソースの極値を刻まないよう None（後段でフォワードフィル）。
     if len(weighted) < MIN_SIGNALS:
@@ -406,5 +461,5 @@ def fetch_sentiment(
         combined = round(sum(s * w for s, w in weighted) / sum(w for _, w in weighted), 2)
     return SentimentSnapshot(
         github_score=gh, arxiv_score=ax, sentiment_score=combined,
-        hackernews_score=hn, trends_score=gt, patents_score=pt,
+        hackernews_score=hn, trends_score=gt, patents_score=pt, news_score=nw,
     )
