@@ -28,7 +28,7 @@ export default function PortfolioPage() {
   const [themeMap, setThemeMap] = useState<Map<string, { theme: string; label: string; region: string; name: string }>>(new Map());
   const [form, setForm] = useState({ ...EMPTY });
   const [err, setErr] = useState<string | null>(null);
-  const [edit, setEdit] = useState<{ ticker: string; name: string; avg_cost: string; shares: string } | null>(null);
+  const [edit, setEdit] = useState<{ ticker: string; name: string; avg_cost: string; shares: string; is_fund: boolean; principal: string; acquired_on: string } | null>(null);
   const [stopPct, setStopPct] = useState(20);  // 損切りライン[%]（取得単価からの下落率）
 
   // 損切りラインは端末に保存して次回も維持
@@ -76,11 +76,17 @@ export default function PortfolioPage() {
 
   async function onSaveEdit() {
     if (!edit) return;
-    await updateHolding(edit.ticker, {
+    const patch: Partial<UserHolding> = {
       name: edit.name || null,
-      avg_cost: edit.avg_cost ? Number(edit.avg_cost) : null,
       shares: edit.shares ? Number(edit.shares) : null,
-    });
+    };
+    if (edit.is_fund) {
+      patch.principal = edit.principal ? Number(edit.principal) : null;
+      patch.acquired_on = edit.acquired_on || null;
+    } else {
+      patch.avg_cost = edit.avg_cost ? Number(edit.avg_cost) : null;
+    }
+    await updateHolding(edit.ticker, patch);
     setEdit(null);
     reload();
   }
@@ -188,11 +194,18 @@ export default function PortfolioPage() {
                           )}
                         </td>
                         <td className="num">
-                          {editing && !h.is_fund ? (
+                          {editing && h.is_fund ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 3, alignItems: "flex-end" }}>
+                              <input className="login-input" style={{ padding: "4px 6px", width: 100 }} type="number" step="any" placeholder="取得額"
+                                value={edit!.principal} onChange={(ev) => setEdit({ ...edit!, principal: ev.target.value })} />
+                              <input className="login-input" style={{ padding: "4px 6px", width: 130 }} type="date" title="取得日"
+                                value={edit!.acquired_on} onChange={(ev) => setEdit({ ...edit!, acquired_on: ev.target.value })} />
+                            </div>
+                          ) : editing ? (
                             <input className="login-input" style={{ padding: "4px 6px", width: 90 }} type="number" step="any"
                               value={edit!.avg_cost} onChange={(ev) => setEdit({ ...edit!, avg_cost: ev.target.value })} />
                           ) : h.is_fund
-                            ? <span title="取得額（投資元本）">{money(h.principal ?? null, h.currency)}</span>
+                            ? <span title={`取得額（投資元本）／取得日 ${h.acquired_on ?? "—"}`}>{money(h.principal ?? null, h.currency)}</span>
                             : money(h.avg_cost, h.currency)}
                         </td>
                         <td className="num">
@@ -221,7 +234,7 @@ export default function PortfolioPage() {
                             </>
                           ) : (
                             <>
-                              <button className="authbar-btn" onClick={() => setEdit({ ticker: h.ticker, name: h.name ?? "", avg_cost: h.avg_cost?.toString() ?? "", shares: h.shares?.toString() ?? "" })}>編集</button>{" "}
+                              <button className="authbar-btn" onClick={() => setEdit({ ticker: h.ticker, name: h.name ?? "", avg_cost: h.avg_cost?.toString() ?? "", shares: h.shares?.toString() ?? "", is_fund: !!h.is_fund, principal: h.principal?.toString() ?? "", acquired_on: h.acquired_on ?? "" })}>編集</button>{" "}
                               <button className="authbar-btn" onClick={async () => { await deleteHolding(h.ticker); reload(); }}>削除</button>
                             </>
                           )}

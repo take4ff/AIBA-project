@@ -29,10 +29,14 @@ export default function AllocationAnalysis({
     const items = holdings.map((h) => {
       const close = metrics.get(h.ticker)?.close_price ?? null;
       const info = themeMap.get(h.ticker);
-      const theme = info?.label ?? "未分類（ユニバース外）";
+      // 投信（指数連動）は単一テーマに属さないため専用バケットへ
+      const theme = h.is_fund ? "投信（指数連動・分散）" : (info?.label ?? "未分類（ユニバース外）");
       const region = REGION_LABEL[info?.region ?? (h.currency === "JPY" ? "jp" : "us")] ?? "その他";
       let value: number | null = null;
-      if (h.shares != null && close != null) {
+      if (h.is_fund) {
+        // 投信は取得額（投資元本）を配分の基準とする
+        value = h.principal != null ? (h.currency === "USD" ? h.principal * usdjpy : h.principal) : null;
+      } else if (h.shares != null && close != null) {
         const jpy = h.currency === "USD" ? close * usdjpy : close;
         value = h.shares * jpy;
       }
