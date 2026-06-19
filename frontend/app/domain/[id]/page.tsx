@@ -4,7 +4,7 @@ import { MetricHistoryRow } from "@/lib/types";
 import TrendChart from "@/components/TrendChart";
 import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
-import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm } from "@/lib/indicators";
+import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm, downsideProfile } from "@/lib/indicators";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
@@ -151,6 +151,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
   const macd = macdState(closes);
   const guide = buyGuide(closes);
   const lt = longTerm(closes);
+  const ds = downsideProfile(closes);
   const cur = region === "jp" ? "JPY" : "USD";
 
   // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
@@ -254,6 +255,26 @@ export default async function DomainPage({ params }: { params: { id: string } })
           {" / "}押し目買い目安 <span style={{ color: "#15a34a", fontWeight: 700 }}>{money(guide.pullback, cur)}</span>
           {" / "}下値支持(60日安値) {money(guide.support, cur)}
           <span className="forecast-note">（現在 {money(guide.current, cur)}）</span>
+        </p>
+      )}
+      {ds.floorStrong != null && (
+        <p className="forecast-line">
+          <ConceptIcon name="warn" size={14} /> 下方リスク：下値メド <span style={{ color: "#15a34a", fontWeight: 700 }}>{money(ds.floorStrong, cur)}</span>
+          （52週安値・<span style={{ fontWeight: 700 }}>下落余地 {ds.downsidePct}%</span>）{" / "}近い支持 {money(ds.floorNear, cur)}
+          {ds.stability && (
+            <> {" / "}値動きの安定度 <span style={{ fontWeight: 700, color: ds.stability === "高い" ? "#15a34a" : ds.stability === "低い" ? "#dc2626" : "var(--muted)" }}>{ds.stability}</span></>
+          )}
+          <span className="forecast-note">
+            （年率ボラ {ds.volAnnual}%・1年の最大下落 {ds.maxDrawdown}%。支持はテクニカルな目安で、割れてさらに下落することもある＝「絶対の底」ではない
+            {(() => {
+              const pe = fundamentals ? (fundamentals.forward_pe && fundamentals.forward_pe > 0 ? fundamentals.forward_pe : fundamentals.trailing_pe && fundamentals.trailing_pe > 0 ? fundamentals.trailing_pe : null) : null;
+              if (fundamentals == null) return "";
+              if (pe == null) return "。赤字企業は業績面の下値が読みにくく、下落が深くなりやすい点に注意";
+              if (pe < 20 && (fundamentals.eps_growth ?? 0) >= 0) return "。黒字かつ割安で、事業面でも下値は相対的に堅め";
+              if (pe >= 40) return "。高PERで業績未達なら下値が深くなりやすい";
+              return "";
+            })()}）
+          </span>
         </p>
       )}
       {lt.dev200 != null && (

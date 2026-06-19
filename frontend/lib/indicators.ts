@@ -89,6 +89,68 @@ export function sma(closes: (number | null)[], period = 200): (number | null)[] 
   return out;
 }
 
+export interface Downside {
+  current: number | null;
+  floorStrong: number | null;  // 強い下値メド = 52週安値（1年で最も売られた水準）
+  floorNear: number | null;    // 近い下値メド = max(直近60日安値, −2σ)
+  downsidePct: number | null;  // 現在値→強い下値メドまでの下落余地[%]（負）
+  volAnnual: number | null;    // 年率ボラティリティ[%]
+  maxDrawdown: number | null;  // 直近1年の最大ドローダウン[%]（負）
+  stability: "高い" | "中程度" | "低い" | null;  // 値動きの安定度（下方耐性の目安）
+}
+
+/**
+ * 下方リスク・プロファイル：複数の支持線で「これ以上下がりにくい目安」を束ね、
+ * ボラティリティと最大下落率で値動きの安定度（下方耐性）を評価する。
+ * いずれもテクニカルな目安で、割れる/さらに下落する可能性は残る（絶対ではない）。
+ */
+export function downsideProfile(closes: (number | null)[]): Downside {
+  const vals = closes.filter((x): x is number => x != null);
+  const current = vals.length ? vals[vals.length - 1] : null;
+  const empty: Downside = { current, floorStrong: null, floorNear: null, downsidePct: null, volAnnual: null, maxDrawdown: null, stability: null };
+  if (vals.length < 60 || current == null) return empty;
+  const r = (x: number) => Math.round(x * 100) / 100;
+
+  const win52 = vals.slice(-252);
+  const floorStrong = Math.min(...win52);
+  // 近い支持：直近60日安値と、25日ボリンジャー −2σ の高い方
+  const recent = vals.slice(-25);
+  const ma = recent.reduce((a, b) => a + b, 0) / recent.length;
+  const sd = Math.sqrt(recent.reduce((a, b) => a + (b - ma) ** 2, 0) / recent.length);
+  const low60 = Math.min(...vals.slice(-60));
+  const floorNear = Math.max(low60, ma - 2 * sd);
+  const downsidePct = ((floorStrong - current) / current) * 100;
+
+  // 年率ボラティリティ（日次対数リターンの標準偏差 × √252）
+  const rets: number[] = [];
+  for (let i = 1; i < win52.length; i++) {
+    if (win52[i - 1] > 0) rets.push(Math.log(win52[i] / win52[i - 1]));
+  }
+  let volAnnual: number | null = null;
+  if (rets.length > 20) {
+    const mr = rets.reduce((a, b) => a + b, 0) / rets.length;
+    const v = Math.sqrt(rets.reduce((a, b) => a + (b - mr) ** 2, 0) / rets.length);
+    volAnnual = v * Math.sqrt(252) * 100;
+  }
+  // 直近1年の最大ドローダウン
+  let peak = win52[0], maxDD = 0;
+  for (const p of win52) { if (p > peak) peak = p; const dd = (p - peak) / peak; if (dd < maxDD) maxDD = dd; }
+  const maxDrawdown = maxDD * 100;
+
+  // 安定度：低ボラ＆浅いDD ほど「下方耐性が高い」目安
+  let stability: Downside["stability"] = null;
+  if (volAnnual != null) {
+    if (volAnnual < 35 && maxDrawdown > -35) stability = "高い";
+    else if (volAnnual < 60 && maxDrawdown > -55) stability = "中程度";
+    else stability = "低い";
+  }
+  return {
+    current, floorStrong: r(floorStrong), floorNear: r(floorNear),
+    downsidePct: Math.round(downsidePct), volAnnual: volAnnual == null ? null : Math.round(volAnnual),
+    maxDrawdown: Math.round(maxDrawdown), stability,
+  };
+}
+
 export interface LongTerm {
   ma200: number | null;
   dev200: number | null;     // 200日MAからの乖離 [%]
