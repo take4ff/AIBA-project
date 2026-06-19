@@ -134,7 +134,7 @@ domains:
       global: { etf: { ticker: QTUM } }
       us:
         etf: { ticker: QTUM }
-        stocks: [{ ticker: IONQ, name: IonQ }, { ticker: RGTI, name: Rigetti }, { ticker: QBTS, name: D-Wave }, { ticker: QUBT, name: Quantum Computing Inc }, { ticker: ARQQ, name: Arqit Quantum }]
+        stocks: [{ ticker: IONQ, name: IonQ }, { ticker: RGTI, name: Rigetti }, { ticker: QBTS, name: D-Wave }, { ticker: QUBT, name: Quantum Computing Inc }, { ticker: ARQQ, name: Arqit Quantum }, { ticker: WIMI, name: WiMi Hologram Cloud }]
       jp:
         etf: { ticker: "1625.T", name: "電機・精密(TOPIX-17)" }
         stocks: [{ ticker: "6702.T", name: 富士通 }, { ticker: "6701.T", name: NEC }, { ticker: "6613.T", name: QDレーザ }]
@@ -231,7 +231,7 @@ domains:
       global: { etf: { ticker: DTCR } }
       us:
         etf: { ticker: SRVR }
-        stocks: [{ ticker: EQIX, name: Equinix }, { ticker: DLR, name: Digital Realty }, { ticker: IRM, name: Iron Mountain }]
+        stocks: [{ ticker: EQIX, name: Equinix }, { ticker: DLR, name: Digital Realty }, { ticker: IRM, name: Iron Mountain }, { ticker: MARA, name: MARA Holdings }]
       jp:
         stocks: [{ ticker: "3774.T", name: IIJ }, { ticker: "3776.T", name: ブロードバンドタワー }]
       row:
