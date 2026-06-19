@@ -139,7 +139,7 @@ RSI勢い  = clamp(RSI − max(0, RSI−80) × 2)   ← 80超は過熱で減衰
       <section className="layer def-section">
         <h2 className="layer-title">1ヶ月先予測</h2>
         <ul className="def-list">
-          <li><strong>買い場入り確率</strong>：今後およそ1ヶ月（21営業日）以内に AIBA が買い場（60以上）へ入る確率。ロジスティック回帰による。</li>
+          <li><strong>買い場到来の確率（今後1ヶ月）</strong>：今後21営業日のうちに AIBAが<strong>一度でも</strong>買い場（60以上）へ入る確率（期間中の最大AIBAで判定）。ロジスティック回帰による。「1ヶ月後に値上がりする確率」でも「ちょうど1ヶ月後に買い場になる確率」でもなく、<strong>その期間中に買い場が訪れるか</strong>の予測。すでに60以上なら今が買い場。</li>
           <li><strong>予測AIBA</strong>：21営業日先の AIBA の点推定（平均回帰モデル）。</li>
         </ul>
         <p className="guide-note">小サンプルでの過学習を避け、平均回帰＋ロジスティックの単純モデルを採用（naive 比較で検証）。実績は「<ConceptIcon name="verify" size={12} /> 検証」ページ参照。</p>

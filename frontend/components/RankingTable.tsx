@@ -67,7 +67,7 @@ export default function RankingTable({
           <th className="num">株価</th>
           <th title="総合的な買い時度(0-100)。高いほど割安・買い場。色: 緑=買い場 / 赤=見送り">AIBAスコア</th>
           <th title="成長×割安(0-100)。割安(AIBA)と研究熱量の上昇を合成。今買い時かつ将来伸びそうな候補を探す指標">成長×割安</th>
-          <th className="num" title="今後約1ヶ月でAIBAが買い場(60以上)に入る確率の予測">買い場確率<br />(1ヶ月)</th>
+          <th className="num" title="今後1ヶ月のうちに買い場(AIBA≧60)が訪れる確率。株価の値上がり確率ではありません。すでに60以上なら今が買い場。">買い場確率<br />(1ヶ月)</th>
           <th className="num col-divider" title="株価の割安感(0-100)。RSIが低い・移動平均より下ほど高得点">テクニカル</th>
           <th className="num" title="GitHub/arXiv/HNの研究熱量(0-100)。50=横ばい、50超=加速。↑↓は直近の傾き">センチメント</th>
           <th className="num" title="相対力指数。70超=過熱、30未満=売られすぎ。50超はAIBA減点">RSI(14)</th>
