@@ -143,6 +143,7 @@ RSI勢い  = clamp(RSI − max(0, RSI−80) × 2)   ← 80超は過熱で減衰
           <li><strong>予測AIBA</strong>：21営業日先の AIBA の点推定（平均回帰モデル）。</li>
         </ul>
         <p className="guide-note">小サンプルでの過学習を避け、平均回帰＋ロジスティックの単純モデルを採用（naive 比較で検証）。実績は「<ConceptIcon name="verify" size={12} /> 検証」ページ参照。</p>
+        <p className="guide-note">▶ <strong>実際の予測値の見方</strong>：買い場確率は各ランキング表の「買い場確率(1ヶ月)」列に、予測AIBAは<strong>銘柄詳細ページ</strong>（ランキングで領域名・銘柄名をクリック）の先頭「1ヶ月先の見通し」に表示されます。</p>
       </section>
 
       {/* 売り管理 */}
