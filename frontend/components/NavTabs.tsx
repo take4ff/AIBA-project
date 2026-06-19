@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Globe, Globe2, Flag, Star, Compass, Search, BarChart3, BookOpen, Bookmark, Briefcase,
-  GraduationCap,
+  GraduationCap, LineChart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +25,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
       { key: "themes", label: "テーマ", href: "/themes", Icon: Compass },
       { key: "screener", label: "スクリーナー", href: "/screener", Icon: Search },
       { key: "verify", label: "検証", href: "/verify", Icon: BarChart3 },
+      { key: "aiba-index", label: "AIBA指数", href: "/aiba-index", Icon: LineChart },
       { key: "guide", label: "スコア定義", href: "/guide", Icon: BookOpen },
       { key: "learn", label: "投資講座", href: "/learn", Icon: GraduationCap },
     ],

@@ -188,14 +188,14 @@ export async function getICMonthly(): Promise<ICMonth[]> {
 }
 
 export interface SnapshotRow {
-  snapshot_date: string; is_buy: boolean | null; aiba_score: number | null;
+  snapshot_date: string; domain_id?: string; is_buy: boolean | null; aiba_score: number | null;
   ret_1m: number | null; ret_3m: number | null; ret_6m: number | null; ret_12m: number | null;
 }
 
 /** 定点記録（スコアのスナップショット）。out-of-sample 検証用。全行ページング取得。 */
 export async function getSnapshots(): Promise<SnapshotRow[]> {
   return selectAll<SnapshotRow>("score_snapshots",
-    "snapshot_date,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m");
+    "snapshot_date,domain_id,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m");
 }
 
 export interface BenchmarkPoint { trade_date: string; close: number }
