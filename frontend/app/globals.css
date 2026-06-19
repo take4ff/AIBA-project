@@ -364,3 +364,260 @@ a { color: inherit; text-decoration: none; }
 .cl-item svg { flex: none; }
 .back-link { color: var(--accent); font-size: 14px; font-weight: 600; }
 .back-link:hover { text-decoration: underline; }
+
+/* ================================================================
+   投資講座ページ (/learn)
+================================================================ */
+
+/* チャプターナビ */
+.learn-chapter-nav {
+  display: flex; gap: 6px; margin: 28px 0 0; flex-wrap: wrap;
+  padding: 5px; background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 12px; width: fit-content;
+}
+.learn-chapter-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; font-size: 14px; font-weight: 600; color: var(--muted);
+  border: none; background: none; border-radius: 8px; cursor: pointer;
+  transition: 0.15s; white-space: nowrap;
+}
+.learn-chapter-btn:hover { color: var(--ink); background: var(--panel); }
+.learn-chapter-active {
+  color: #fff !important; background: var(--ink) !important; font-weight: 700;
+  box-shadow: 0 2px 8px rgba(16,24,40,0.15);
+}
+.learn-chapter-ico { color: var(--accent); flex: none; }
+.learn-chapter-active .learn-chapter-ico { color: #fff; }
+
+/* セクション */
+.learn-section { margin-top: 28px; }
+.learn-intro { margin-bottom: 20px; }
+.learn-section-title { font-size: 22px; font-weight: 800; color: var(--ink); margin: 0 0 8px; }
+.learn-section-desc { color: var(--muted); font-size: 14px; line-height: 1.8; margin: 0; }
+
+/* 用語カード */
+.learn-terms-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+.learn-term-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.learn-term-card--open {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(36,86,230,0.08);
+}
+.learn-term-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; padding: 14px 18px; background: none; border: none;
+  cursor: pointer; text-align: left; transition: background 0.12s;
+}
+.learn-term-head:hover { background: var(--panel-2); }
+.learn-term-left { display: flex; flex-direction: column; gap: 3px; }
+.learn-term-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.learn-term-short { font-size: 13px; color: var(--muted); }
+.learn-chevron { color: var(--muted); flex: none; }
+.learn-term-body {
+  padding: 4px 18px 18px; border-top: 1px solid var(--border);
+  animation: learn-fade-in 0.18s ease;
+}
+.learn-term-detail { font-size: 14px; color: var(--text); line-height: 1.85; margin: 12px 0 0; }
+.learn-example {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-top: 12px; background: var(--panel-2);
+  border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 8px; padding: 12px 14px;
+}
+.learn-example-ico { color: var(--accent); flex: none; margin-top: 2px; }
+.learn-example-text {
+  font-size: 13px; color: var(--text); line-height: 1.75;
+  white-space: pre-wrap; font-family: inherit; margin: 0;
+}
+.learn-tip {
+  display: flex; flex-direction: column; gap: 3px;
+  margin-top: 12px; padding: 10px 14px;
+  background: rgba(36,86,230,0.05); border: 1px solid rgba(36,86,230,0.2);
+  border-radius: 8px;
+}
+.learn-tip-label { font-size: 11px; font-weight: 700; color: var(--accent); }
+.learn-tip-text { font-size: 13px; color: var(--text); line-height: 1.7; }
+
+/* ナビゲーションヒント */
+.learn-next-hint {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  margin-top: 32px; padding: 16px 20px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+}
+.learn-next-hint p { margin: 0; font-size: 14px; color: var(--muted); }
+.learn-next-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 20px; background: var(--ink); color: #fff;
+  font-size: 13px; font-weight: 700; border: none; border-radius: 8px;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.learn-next-btn:hover { opacity: 0.85; }
+
+/* ガイドCTA */
+.learn-guide-cta {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: 24px; padding: 12px 16px;
+  background: rgba(36,86,230,0.05); border: 1px solid rgba(36,86,230,0.15);
+  border-radius: 8px; font-size: 13px; color: var(--muted);
+}
+
+/* 複利シミュレーター */
+.learn-calc {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.learn-calc-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 16px; }
+.learn-calc-inputs {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.learn-calc-label {
+  display: flex; flex-direction: column; gap: 5px;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+}
+.learn-calc-input {
+  padding: 8px 10px; background: var(--panel-2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 14px; transition: border-color 0.15s;
+  width: 100%;
+}
+.learn-calc-input:focus { outline: none; border-color: var(--accent); }
+.learn-calc-result {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  padding: 16px; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.learn-calc-stat { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 120px; }
+.learn-calc-stat-label { font-size: 11px; color: var(--muted); font-weight: 700; }
+.learn-calc-stat-val { font-size: 20px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.learn-calc-stat-main { font-size: 26px; color: var(--accent); }
+.learn-calc-gain { color: var(--green); }
+.learn-calc-note { color: var(--muted); font-size: 11px; margin: 12px 0 0; }
+
+/* コア・サテライト戦略カード */
+.learn-strategy-card {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.learn-strategy-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 16px; }
+.learn-strategy-grid {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.learn-strategy-item {
+  flex: 1; min-width: 180px; padding: 16px; border-radius: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.learn-strategy-core {
+  background: rgba(36,86,230,0.06); border: 1px solid rgba(36,86,230,0.2);
+}
+.learn-strategy-satellite {
+  background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.2);
+}
+.learn-strategy-label { font-size: 13px; font-weight: 700; color: var(--ink); }
+.learn-strategy-pct { font-size: 22px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.learn-strategy-satellite .learn-strategy-pct { color: var(--green); }
+.learn-strategy-item p { font-size: 13px; color: var(--muted); line-height: 1.7; margin: 0; }
+.learn-strategy-sep { font-size: 22px; font-weight: 800; color: var(--muted); padding: 0 4px; }
+.learn-strategy-note { font-size: 12px; color: var(--muted); margin: 14px 0 0; line-height: 1.8; }
+
+/* 使い方フロー */
+.learn-flow-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 14px; }
+.learn-flow { display: flex; flex-direction: column; gap: 0; margin-bottom: 28px; }
+.learn-flow-step {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 16px 0; border-bottom: 1px solid var(--border);
+}
+.learn-flow-step:last-child { border-bottom: none; }
+.learn-flow-icon {
+  width: 40px; height: 40px; border-radius: 10px; flex: none;
+  background: linear-gradient(135deg, #16233f 0%, #1e3056 100%);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  box-shadow: 0 2px 6px rgba(16,24,40,0.15);
+}
+.learn-flow-content { flex: 1; }
+.learn-flow-step-title { font-size: 15px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+.learn-flow-step-desc { font-size: 13px; color: var(--muted); line-height: 1.75; margin: 0 0 8px; }
+.learn-flow-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none;
+}
+.learn-flow-link:hover { text-decoration: underline; }
+
+/* スコア帯 */
+.learn-score-guide {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.learn-score-guide-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 14px; }
+.learn-score-bands { display: flex; flex-direction: column; gap: 6px; }
+.learn-score-band {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; border-radius: 8px; border: 1px solid;
+}
+.learn-score-band-range { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 70px; }
+.learn-score-band-label { font-size: 13px; font-weight: 600; color: var(--text); }
+
+/* FAQ */
+.learn-faq-title { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 12px; }
+.learn-faq-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
+.learn-faq-item {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+.learn-faq-item--open { border-color: var(--accent); }
+.learn-faq-q {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 14px 16px; background: none; border: none;
+  cursor: pointer; text-align: left; font-size: 14px; font-weight: 600;
+  color: var(--ink); transition: background 0.12s;
+}
+.learn-faq-q:hover { background: var(--panel-2); }
+.learn-faq-ico { color: var(--accent); flex: none; }
+.learn-faq-q .learn-chevron { margin-left: auto; }
+.learn-faq-a {
+  padding: 4px 16px 16px; margin: 0;
+  font-size: 13px; color: var(--muted); line-height: 1.85;
+  border-top: 1px solid var(--border);
+  animation: learn-fade-in 0.18s ease;
+}
+
+@keyframes learn-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .learn-chapter-nav { width: 100%; }
+  .learn-chapter-btn { flex: 1; justify-content: center; font-size: 13px; padding: 8px 12px; }
+  .learn-strategy-grid { flex-direction: column; }
+  .learn-strategy-sep { display: none; }
+  .learn-calc-inputs { grid-template-columns: 1fr 1fr; }
+}
+
+/* ================================================================
+   ナビゲーション プログレスバー (NavigationProgress.tsx)
+   ページ遷移中に画面最上部へ固定表示される細いバー。
+   現ページのコンテンツはそのまま表示したまま重なる。
+================================================================ */
+.nav-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    #60a5fa 60%,
+    #a5f3fc 100%
+  );
+  border-radius: 0 2px 2px 0;
+  box-shadow:
+    0 0 8px rgba(36, 86, 230, 0.5),
+    0 0 16px rgba(36, 86, 230, 0.25);
+  /* width と opacity は NavigationProgress.tsx の inline style で制御 */
+}

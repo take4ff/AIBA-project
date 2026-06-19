@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 import AuthButton from "@/components/AuthButton";
+import NavigationProgress from "@/components/NavigationProgress";
 
 export const metadata: Metadata = {
   title: "AIBA — 次世代技術投資分析",
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body>
         <AuthProvider>
+          <NavigationProgress />
           <AuthButton />
           {children}
         </AuthProvider>
