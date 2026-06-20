@@ -18,11 +18,11 @@ interface ThemeCard {
   aiba: number | null; sentiment: number | null; trend: number; rising: boolean; tone: number | null;
 }
 
-// ニュース論調（GDELT平均トーン）→ ラベル＋色。おおむね -10〜+10、0=中立。
+// ニュース論調（GDELT平均トーン）→ ラベル＋色。実ニュースは概ね ±2 に収まるため ±1 を境界に。
 function toneInfo(t: number | null): { label: string; color: string } | null {
   if (t == null) return null;
-  if (t >= 2) return { label: "ポジティブ", color: "#15a34a" };
-  if (t <= -2) return { label: "ネガティブ", color: "#dc2626" };
+  if (t >= 1) return { label: "ポジティブ", color: "#15a34a" };
+  if (t <= -1) return { label: "ネガティブ", color: "#dc2626" };
   return { label: "中立", color: "var(--muted)" };
 }
 
