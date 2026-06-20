@@ -8,7 +8,7 @@ import {
   UserHolding, TickerMetric, TickerFundamentals,
   getHoldings, getTickerData, getTickerThemes, getFundAcqCloses, addHolding, updateHolding, deleteHolding,
 } from "@/lib/user-portfolio";
-import { assessSell, assessStopLoss, assessTakeProfit, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
+import { assessSell, assessStopLoss, assessTakeProfit, money, pct, earningsLabel, overheatColor, daysUntil } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -261,6 +261,36 @@ export default function PortfolioPage() {
               </table>
             </div>
           )}
+          {holdings.length > 0 && (() => {
+            const upcoming = holdings
+              .map((h) => {
+                const d = funds.get(h.ticker)?.next_earnings_date ?? null;
+                const days = daysUntil(d);
+                const displayName = (h.name && h.name !== h.ticker) ? h.name : (themeMap.get(h.ticker)?.name ?? h.ticker);
+                return { ticker: h.ticker, name: displayName, date: d, days };
+              })
+              .filter((x) => x.date && x.days != null && x.days >= 0)
+              .sort((a, b) => a.days! - b.days!);
+            if (upcoming.length === 0) return null;
+            return (
+              <div style={{ marginTop: 20 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, margin: "0 0 8px" }}>今後の決算予定</h2>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {upcoming.map(({ ticker, name, date, days }) => {
+                    const color = days! <= 7 ? "#dc2626" : days! <= 30 ? "#d97706" : "var(--muted)";
+                    return (
+                      <Link key={ticker} href={`/portfolio/${encodeURIComponent(ticker)}`}
+                        style={{ display: "flex", flexDirection: "column", gap: 2, padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--panel-2)", textDecoration: "none", color: "inherit", minWidth: 130 }}>
+                        <span style={{ fontWeight: 700, fontSize: 13 }}>{name}<span className="ticker" style={{ marginLeft: 6 }}>{ticker}</span></span>
+                        <span style={{ fontSize: 12, color, fontWeight: days! <= 30 ? 700 : 400 }}>{date}（あと{days}日）</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {holdings.length > 0 && (
             <AllocationAnalysis holdings={holdings} metrics={metrics} themeMap={themeMap} />
           )}

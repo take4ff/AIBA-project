@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { RankingRow } from "@/lib/types";
 import RankingTableMore from "@/components/RankingTableMore";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -15,6 +15,11 @@ const SORTS = {
   buyzone: { label: "買い場入り確率", key: (r: RankingRow) => r.buyzone_prob ?? -1 },
 } as const;
 type SortKey = keyof typeof SORTS;
+
+const SK = "aiba_screener";
+function loadSaved(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(SK) ?? "{}"); } catch { return {}; }
+}
 
 export default function ScreenerClient({
   rows,
@@ -35,6 +40,29 @@ export default function ScreenerClient({
   const [divOnly, setDivOnly] = useState(false);
   const [cur, setCur] = useState<"JPY" | "USD">("JPY");
   const [sort, setSort] = useState<SortKey>("aiba");
+
+  // マウント時に保存条件を復元
+  useEffect(() => {
+    const s = loadSaved();
+    if (s.region) setRegion(s.region as any);
+    if (s.kind) setKind(s.kind as any);
+    if (s.layer) setLayer(s.layer as any);
+    if (s.minAiba) setMinAiba(s.minAiba);
+    if (s.maxBuyzone) setMaxBuyzone(s.maxBuyzone);
+    if (s.maxPE) setMaxPE(s.maxPE);
+    if (s.trendUp) setTrendUp(s.trendUp === "1");
+    if (s.divOnly) setDivOnly(s.divOnly === "1");
+    if (s.cur) setCur(s.cur as any);
+    if (s.sort) setSort(s.sort as SortKey);
+  }, []);
+
+  // 条件変更のたびに保存
+  useEffect(() => {
+    localStorage.setItem(SK, JSON.stringify({
+      region, kind, layer, minAiba, maxBuyzone, maxPE,
+      trendUp: trendUp ? "1" : "", divOnly: divOnly ? "1" : "", cur, sort,
+    }));
+  }, [region, kind, layer, minAiba, maxBuyzone, maxPE, trendUp, divOnly, cur, sort]);
 
   const filtered = useMemo(() => {
     const minA = minAiba ? Number(minAiba) : null;
@@ -62,6 +90,7 @@ export default function ScreenerClient({
     setRegion("all"); setKind("all"); setLayer("all");
     setMinAiba(""); setMaxBuyzone(""); setMaxPE("");
     setTrendUp(false); setDivOnly(false); setSort("aiba");
+    localStorage.removeItem(SK);
   };
 
   return (
