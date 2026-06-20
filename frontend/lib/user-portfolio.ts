@@ -226,15 +226,22 @@ export async function getAllTickerHistories(
 ): Promise<Map<string, { date: string; close: number }[]>> {
   if (!tickers.length) return new Map();
   const cutoff = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
-  const { data: tm } = await supabaseBrowser.from("ticker_metrics")
-    .select("ticker,trade_date,close_price").in("ticker", tickers)
-    .gte("trade_date", cutoff).order("trade_date", { ascending: true });
+  // PostgREST のデフォルト上限(1000行)を回避するため ticker ごとに並列取得する
+  const tmResults = await Promise.all(
+    tickers.map((t) =>
+      supabaseBrowser.from("ticker_metrics")
+        .select("ticker,trade_date,close_price").eq("ticker", t)
+        .gte("trade_date", cutoff).order("trade_date", { ascending: true })
+    )
+  );
   const result = new Map<string, { date: string; close: number }[]>();
-  for (const r of (tm ?? []) as any[]) {
-    if (r.close_price == null) continue;
-    const arr = result.get(r.ticker) ?? [];
-    arr.push({ date: r.trade_date, close: Number(r.close_price) });
-    result.set(r.ticker, arr);
+  for (const { data } of tmResults) {
+    for (const r of (data ?? []) as any[]) {
+      if (r.close_price == null) continue;
+      const arr = result.get(r.ticker) ?? [];
+      arr.push({ date: r.trade_date, close: Number(r.close_price) });
+      result.set(r.ticker, arr);
+    }
   }
   const missing = tickers.filter((t) => !result.has(t));
   if (missing.length) {
@@ -242,10 +249,16 @@ export async function getAllTickerHistories(
     const tkByDom = new Map<string, string>();
     for (const d of (doms ?? []) as any[]) tkByDom.set(d.id, d.ticker);
     if (tkByDom.size) {
-      const { data: dm } = await supabaseBrowser.from("daily_metrics")
-        .select("domain_id,trade_date,close_price").in("domain_id", [...tkByDom.keys()])
-        .gte("trade_date", cutoff).order("trade_date", { ascending: true });
-      for (const r of (dm ?? []) as any[]) {
+      // domain_id ごとに並列取得（同じく上限回避）
+      const dmResults = await Promise.all(
+        [...tkByDom.keys()].map((domId) =>
+          supabaseBrowser.from("daily_metrics")
+            .select("domain_id,trade_date,close_price").eq("domain_id", domId)
+            .gte("trade_date", cutoff).order("trade_date", { ascending: true })
+        )
+      );
+      const dm = dmResults.flatMap(({ data }) => (data ?? []) as any[]);
+      for (const r of dm) {
         if (r.close_price == null) continue;
         const tk = tkByDom.get(r.domain_id)!;
         const arr = result.get(tk) ?? [];
