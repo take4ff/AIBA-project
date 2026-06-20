@@ -15,8 +15,13 @@ from aiba.config import settings
 
 log = logging.getLogger("aiba.benchmark")
 
-# ticker: 表示名（必要なら QQQ / ^GSPC 等を追加可能）
-INDICES = {"ACWI": "全世界株(ACWI)"}
+# ticker: 表示名
+INDICES = {
+    "ACWI": "全世界株(ACWI)",
+    "QQQ":  "NASDAQ-100(QQQ)",
+    "ARKK": "ARK Innovation(ARKK)",
+    "BUZZ": "Social Sentiment(BUZZ)",
+}
 PERIOD_DAYS = 1825  # 約5年（定点記録の2022年初〜をカバー）
 
 

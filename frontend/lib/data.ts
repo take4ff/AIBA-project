@@ -226,11 +226,26 @@ export const getSnapshots = unstable_cache(
 
 export interface BenchmarkPoint { trade_date: string; close: number }
 
-/** ベンチマーク指数の日次終値（既定 ACWI）。全行ページング取得。テーブル未作成時は空配列。 */
+/** ベンチマーク指数の日次終値（単一ティッカー）。全行ページング取得。テーブル未作成時は空配列。 */
 export async function getBenchmark(ticker = "ACWI"): Promise<BenchmarkPoint[]> {
   const rows = await selectAll<any>("benchmark_prices", "trade_date,close",
     (q) => q.eq("ticker", ticker).order("trade_date", { ascending: true }));
   return rows.map((r) => ({ trade_date: r.trade_date, close: Number(r.close) }));
+}
+
+/** 複数ベンチマーク指数を一括取得。ticker → BenchmarkPoint[] の Map を返す。 */
+export async function getAllBenchmarks(
+  tickers = ["ACWI", "QQQ", "ARKK", "BUZZ"],
+): Promise<Map<string, BenchmarkPoint[]>> {
+  const rows = await selectAll<any>("benchmark_prices", "trade_date,ticker,close",
+    (q) => q.in("ticker", tickers).order("trade_date", { ascending: true }));
+  const out = new Map<string, BenchmarkPoint[]>();
+  for (const r of rows) {
+    const arr = out.get(r.ticker) ?? [];
+    arr.push({ trade_date: r.trade_date, close: Number(r.close) });
+    out.set(r.ticker, arr);
+  }
+  return out;
 }
 
 /** 現在の USD/JPY レート（取得失敗時はフォールバック）。 */

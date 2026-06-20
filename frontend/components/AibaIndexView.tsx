@@ -6,6 +6,13 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { SnapshotRow, BenchmarkPoint } from "@/lib/data";
+
+const BENCHMARKS: { key: string; label: string; color: string; dash?: string }[] = [
+  { key: "ACWI", label: "全世界株 ACWI",       color: "#2456e6" },
+  { key: "QQQ",  label: "NASDAQ-100 QQQ",      color: "#d97706" },
+  { key: "ARKK", label: "ARK Innovation ARKK", color: "#dc2626" },
+  { key: "BUZZ", label: "Social Sentiment BUZZ", color: "#9333ea" },
+];
 import { RankingRow } from "@/lib/types";
 import { parseDomainId } from "@/lib/regions";
 
@@ -41,10 +48,16 @@ function selectByVariant(rows: SnapshotRow[], variant: Variant): SnapshotRow[] {
 }
 
 export default function AibaIndexView({
-  snaps, rows, bench, usdjpy,
-}: { snaps: SnapshotRow[]; rows: RankingRow[]; bench: BenchmarkPoint[]; usdjpy: number }) {
+  snaps, rows, bench, benchmarks, usdjpy,
+}: {
+  snaps: SnapshotRow[]; rows: RankingRow[];
+  bench: BenchmarkPoint[];
+  benchmarks?: Map<string, BenchmarkPoint[]>;
+  usdjpy: number;
+}) {
   const [variant, setVariant] = useState<Variant>("core_lt");
   const [monthly, setMonthly] = useState(30000);
+  const [activeBenchmarks, setActiveBenchmarks] = useState<Set<string>>(new Set(["ACWI"]));
 
   const dates = useMemo(() => Array.from(new Set(snaps.map((s) => s.snapshot_date))).sort(), [snaps]);
 
@@ -83,43 +96,55 @@ export default function AibaIndexView({
     return rets.length ? mean(rets) : null;
   };
 
-  // 月次インデックス系列（100スタート）＋ ACWI を同窓で連結
+  // 月次インデックス系列（100スタート）＋ 各ベンチマークを同窓で連結
   const series = useMemo(() => {
-    const benchClose = (d: string): number | null => {
+    const mkClose = (pts: BenchmarkPoint[]) => (d: string): number | null => {
       let c: number | null = null;
-      for (const b of bench) { if (b.trade_date <= d) c = b.close; else break; }
+      for (const b of pts) { if (b.trade_date <= d) c = b.close; else break; }
       return c;
     };
-    const out: { date: string; idx: number; acwi: number | null }[] = [];
-    let v = 100, ei = 100; let idxStarted = false;
+    const allBench = benchmarks ?? new Map([["ACWI", bench]]);
+    const closeFns = new Map(BENCHMARKS.map((b) => [b.key, mkClose(allBench.get(b.key) ?? [])]));
+
+    const out: Record<string, string | number | null>[] = [];
+    let v = 100;
+    const eis = new Map(BENCHMARKS.map((b) => [b.key, 100]));
+    const started = new Map(BENCHMARKS.map((b) => [b.key, false]));
+
     for (let i = 0; i < dates.length; i++) {
       const d = dates[i];
       const mr = monthRetOf(perMonth.get(d) ?? []);
-      if (mr == null) break; // 直近の未評価月で打ち切り
+      if (mr == null) break;
       v *= 1 + mr / 100;
-      const c0 = benchClose(d), c1 = dates[i + 1] ? benchClose(dates[i + 1]) : null;
-      if (c0 != null) { idxStarted = true; if (c1 != null) ei *= c1 / c0; }
-      out.push({ date: d, idx: Math.round(v * 10) / 10, acwi: idxStarted ? Math.round(ei * 10) / 10 : null });
+      const row: Record<string, string | number | null> = { date: d, idx: Math.round(v * 10) / 10 };
+      for (const { key } of BENCHMARKS) {
+        const fn = closeFns.get(key)!;
+        const c0 = fn(d), c1 = dates[i + 1] ? fn(dates[i + 1]) : null;
+        if (c0 != null) { started.set(key, true); if (c1 != null) eis.set(key, eis.get(key)! * c1 / c0); }
+        row[key] = started.get(key) ? Math.round(eis.get(key)! * 10) / 10 : null;
+      }
+      out.push(row);
     }
     return out;
-  }, [perMonth, dates, bench]);
+  }, [perMonth, dates, bench, benchmarks]);
 
   // 積立シミュレーション（毎月 monthly 円をインデックス値で購入）
   const sim = useMemo(() => {
     if (series.length < 2) return null;
     const n = series.length;
     let units = 0;
-    for (const p of series) units += monthly / p.idx;           // 各月のインデックス値で購入
-    const last = series[n - 1].idx;
+    for (const p of series) units += monthly / (p["idx"] as number);
+    const lastIdx = series[n - 1]["idx"] as number;
+    const firstIdx = series[0]["idx"] as number;
     const invested = monthly * n;
-    const dcaValue = units * last;
-    const lumpValue = (invested / series[0].idx) * last;         // 同額を初月に一括
+    const dcaValue = units * lastIdx;
+    const lumpValue = (invested / firstIdx) * lastIdx;
     // ACWI に同条件で積立
-    const acwiPts = series.filter((p) => p.acwi != null) as { acwi: number }[];
+    const acwiPts = series.filter((p) => p["ACWI"] != null);
     let acwiVal: number | null = null;
     if (acwiPts.length >= 2) {
-      let u = 0; for (const p of acwiPts) u += monthly / p.acwi;
-      acwiVal = u * acwiPts[acwiPts.length - 1].acwi;
+      let u = 0; for (const p of acwiPts) u += monthly / (p["ACWI"] as number);
+      acwiVal = u * (acwiPts[acwiPts.length - 1]["ACWI"] as number);
     }
     return { n, invested, dcaValue, lumpValue, acwiVal };
   }, [series, monthly]);
@@ -201,7 +226,16 @@ export default function AibaIndexView({
   }, [holdings, monthly, usdjpy]);
 
   const last = series.at(-1);
-  const vsAcwi = last && last.acwi != null ? last.idx - last.acwi : null;
+  const vsAcwi = last && last["ACWI"] != null ? (last["idx"] as number) - (last["ACWI"] as number) : null;
+
+  function toggleBenchmark(key: string) {
+    setActiveBenchmarks((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) { if (next.size > 1) next.delete(key); }
+      else next.add(key);
+      return next;
+    });
+  }
 
   return (
     <>
@@ -218,12 +252,32 @@ export default function AibaIndexView({
         <>
           <div className="stat-grid" style={{ marginTop: 8 }}>
             <div className="stat"><div className="stat-label">期間</div><div className="stat-val" style={{ fontSize: 15 }}>{series[0].date} 〜 {last!.date}</div></div>
-            <div className="stat"><div className="stat-label">インデックス（100→）</div><div className="stat-val pos">{last!.idx.toFixed(0)}</div></div>
-            <div className="stat"><div className="stat-label">全世界株ACWI（100→）</div><div className="stat-val">{last!.acwi?.toFixed(0) ?? "—"}</div></div>
+            <div className="stat"><div className="stat-label">インデックス（100→）</div><div className="stat-val pos">{(last!["idx"] as number).toFixed(0)}</div></div>
+            <div className="stat"><div className="stat-label">全世界株ACWI（100→）</div><div className="stat-val">{(last!["ACWI"] as number | null)?.toFixed(0) ?? "—"}</div></div>
             <div className="stat"><div className="stat-label">対ACWI 超過</div><div className="stat-val pos">{vsAcwi == null ? "—" : (vsAcwi >= 0 ? "+" : "") + vsAcwi.toFixed(0)}</div></div>
           </div>
 
-          <div className="chart-wrap" style={{ paddingTop: 8 }}>
+          {/* ベンチマーク切替 */}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 4px" }}>
+            <span style={{ fontSize: 12, color: "var(--muted)", alignSelf: "center" }}>比較：</span>
+            {BENCHMARKS.map((b) => {
+              const active = activeBenchmarks.has(b.key);
+              return (
+                <button key={b.key} type="button"
+                  onClick={() => toggleBenchmark(b.key)}
+                  style={{
+                    fontSize: 12, padding: "3px 10px", borderRadius: 16, cursor: "pointer",
+                    border: `1.5px solid ${b.color}`,
+                    background: active ? b.color : "transparent",
+                    color: active ? "#fff" : b.color,
+                    fontWeight: active ? 700 : 400,
+                  }}
+                >{b.label}</button>
+              );
+            })}
+          </div>
+
+          <div className="chart-wrap" style={{ paddingTop: 4 }}>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={series} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="#e6e8ec" strokeDasharray="3 3" />
@@ -233,7 +287,10 @@ export default function AibaIndexView({
                 <Tooltip contentStyle={TOOLTIP} formatter={(v: number, n: string) => [v?.toFixed(1), n]} />
                 <Legend />
                 <Line type="monotone" dataKey="idx" name="AIBAインデックス" stroke="#15a34a" strokeWidth={2.6} dot={false} connectNulls />
-                <Line type="monotone" dataKey="acwi" name="全世界株ACWI" stroke="#2456e6" strokeWidth={1.8} strokeDasharray="5 3" dot={false} connectNulls />
+                {BENCHMARKS.filter((b) => activeBenchmarks.has(b.key)).map((b) => (
+                  <Line key={b.key} type="monotone" dataKey={b.key} name={b.label}
+                    stroke={b.color} strokeWidth={1.8} strokeDasharray="5 3" dot={false} connectNulls />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           </div>

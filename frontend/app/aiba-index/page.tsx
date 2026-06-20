@@ -1,4 +1,4 @@
-import { getSnapshots, getAllRows, getBenchmark, getUsdJpy } from "@/lib/data";
+import { getSnapshots, getAllRows, getAllBenchmarks, getUsdJpy } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -10,7 +10,8 @@ export default async function AibaIndexPage() {
   if (!isSupabaseConfigured) {
     return <main className="container"><div className="notice">Supabase の環境変数が未設定です。</div></main>;
   }
-  const [snaps, rows, bench, usdjpy] = await Promise.all([getSnapshots(), getAllRows(), getBenchmark("ACWI"), getUsdJpy()]);
+  const [snaps, rows, benchmarks, usdjpy] = await Promise.all([getSnapshots(), getAllRows(), getAllBenchmarks(), getUsdJpy()]);
+  const bench = benchmarks.get("ACWI") ?? [];
 
   return (
     <main className="container">
@@ -21,7 +22,7 @@ export default async function AibaIndexPage() {
       </header>
       <NavTabs active="aiba-index" />
       <section className="layer">
-        <AibaIndexView snaps={snaps} rows={rows} bench={bench} usdjpy={usdjpy} />
+        <AibaIndexView snaps={snaps} rows={rows} bench={bench} benchmarks={benchmarks} usdjpy={usdjpy} />
       </section>
       <p className="guide-note" style={{ marginTop: 16 }}>
         ※ 実在の金融商品ではなく、過去データ（定点記録）に基づくサイト内シミュレーションです。実発注・自動積立は行いません。重複・取引コスト未考慮の概算で、将来の成果を保証しません。
