@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ReferenceArea, ReferenceLine, ResponsiveContainer,
 } from "recharts";
 import { MetricHistoryRow } from "@/lib/types";
 import PeriodFilter, { PERIODS, Period } from "@/components/PeriodFilter";
+import { computeSwingTrendlines } from "@/lib/trendlines";
 
 const BUY_THRESHOLD = 60;
 
@@ -64,14 +65,30 @@ export default function TrendChart({
 }) {
   const [period, setPeriod] = useState<Period>("6M");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [showTrend, setShowTrend] = useState(false);
   const toggle = (k: string) => setHidden((h) => ({ ...h, [k]: !h[k] }));
   const view = data.slice(-PERIODS[period]);
   const bands = buyBands(view);
   const priceFmt = makePriceFmt(currency);
+  const trendlines = useMemo(
+    () => (showTrend ? computeSwingTrendlines(view) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showTrend, period, data]
+  );
 
   return (
     <div className="chart-wrap">
-      <PeriodFilter value={period} onChange={setPeriod} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+        <PeriodFilter value={period} onChange={setPeriod} />
+        <button
+          type="button"
+          className={showTrend ? "kind-active" : "kind-btn"}
+          onClick={() => setShowTrend((v) => !v)}
+          style={{ fontSize: 12, padding: "3px 10px" }}
+        >
+          トレンドライン
+        </button>
+      </div>
       <ResponsiveContainer width="100%" height={420}>
         <ComposedChart data={view} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <defs>
@@ -99,6 +116,17 @@ export default function TrendChart({
               label={{ value: `押し目目安 ${priceFmt(buyLevel)}`, position: "insideBottomRight", fill: "#111418", fontSize: 11 }} />
           )}
 
+          {trendlines.map((tl, i) => (
+            <ReferenceLine
+              key={`tl-${i}`}
+              yAxisId="price"
+              segment={[{ x: tl.x1, y: tl.y1 }, { x: tl.x2, y: tl.y2 }]}
+              stroke={tl.kind === "resistance" ? "#ef4444" : "#22c55e"}
+              strokeWidth={1.5}
+              strokeDasharray="6 4"
+            />
+          ))}
+
           <Tooltip contentStyle={TOOLTIP}
             formatter={(value: number, name: string) => (name === "株価" ? priceFmt(value) : value?.toFixed(1))} />
           <Legend content={(p: any) => <ClickableLegend {...p} hidden={hidden} onToggle={toggle} />} />
@@ -121,6 +149,9 @@ export default function TrendChart({
       <p style={{ color: "#71767f", fontSize: 12, marginTop: 10 }}>
         左軸＝各種スコア(0-100)、右軸＝株価(終値・{currency === "JPY" ? "円" : "ドル"})。
         <span style={{ color: C.buy }}>緑の帯</span>は AIBAスコアが買い閾値({BUY_THRESHOLD})以上だった「買い場」期間。凡例クリックで線の表示/非表示。
+        {showTrend && (
+          <> ／ <span style={{ color: "#22c55e" }}>緑点線</span>＝支持線（スイング安値）、<span style={{ color: "#ef4444" }}>赤点線</span>＝抵抗線（スイング高値）。</>
+        )}
       </p>
     </div>
   );
