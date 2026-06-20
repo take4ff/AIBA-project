@@ -39,6 +39,9 @@ class Domain:
     ticker: str
     github_keywords: list[str] = field(default_factory=list)
     arxiv_keywords: list[str] = field(default_factory=list)
+    # GDELT ニュース取得専用キーワード。空リストの場合は arxiv_keywords[0] にフォールバック。
+    # arxiv_keywords が研究寄りすぎて市場ニュースを拾えないテーマで設定する。
+    gdelt_keywords: list[str] = field(default_factory=list)
     tags: tuple[str, ...] = ()   # 副テーマ（マルチ事業企業の他テーマ展開・表示用）
 
 
@@ -73,6 +76,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
     for d in raw.get("domains", []):
         gh = list(d.get("github_keywords", []))
         ax = list(d.get("arxiv_keywords", []))
+        gd = list(d.get("gdelt_keywords", []))
         theme_name = d["name"]
         layer = int(d["layer"])
         instruments: dict = d.get("instruments", {})
@@ -87,7 +91,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
                     name=etf.get("name") or theme_name,
                     region=region, kind="etf", layer=layer,
                     ticker=str(etf["ticker"]),
-                    github_keywords=gh, arxiv_keywords=ax,
+                    github_keywords=gh, arxiv_keywords=ax, gdelt_keywords=gd,
                 ))
 
             for stock in reg.get("stocks", []):

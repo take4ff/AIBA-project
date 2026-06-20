@@ -28,6 +28,7 @@ domains:
         stocks: [{ ticker: "2330.TW", name: TSMC（台湾） }, { ticker: "005930.KS", name: サムスン電子（韓国） }]
     github_keywords: ["cuda", "gpu kernel", "tensorrt", "kv cache", "llm inference", "flash attention", "nvme ssd", "memory bandwidth"]
     arxiv_keywords: ["GPU accelerator", "AI chip", "kv cache offloading", "memory efficient inference", "flash attention"]
+    gdelt_keywords: ["semiconductor demand"]
 
   - id: generative_ai
     name: 生成AI基盤
@@ -44,6 +45,7 @@ domains:
         stocks: [{ ticker: SAP, name: SAP（独） }, { ticker: "9988.HK", name: アリババ（中国） }]
     github_keywords: ["llm", "transformer", "diffusion model", "vllm", "inference engine", "speculative decoding"]
     arxiv_keywords: ["large language model", "generative model", "inference optimization", "kv cache"]
+    gdelt_keywords: ["generative AI"]
 
   - id: cloud_infra
     name: クラウドインフラ
@@ -60,6 +62,7 @@ domains:
         stocks: [{ ticker: INFY, name: Infosys（印） }]
     github_keywords: ["kubernetes", "serverless", "terraform", "gpu cloud", "inference endpoint", "model serving", "opentofu", "ebpf"]
     arxiv_keywords: ["cloud computing", "datacenter scheduling", "GPU cloud computing", "AI inference service", "multi-cloud orchestration"]
+    gdelt_keywords: ["cloud spending"]
 
   # ---------------- 第2層：次なる波 ----------------
   - id: cooling_power_infra
@@ -77,6 +80,7 @@ domains:
         stocks: [{ ticker: "SU.PA", name: シュナイダーエレクトリック（仏） }]
     github_keywords: ["liquid cooling", "power management", "smart grid", "immersion cooling", "direct liquid cooling", "power density", "nuclear datacenter"]
     arxiv_keywords: ["data center cooling", "power grid optimization", "liquid immersion cooling", "power usage effectiveness", "ai datacenter power"]
+    gdelt_keywords: ["AI power consumption"]
 
   - id: edge_ai_robotics
     name: エッジAI・ロボティクス
@@ -93,6 +97,7 @@ domains:
         stocks: [{ ticker: "ABBN.SW", name: ABB（スイス） }]
     github_keywords: ["edge ai", "ros2", "tinyml", "on device llm", "npu inference", "humanoid robot", "mobile inference"]
     arxiv_keywords: ["edge inference", "robot learning", "on-device inference", "model compression", "humanoid locomotion"]
+    gdelt_keywords: ["industrial robot"]
 
   - id: bioinformatics
     name: バイオインフォマティクス
@@ -109,6 +114,7 @@ domains:
         stocks: [{ ticker: AZN, name: アストラゼネカ（英） }, { ticker: NVO, name: ノボノルディスク（デンマーク） }]
     github_keywords: ["bioinformatics", "genomics", "protein folding", "alphafold", "protein language model", "drug discovery ai", "cell foundation model"]
     arxiv_keywords: ["computational biology", "protein structure prediction", "protein language model", "AlphaFold", "AI drug discovery", "foundation model biology"]
+    gdelt_keywords: ["drug discovery"]
 
   - id: entertainment_content
     name: エンタメ・コンテンツ
@@ -223,6 +229,7 @@ domains:
         stocks: [{ ticker: "000660.KS", name: SK Hynix（韓国・HBM/NAND） }]
     github_keywords: ["kv cache", "nvme kv offload", "lmcache", "hbm", "flash memory", "storage class memory"]
     arxiv_keywords: ["kv cache offloading", "LLM inference storage", "memory hierarchy", "CXL memory", "HBM memory"]
+    gdelt_keywords: ["NAND price"]
 
   # ---------------- 常時需要（ディフェンシブ成長） ----------------
   - id: cybersecurity
@@ -239,6 +246,7 @@ domains:
         stocks: [{ ticker: CHKP, name: チェック・ポイント（イスラエル） }]
     github_keywords: ["cybersecurity", "vulnerability scanner", "zero trust", "llm security", "adversarial attack", "ai red team", "prompt injection"]
     arxiv_keywords: ["network security", "intrusion detection", "malware detection", "LLM security", "adversarial machine learning", "AI system vulnerabilities"]
+    gdelt_keywords: ["ransomware"]
 
   - id: data_center
     name: データセンター
@@ -254,6 +262,7 @@ domains:
         stocks: [{ ticker: GDS, name: GDS（中国） }, { ticker: VNET, name: 21Vianet（中国） }]
     github_keywords: ["data center", "infrastructure as code", "server provisioning"]
     arxiv_keywords: ["data center networking", "datacenter energy", "server consolidation"]
+    gdelt_keywords: ["data center investment"]
 
 # =============================================================================
 # 新興テーマ候補（ユニバース未採用）

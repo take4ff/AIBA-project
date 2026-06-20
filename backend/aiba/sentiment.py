@@ -461,19 +461,23 @@ def fetch_news_score(keywords: list[str], as_of: datetime | None = None) -> floa
 def fetch_sentiment(
     github_keywords: list[str],
     arxiv_keywords: list[str],
+    gdelt_keywords: list[str] | None = None,
     as_of: datetime | None = None,
 ) -> SentimentSnapshot:
     """GitHub・arXiv・Hacker News・Google Trends・特許・ニュース の熱量を統合する。
 
-    HN/Trends/特許/ニュース はタイトル・検索語が自然文のため arxiv_keywords（自然言語）を流用。
+    HN/Trends/特許 はタイトル・検索語が自然文のため arxiv_keywords（自然言語）を流用。
+    ニュース（GDELT）は gdelt_keywords が指定されていればそちらを使う。
+    gdelt_keywords が空/None の場合は arxiv_keywords にフォールバック。
     取得できた指標のみの平均をとる（失敗した指標は中立で薄めず除外）。
     """
+    news_kw = gdelt_keywords if gdelt_keywords else arxiv_keywords
     gh = fetch_github_score(github_keywords, as_of)
     ax = fetch_arxiv_score(arxiv_keywords, as_of)
     hn = fetch_hackernews_score(arxiv_keywords, as_of)
     gt = fetch_google_trends_score(arxiv_keywords, as_of)
     pt = fetch_patents_score(arxiv_keywords, as_of)
-    nw = fetch_news_score(arxiv_keywords, as_of)
+    nw = fetch_news_score(news_kw, as_of)
 
     # 本体(GitHub/arXiv)と補助(HN/Trends/特許/ニュース)を重み付けし、取得できた指標のみで加重平均。
     weighted = [(s, w) for s, w in (

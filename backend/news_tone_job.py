@@ -22,10 +22,10 @@ def main() -> int:
     from supabase import create_client
     client = create_client(settings.supabase_url, settings.supabase_key)
 
-    # テーマごとの代表キーワード（arxiv_keywords＝自然言語）
+    # テーマごとのニュース用キーワード（gdelt_keywords 優先、なければ arxiv_keywords）
     kw_by_theme: dict[str, list[str]] = {}
     for d in load_domains():
-        kw_by_theme.setdefault(d.theme_id, d.arxiv_keywords)
+        kw_by_theme.setdefault(d.theme_id, d.gdelt_keywords or d.arxiv_keywords)
 
     now = datetime.now(timezone.utc).isoformat()
     rows = []
