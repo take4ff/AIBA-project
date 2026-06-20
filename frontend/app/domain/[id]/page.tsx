@@ -13,7 +13,7 @@ import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
 import ConceptIcon from "@/components/ConceptIcon";
 import { narrative } from "@/lib/narrative";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 async function getHistory(id: string) {
   const { data: dom } = await supabase

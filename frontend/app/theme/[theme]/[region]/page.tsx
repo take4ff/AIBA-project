@@ -4,7 +4,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 import { Region, REGION_LABEL, REGION_PATH } from "@/lib/regions";
 import RankingTable from "@/components/RankingTable";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 export default async function IndustryPage({
   params,

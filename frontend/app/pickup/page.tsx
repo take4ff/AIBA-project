@@ -1,10 +1,10 @@
 import { getPickup, getUsdJpy } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import RankingTable from "@/components/RankingTable";
+import RankingTableMore from "@/components/RankingTableMore";
 import NavTabs from "@/components/NavTabs";
 import ConceptIcon from "@/components/ConceptIcon";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 export default async function PickupPage({
   searchParams,
@@ -89,7 +89,7 @@ export default async function PickupPage({
         <div className="notice" style={{ marginTop: 20 }}>条件に合う候補がありません。</div>
       ) : (
         <section className="layer">
-          <RankingTable rows={rows} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} rankDelta={rankDelta} />
+          <RankingTableMore rows={rows} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} rankDelta={rankDelta} />
         </section>
       )}
     </main>

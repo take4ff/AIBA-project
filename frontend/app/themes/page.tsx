@@ -8,7 +8,7 @@ import { THEME_KEYWORDS } from "@/lib/theme-meta";
 import NavTabs from "@/components/NavTabs";
 import ConceptIcon from "@/components/ConceptIcon";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 const trendArrow = (t: number) => (t > 1 ? "↑" : t < -1 ? "↓" : "→");
 const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");

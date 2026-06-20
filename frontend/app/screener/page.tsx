@@ -4,7 +4,7 @@ import NavTabs from "@/components/NavTabs";
 import ScreenerClient from "@/components/ScreenerClient";
 import ConceptIcon from "@/components/ConceptIcon";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 export default async function ScreenerPage() {
   if (!isSupabaseConfigured) {

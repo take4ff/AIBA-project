@@ -2,7 +2,7 @@ import { getRanking } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { LAYER_META } from "@/lib/types";
 import { Region, Kind, REGION_LABEL, KIND_LABEL, regionHasStocks, regionHasEtf } from "@/lib/regions";
-import RankingTable from "@/components/RankingTable";
+import RankingTableMore from "@/components/RankingTableMore";
 import NavTabs from "@/components/NavTabs";
 import KindToggle from "@/components/KindToggle";
 import ScoreGuide from "@/components/ScoreGuide";
@@ -65,7 +65,7 @@ export default async function RegionDashboard({
             <section className="layer" key={layer}>
               <h2 className="layer-title">{meta.title}</h2>
               <p className="layer-subtitle">{meta.subtitle}</p>
-              <RankingTable rows={layerRows} showTheme={effectiveKind === "stock"} />
+              <RankingTableMore rows={layerRows} showTheme={effectiveKind === "stock"} initial={20} />
             </section>
           );
         })

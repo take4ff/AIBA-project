@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { RankingRow } from "@/lib/types";
-import RankingTable from "@/components/RankingTable";
+import RankingTableMore from "@/components/RankingTableMore";
 import ConceptIcon from "@/components/ConceptIcon";
 
 type Fund = { forward_pe: number | null; eps_growth: number | null };
@@ -124,7 +124,7 @@ export default function ScreenerClient({
         <div className="notice" style={{ marginTop: 20 }}>条件に合う銘柄がありません。</div>
       ) : (
         <section className="layer">
-          <RankingTable rows={filtered} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} />
+          <RankingTableMore rows={filtered} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} />
         </section>
       )}
     </>

@@ -93,6 +93,7 @@
 ## 🏗️ アーキテクチャ
 
 運用コストを無料枠に抑えた構成。**重い処理は GitHub Actions、Vercel は表示のみ**。
+表示は **ISR（10分キャッシュ）＋ 重い集計の `unstable_cache`** で高速化（日次更新データのため鮮度は十分）。長いランキングは**初期表示＋「もっと見る」**で初期描画を軽量化。
 
 ```
 yfinance / GitHub / arXiv / Hacker News / Google Trends / EPO OPS（特許）/ GDELT（ニュース）

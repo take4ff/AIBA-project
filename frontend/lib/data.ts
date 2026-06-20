@@ -1,6 +1,10 @@
+import { unstable_cache } from "next/cache";
 import { supabase } from "./supabase";
 import { RankingRow } from "./types";
 import { Region, Kind, parseDomainId } from "./regions";
+
+// 日次更新の公開データを 10 分キャッシュ（searchParams 付きの動的ページでも重い集計を再利用）。
+const CACHE_TTL = 600;
 
 // 最新行＋センチメント/株価の傾き算出のため、直近この日数を取得
 const LOOKBACK_DAYS = 45;
@@ -133,9 +137,12 @@ async function buildAllRows(): Promise<RankingRow[]> {
   return rows;
 }
 
+// 全ドメインの集計（重い）を 10 分キャッシュ。全ランキング系がこれを共有・再利用する。
+const cachedAllRows = unstable_cache(buildAllRows, ["aiba-all-rows"], { revalidate: CACHE_TTL });
+
 /** 指定地域・種別の最新ランキング。 */
 export async function getRanking(region: Region, kind: Kind): Promise<RankingRow[]> {
-  return (await buildAllRows()).filter((r) => r.region === region && r.kind === kind);
+  return (await cachedAllRows()).filter((r) => r.region === region && r.kind === kind);
 }
 
 /** 指定テーマ×地域の構成銘柄（業界ETF＋個別株）。業界ページ用。
@@ -192,11 +199,13 @@ export interface SnapshotRow {
   ret_1m: number | null; ret_3m: number | null; ret_6m: number | null; ret_12m: number | null;
 }
 
-/** 定点記録（スコアのスナップショット）。out-of-sample 検証用。全行ページング取得。 */
-export async function getSnapshots(): Promise<SnapshotRow[]> {
-  return selectAll<SnapshotRow>("score_snapshots",
-    "snapshot_date,domain_id,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m");
-}
+/** 定点記録（スコアのスナップショット）。out-of-sample 検証用。全行ページング取得。10分キャッシュ。 */
+export const getSnapshots = unstable_cache(
+  async (): Promise<SnapshotRow[]> =>
+    selectAll<SnapshotRow>("score_snapshots",
+      "snapshot_date,domain_id,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m"),
+  ["aiba-snapshots"], { revalidate: CACHE_TTL },
+);
 
 export interface BenchmarkPoint { trade_date: string; close: number }
 
@@ -241,7 +250,7 @@ export async function getCandidates(): Promise<CandidateTheme[]> {
 
 /** スクリーナー用：全ドメインの最新行（フィルタはクライアント側で行う）。 */
 export async function getAllRows(): Promise<RankingRow[]> {
-  return (await buildAllRows()).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
+  return (await cachedAllRows()).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
 }
 
 /** ticker → 予想PER・EPS成長 のマップ（スクリーナーのファンダ条件用）。 */
@@ -259,7 +268,7 @@ export async function getFundamentalsMap(): Promise<Record<string, { forward_pe:
 
 /** Pickup: 地域・種別を問わず「今買い」候補（AIBA≥閾値 or 乖離）をAIBA順で。 */
 export async function getPickup(): Promise<RankingRow[]> {
-  return (await buildAllRows())
+  return (await cachedAllRows())
     .filter((r) => (r.aiba_score ?? 0) >= BUY_LEVEL || r.divergence)
     .sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
 }

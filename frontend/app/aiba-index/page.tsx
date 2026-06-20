@@ -4,7 +4,7 @@ import NavTabs from "@/components/NavTabs";
 import ConceptIcon from "@/components/ConceptIcon";
 import AibaIndexView from "@/components/AibaIndexView";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 export default async function AibaIndexPage() {
   if (!isSupabaseConfigured) {

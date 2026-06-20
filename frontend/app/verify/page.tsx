@@ -6,7 +6,7 @@ import EquityCurve from "@/components/EquityCurve";
 import ICHistoryChart from "@/components/ICHistoryChart";
 import ConceptIcon from "@/components/ConceptIcon";
 
-export const revalidate = 0;
+export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
 const f3 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(3));
 const f2 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%");
