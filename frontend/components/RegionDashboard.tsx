@@ -41,8 +41,6 @@ export default async function RegionDashboard({
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           テクニカル指標とセンチメント指標の乖離から<strong>「入口（押し目）」</strong>を定量化。次世代技術テーマを<strong>長期で育てるサテライト枠</strong>向け。
-          <span className="region-badge">{REGION_LABEL[region]} / {KIND_LABEL[effectiveKind]}</span>
-          {tradeDate && <> 最新データ: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
 
