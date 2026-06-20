@@ -4,6 +4,7 @@ import NavTabs from "@/components/NavTabs";
 import SnapshotChart from "@/components/SnapshotChart";
 import EquityCurve from "@/components/EquityCurve";
 import ICHistoryChart from "@/components/ICHistoryChart";
+import EventStudyChart from "@/components/EventStudyChart";
 import ConceptIcon from "@/components/ConceptIcon";
 
 export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
@@ -188,6 +189,7 @@ export default async function VerifyPage() {
               <EquityCurve data={equity} />
             </>
           )}
+          <EventStudyChart snaps={snaps} />
           </>
         )}
       </section>
