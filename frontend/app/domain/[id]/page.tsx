@@ -250,6 +250,16 @@ export default async function DomainPage({ params }: { params: { id: string } })
 
       {summary && <p className="narrative"><ConceptIcon name="narrative" size={15} /> {summary}</p>}
 
+      {/* 株価×スコアチャート（最重要なので上部に配置） */}
+      {history.length === 0 ? (
+        <div className="notice">この領域の時系列データがまだありません。</div>
+      ) : (
+        <>
+          <TrendChart data={chartData} currency={cur} etfCompare={!!compare} buyLevel={guide.pullback} />
+          <p className="forecast-line" style={{ marginTop: 4 }}><ConceptIcon name="macd" size={14} /> MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
+        </>
+      )}
+
       {compare && vsDelta != null && (
         <p className="forecast-line">
           <ConceptIcon name="both" size={14} /> 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
@@ -319,17 +329,8 @@ export default async function DomainPage({ params }: { params: { id: string } })
           )}
         </section>
       )}
-      {history.length > 0 && (
-        <p className="forecast-line" style={{ marginTop: 0 }}><ConceptIcon name="macd" size={14} /> MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
-      )}
-
       <HoldingHorizons closes={closes} rsi={latest?.rsi_14 ?? null} overheat={hhOverheat} sentimentTrend={hhSentTrend} />
       <TechSummary closes={closes} rsi={latest?.rsi_14 ?? null} />
-      {history.length === 0 ? (
-        <div className="notice">この領域の時系列データがまだありません。</div>
-      ) : (
-        <TrendChart data={chartData} currency={cur} etfCompare={!!compare} buyLevel={guide.pullback} />
-      )}
 
       {fundamentals && (fundamentals.trailing_pe != null || fundamentals.forward_pe != null || fundamentals.next_earnings_date != null) && (
         <section className="layer">
