@@ -87,6 +87,6 @@ def run_pipeline(
 def domains_master(domains: list[Domain]) -> list[dict[str, Any]]:
     """domainsマスタ用のレコードを生成する。"""
     return [
-        {"id": d.id, "name": d.name, "layer": d.layer, "ticker": d.ticker}
+        {"id": d.id, "name": d.name, "layer": d.layer, "ticker": d.ticker, "tags": list(d.tags)}
         for d in domains
     ]

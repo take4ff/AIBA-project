@@ -64,7 +64,7 @@ def metrics_for(ticker: str) -> list[dict[str, Any]]:
     return rows
 
 
-QUALITY_COLS = ("operating_margin", "roe", "debt_to_equity", "current_ratio", "free_cashflow")
+QUALITY_COLS = ("operating_margin", "roe", "debt_to_equity", "current_ratio", "free_cashflow", "market_cap")
 
 
 def upsert_fundamentals(client: Any, funds: list[dict[str, Any]]) -> None:
@@ -86,7 +86,7 @@ def fetch_fundamentals(ticker: str) -> dict[str, Any]:
         "last_surprise_pct": None, "trailing_pe": None, "forward_pe": None,
         "eps_growth": None, "revenue_growth": None,
         "operating_margin": None, "roe": None, "debt_to_equity": None,
-        "current_ratio": None, "free_cashflow": None,
+        "current_ratio": None, "free_cashflow": None, "market_cap": None,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     try:
@@ -107,6 +107,11 @@ def fetch_fundamentals(ticker: str) -> dict[str, Any]:
     try:
         fcf = info.get("freeCashflow")
         out["free_cashflow"] = None if fcf is None else round(float(fcf))
+    except (TypeError, ValueError):
+        pass
+    try:
+        mc = info.get("marketCap")
+        out["market_cap"] = None if mc is None else round(float(mc))
     except (TypeError, ValueError):
         pass
     if info.get("quoteType") == "EQUITY":

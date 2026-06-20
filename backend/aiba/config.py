@@ -39,6 +39,7 @@ class Domain:
     ticker: str
     github_keywords: list[str] = field(default_factory=list)
     arxiv_keywords: list[str] = field(default_factory=list)
+    tags: tuple[str, ...] = ()   # 副テーマ（マルチ事業企業の他テーマ展開・表示用）
 
 
 @dataclass(frozen=True)
@@ -97,6 +98,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
                     region=region, kind="stock", layer=layer,
                     ticker=str(stock["ticker"]),
                     github_keywords=gh, arxiv_keywords=ax,
+                    tags=tuple(stock.get("tags", []) or []),
                 ))
     return domains
 

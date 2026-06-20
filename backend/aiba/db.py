@@ -31,7 +31,14 @@ def upsert_domains(domains: list[dict[str, Any]]) -> None:
     from supabase import create_client
 
     client = create_client(settings.supabase_url, settings.supabase_key)
-    client.table("domains").upsert(domains, on_conflict="id").execute()
+    try:
+        client.table("domains").upsert(domains, on_conflict="id").execute()
+    except Exception as e:  # noqa: BLE001
+        if "tags" in str(e):  # tags 列が未マイグレーションなら除外して再試行
+            stripped = [{k: v for k, v in d.items() if k != "tags"} for d in domains]
+            client.table("domains").upsert(stripped, on_conflict="id").execute()
+        else:
+            raise
 
 
 def write_metrics(records: list[dict[str, Any]]) -> str:

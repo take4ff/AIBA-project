@@ -71,6 +71,7 @@ alter table ticker_fundamentals add column if not exists roe              numeri
 alter table ticker_fundamentals add column if not exists debt_to_equity   numeric(10, 2);  -- D/E（％表記・yfinance準拠）
 alter table ticker_fundamentals add column if not exists current_ratio    numeric(8, 2);   -- 流動比率
 alter table ticker_fundamentals add column if not exists free_cashflow    numeric(20, 0);  -- フリーCF（通貨建て）
+alter table ticker_fundamentals add column if not exists market_cap       numeric(22, 0);  -- 時価総額（規模の伸びしろ判定用）
 alter table ticker_fundamentals enable row level security;
 drop policy if exists "public read ticker_fundamentals" on ticker_fundamentals;
 create policy "public read ticker_fundamentals" on ticker_fundamentals for select using (true);

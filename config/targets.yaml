@@ -20,7 +20,7 @@ domains:
       global: { etf: { ticker: SOXX } }
       us:
         etf: { ticker: SMH }
-        stocks: [{ ticker: NVDA, name: NVIDIA }, { ticker: AMD, name: AMD }, { ticker: AVGO, name: Broadcom }, { ticker: ARM, name: Arm }, { ticker: TSM, name: TSMC }, { ticker: ASML, name: ASML }, { ticker: MU, name: Micron }, { ticker: QCOM, name: Qualcomm }, { ticker: LRCX, name: Lam Research }, { ticker: AMAT, name: Applied Materials }, { ticker: KLAC, name: KLA }, { ticker: ENTG, name: Entegris }, { ticker: UCTT, name: Ultra Clean }]
+        stocks: [{ ticker: NVDA, name: NVIDIA, tags: [generative_ai, data_center, edge_ai_robotics] }, { ticker: AMD, name: AMD }, { ticker: AVGO, name: Broadcom, tags: [cloud_infra, cybersecurity] }, { ticker: ARM, name: Arm }, { ticker: TSM, name: TSMC }, { ticker: ASML, name: ASML }, { ticker: MU, name: Micron }, { ticker: QCOM, name: Qualcomm }, { ticker: LRCX, name: Lam Research }, { ticker: AMAT, name: Applied Materials }, { ticker: KLAC, name: KLA }, { ticker: ENTG, name: Entegris }, { ticker: UCTT, name: Ultra Clean }]
       jp:
         etf: { ticker: "2644.T", name: "Global X 日本半導体" }
         stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }, { ticker: "2802.T", name: 味の素（ABF基板材料） }, { ticker: "4063.T", name: 信越化学工業 }, { ticker: "3436.T", name: SUMCO }, { ticker: "4186.T", name: 東京応化工業 }, { ticker: "4004.T", name: レゾナック（後工程材料） }]
@@ -36,7 +36,7 @@ domains:
       global: { etf: { ticker: AIQ } }
       us:
         etf: { ticker: IGV }
-        stocks: [{ ticker: MSFT, name: Microsoft }, { ticker: GOOGL, name: Alphabet }, { ticker: META, name: Meta }, { ticker: PLTR, name: Palantir }, { ticker: CRM, name: Salesforce }, { ticker: NOW, name: ServiceNow }, { ticker: ADBE, name: Adobe }]
+        stocks: [{ ticker: MSFT, name: Microsoft, tags: [cloud_infra, cybersecurity, quantum_computing] }, { ticker: GOOGL, name: Alphabet, tags: [cloud_infra, quantum_computing] }, { ticker: META, name: Meta, tags: [entertainment_content] }, { ticker: AAPL, name: Apple, tags: [edge_ai_robotics, entertainment_content] }, { ticker: PLTR, name: Palantir }, { ticker: CRM, name: Salesforce }, { ticker: NOW, name: ServiceNow }, { ticker: ADBE, name: Adobe }]
       jp:
         etf: { ticker: "2854.T", name: "Global X 日本テックTop20" }
         stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }, { ticker: "4488.T", name: AI inside }, { ticker: "9432.T", name: NTT（tsuzumi） }, { ticker: "9433.T", name: KDDI }, { ticker: "9434.T", name: ソフトバンク（通信） }]
@@ -52,7 +52,7 @@ domains:
       global: { etf: { ticker: SKYY } }
       us:
         etf: { ticker: WCLD }
-        stocks: [{ ticker: AMZN, name: Amazon }, { ticker: NET, name: Cloudflare }, { ticker: SNOW, name: Snowflake }, { ticker: ORCL, name: Oracle }, { ticker: DDOG, name: Datadog }, { ticker: MDB, name: MongoDB }, { ticker: ANET, name: Arista Networks }, { ticker: SMCI, name: Super Micro }]
+        stocks: [{ ticker: AMZN, name: Amazon, tags: [generative_ai, data_center, space_infra] }, { ticker: NET, name: Cloudflare }, { ticker: SNOW, name: Snowflake }, { ticker: ORCL, name: Oracle }, { ticker: DDOG, name: Datadog }, { ticker: MDB, name: MongoDB }, { ticker: ANET, name: Arista Networks }, { ticker: SMCI, name: Super Micro }]
       jp:
         etf: { ticker: "1626.T", name: "情報通信(TOPIX-17)" }
         stocks: [{ ticker: "3778.T", name: さくらインターネット }, { ticker: "4478.T", name: freee }, { ticker: "3994.T", name: マネーフォワード }, { ticker: "4684.T", name: オービック }, { ticker: "4307.T", name: 野村総合研究所 }]
@@ -85,7 +85,7 @@ domains:
       global: { etf: { ticker: ROBO } }
       us:
         etf: { ticker: BOTZ }
-        stocks: [{ ticker: ROK, name: Rockwell Automation }, { ticker: ISRG, name: Intuitive Surgical }, { ticker: TER, name: Teradyne }, { ticker: SYM, name: Symbotic }, { ticker: PATH, name: UiPath }]
+        stocks: [{ ticker: TSLA, name: Tesla, tags: [solid_state_battery, nextgen_energy] }, { ticker: ROK, name: Rockwell Automation }, { ticker: ISRG, name: Intuitive Surgical }, { ticker: TER, name: Teradyne }, { ticker: SYM, name: Symbotic }, { ticker: PATH, name: UiPath }]
       jp:
         etf: { ticker: "1624.T", name: "機械(TOPIX-17)" }
         stocks: [{ ticker: "6954.T", name: ファナック }, { ticker: "6506.T", name: 安川電機 }, { ticker: "6645.T", name: オムロン }, { ticker: "6324.T", name: ハーモニック・ドライブ }, { ticker: "6273.T", name: SMC }]

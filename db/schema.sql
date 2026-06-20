@@ -13,6 +13,8 @@ create table if not exists domains (
     ticker       text not null,
     created_at   timestamptz not null default now()
 );
+-- マルチ事業企業の副テーマ（GOOGL=生成AI主＋クラウド/量子タグ 等。表示用）
+alter table domains add column if not exists tags text[];
 
 -- 日次サマリー（スコア・テクニカル・センチメントの確定値）
 create table if not exists daily_metrics (
