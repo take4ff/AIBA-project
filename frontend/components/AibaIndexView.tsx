@@ -144,6 +144,20 @@ export default function AibaIndexView({
     return [...best.values()].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
   }, [rows, variant, perMonth, dates]);
 
+  // 現在の構成から見て「前回から外れた＝売った」銘柄。コア長期は holdings が最新月なので前月(-2)、
+  // 他バリアントは holdings がライブAIBAなので最新スナップ(-1)と比較する。
+  const soldSincePrev = useMemo(() => {
+    const prevDate = variant === "core_lt" ? dates.at(-2) : dates.at(-1);
+    const prev = prevDate ? (perMonth.get(prevDate) ?? []) : [];
+    const curIds = new Set(holdings.map((h) => h.domain_id));
+    const rmap = new Map(rows.map((r) => [r.domain_id, r]));
+    return prev
+      .filter((p) => p.domain_id && !curIds.has(p.domain_id))
+      .map((p) => rmap.get(p.domain_id as string))
+      .filter((x): x is RankingRow => !!x)
+      .sort((a, b) => (b.aiba_score as number ?? 0) - (a.aiba_score as number ?? 0));
+  }, [variant, dates, perMonth, holdings, rows]);
+
   // 過去の構成（月別・AIBA順）＋前月比の IN(新規)/OUT(除外=売り)。
   const monthlyComp = useMemo(() => {
     const nm = new Map(rows.map((r) => [r.domain_id, { name: r.domain_name, ticker: r.ticker }]));
@@ -156,11 +170,11 @@ export default function AibaIndexView({
       const prevSet = new Set(prev.map((p) => p.domain_id));
       const thisSet = new Set(m.picked.map((p) => p.domain_id));
       const items = m.picked.slice(0, TOP).map((p) => ({
-        name: nameOf(p.domain_id), ticker: p.domain_id ? (nm.get(p.domain_id)?.ticker ?? "") : "",
+        id: p.domain_id, name: nameOf(p.domain_id), ticker: p.domain_id ? (nm.get(p.domain_id)?.ticker ?? "") : "",
         aiba: Math.round(p.aiba_score as number), isNew: i > 0 && !prevSet.has(p.domain_id),
       }));
-      const outNames = i > 0 ? prev.filter((p) => !thisSet.has(p.domain_id)).map((p) => nameOf(p.domain_id)) : [];
-      return { date: m.date, items, outNames };
+      const outItems = i > 0 ? prev.filter((p) => !thisSet.has(p.domain_id)).map((p) => ({ id: p.domain_id, name: nameOf(p.domain_id) })) : [];
+      return { date: m.date, items, outItems };
     }).reverse();
   }, [perMonth, dates, rows]);
 
@@ -266,6 +280,22 @@ export default function AibaIndexView({
                 })}
               </div>
             )}
+            {soldSincePrev.length > 0 && (
+              <div style={{ marginTop: 14 }}>
+                <h3 style={{ fontSize: 14, margin: "0 0 6px", color: "#dc2626" }}>前回から外れた銘柄（＝売り）{soldSincePrev.length}</h3>
+                <p className="layer-subtitle" style={{ marginTop: 0 }}>
+                  前回の構成にあったが、最新の基準では組み入れ対象から外れた銘柄（カッコ内は現在のAIBA＝閾値割れの度合い）。
+                </p>
+                <div className="hh-grid">
+                  {soldSincePrev.map((r) => (
+                    <Link key={r.domain_id} href={`/domain/${r.domain_id}`} className="tech-sig idx-holding" title={`${r.theme_name}（クリックで詳細）`}>
+                      <span className="tech-sig-name">{r.domain_name}<span className="ticker" style={{ marginLeft: 6 }}>{r.ticker}</span></span>
+                      <span className="tech-sig-verdict" style={{ marginLeft: "auto", color: "#dc2626" }}>{r.aiba_score == null ? "—" : (r.aiba_score as number).toFixed(0)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="layer" style={{ marginTop: 20 }}>
@@ -291,12 +321,23 @@ export default function AibaIndexView({
                         const it = m.items[i];
                         return (
                           <td key={i} className="num">
-                            {it ? <span title={`${it.ticker} ・ AIBA ${it.aiba}`}>{it.isNew && <span className="mc-new">新</span>}{it.name}<span className="idx-mc-aiba"> {it.aiba}</span></span> : ""}
+                            {it ? (
+                              it.id
+                                ? <Link href={`/domain/${it.id}`} className="idx-mc-link" title={`${it.ticker} ・ AIBA ${it.aiba}（クリックで詳細）`}>{it.isNew && <span className="mc-new">新</span>}{it.name}<span className="idx-mc-aiba"> {it.aiba}</span></Link>
+                                : <span title={`${it.ticker} ・ AIBA ${it.aiba}`}>{it.isNew && <span className="mc-new">新</span>}{it.name}<span className="idx-mc-aiba"> {it.aiba}</span></span>
+                            ) : ""}
                           </td>
                         );
                       })}
                       <td className="num mc-out">
-                        {m.outNames.length === 0 ? "—" : m.outNames.slice(0, 6).join("・") + (m.outNames.length > 6 ? ` 他${m.outNames.length - 6}` : "")}
+                        {m.outItems.length === 0 ? "—" : (
+                          m.outItems.slice(0, 6).map((o, i) => (
+                            <span key={o.id ?? i}>
+                              {i > 0 && "・"}
+                              {o.id ? <Link href={`/domain/${o.id}`} className="idx-mc-link" title="クリックで詳細">{o.name}</Link> : o.name}
+                            </span>
+                          )).concat(m.outItems.length > 6 ? [<span key="more"> 他{m.outItems.length - 6}</span>] : [])
+                        )}
                       </td>
                     </tr>
                   ))}

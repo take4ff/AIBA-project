@@ -89,7 +89,7 @@ export function assessStopLoss(ret: number | null, thresholdPct: number): StopLo
   return {
     triggered,
     lossPct: ret,
-    label: triggered ? `🔻 損切り ${ret.toFixed(0)}%` : "",
+    label: triggered ? `損切り ${ret.toFixed(0)}%` : "",
     tooltip: triggered
       ? `取得単価から ${Math.abs(ret).toFixed(1)}% 下落（損切りライン −${thresholdPct}%）。`
         + `過熱度ベースの売りシグナルは下落局面を捉えないため、塩漬け回避の独立基準。`
@@ -114,7 +114,7 @@ export function assessTakeProfit(ret: number | null, thresholdPct: number): Take
   return {
     triggered,
     gainPct: ret,
-    label: triggered ? `💰 利確 +${ret.toFixed(0)}%` : "",
+    label: triggered ? `利確 +${ret.toFixed(0)}%` : "",
     tooltip: triggered
       ? `取得単価から ${ret.toFixed(1)}% 上昇（利確ライン +${thresholdPct}%）。`
         + `含み益を確定する目安。ただし機械的な利確は長期の大化けを逃すこともあるため、`

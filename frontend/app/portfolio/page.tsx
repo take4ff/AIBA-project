@@ -153,14 +153,14 @@ export default function PortfolioPage() {
                 <input className="login-input" type="number" min={1} max={90} step={1} value={stopPct}
                   onChange={(ev) => setStopPct(Math.max(1, Math.min(90, Number(ev.target.value) || 0)))}
                   style={{ width: 60, padding: "4px 6px" }} />
-                ％で「🔻 損切り検討」
+                ％で「損切り検討」
               </label>
               <label className="pf-stop" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
                 利確ライン：取得単価から ＋
                 <input className="login-input" type="number" min={1} max={500} step={5} value={profitPct}
                   onChange={(ev) => setProfitPct(Math.max(1, Math.min(500, Number(ev.target.value) || 0)))}
                   style={{ width: 60, padding: "4px 6px" }} />
-                ％で「💰 利確検討」
+                ％で「利確検討」
               </label>
             </div>
           )}
@@ -274,10 +274,10 @@ export default function PortfolioPage() {
             インデックス投信なら指数が同じなのでスコア・シグナルは妥当。損益・評価は<strong>代用ETFの取得日からのリターンで概算</strong>（手数料・為替ヘッジ・分配金の差は未考慮）。口数は記録用です。
           </p>
           <p className="guide-note">
-            ※ <strong>🔻 損切り検討</strong>＝取得単価からの下落率が損切りラインを超えた状態。過熱度ベースの売りシグナルは
+            ※ <strong>損切り検討</strong>＝取得単価からの下落率が損切りラインを超えた状態。過熱度ベースの売りシグナルは
             <strong>高値圏（売り時）を捉える一方、株価下落は「🟢継続」となり塩漬けを見逃す</strong>ため、含み損ベースの独立基準として併設。
             機械的な損切りはテーマの構造的成長を取りに行く長期保有方針とは相反するので、方針に応じて目安としてご利用ください（取得単価未入力の銘柄は判定対象外）。
-            <strong>💰 利確検討</strong>＝取得単価から利確ラインを超えて上昇した状態。含み益確定の目安（ただし大化けを逃す面もあるため一部利確など柔軟に）。
+            <strong>利確検討</strong>＝取得単価から利確ラインを超えて上昇した状態。含み益確定の目安（ただし大化けを逃す面もあるため一部利確など柔軟に）。
           </p>
         </>
       )}

@@ -16,6 +16,7 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
   const [history, setHistory] = useState<TickerMetric[]>([]);
   const [holding, setHolding] = useState<any>(null);
   const [uniName, setUniName] = useState<string | null>(null);
+  const [domainId, setDomainId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,7 +29,9 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
       ]);
       setHolding(h);
       setHistory(hist);
-      setUniName(themes.get(ticker)?.name ?? null);
+      const ti = themes.get(ticker);
+      setUniName(ti?.name ?? null);
+      setDomainId(ti?.id ?? null);   // ユニバース銘柄なら買い詳細(/domain/[id])へ飛べる
       setLoading(false);
     })();
   }, [user, ticker]);
@@ -61,6 +64,13 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
             {ret != null && <>／ 損益 <span style={{ color: ret >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>{pct(ret)}</span></>}
             {latest.overheat != null && <>／ 過熱度 {Math.round(latest.overheat)}</>}
             （{latest.trade_date}）
+          </p>
+        )}
+        {domainId && (
+          <p style={{ marginTop: 6 }}>
+            <Link className="back-link" href={`/domain/${domainId}`}>
+              買い目線の詳細（AIBAスコア・購入目安・1ヶ月予測）→
+            </Link>
           </p>
         )}
       </header>
