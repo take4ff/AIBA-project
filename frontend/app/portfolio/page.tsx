@@ -8,7 +8,7 @@ import {
   UserHolding, TickerMetric, TickerFundamentals,
   getHoldings, getTickerData, getTickerThemes, getFundAcqCloses, addHolding, updateHolding, deleteHolding,
 } from "@/lib/user-portfolio";
-import { assessSell, assessStopLoss, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
+import { assessSell, assessStopLoss, assessTakeProfit, money, pct, earningsLabel, overheatColor } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -30,13 +30,17 @@ export default function PortfolioPage() {
   const [err, setErr] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ ticker: string; name: string; avg_cost: string; shares: string; is_fund: boolean; principal: string; acquired_on: string } | null>(null);
   const [stopPct, setStopPct] = useState(20);  // 損切りライン[%]（取得単価からの下落率）
+  const [profitPct, setProfitPct] = useState(30);  // 利確ライン[%]（取得単価からの上昇率）
 
-  // 損切りラインは端末に保存して次回も維持
+  // 損切り/利確ラインは端末に保存して次回も維持
   useEffect(() => {
-    const v = Number(localStorage.getItem("aiba_stop_pct"));
-    if (v > 0) setStopPct(v);
+    const s = Number(localStorage.getItem("aiba_stop_pct"));
+    if (s > 0) setStopPct(s);
+    const p = Number(localStorage.getItem("aiba_profit_pct"));
+    if (p > 0) setProfitPct(p);
   }, []);
   useEffect(() => { localStorage.setItem("aiba_stop_pct", String(stopPct)); }, [stopPct]);
+  useEffect(() => { localStorage.setItem("aiba_profit_pct", String(profitPct)); }, [profitPct]);
 
   const reload = useCallback(async () => {
     const hs = await getHoldings();
@@ -143,13 +147,22 @@ export default function PortfolioPage() {
           {err && <p style={{ color: "#dc2626", fontSize: 13 }}>{err}</p>}
 
           {holdings.length > 0 && (
-            <label className="pf-stop" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, marginTop: 8 }}>
-              損切りライン：取得単価から
-              <input className="login-input" type="number" min={1} max={90} step={1} value={stopPct}
-                onChange={(ev) => setStopPct(Math.max(1, Math.min(90, Number(ev.target.value) || 0)))}
-                style={{ width: 64, padding: "4px 6px" }} />
-              ％下落で「🔻 損切り検討」を表示
-            </label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", marginTop: 8 }}>
+              <label className="pf-stop" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                損切りライン：取得単価から −
+                <input className="login-input" type="number" min={1} max={90} step={1} value={stopPct}
+                  onChange={(ev) => setStopPct(Math.max(1, Math.min(90, Number(ev.target.value) || 0)))}
+                  style={{ width: 60, padding: "4px 6px" }} />
+                ％で「🔻 損切り検討」
+              </label>
+              <label className="pf-stop" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+                利確ライン：取得単価から ＋
+                <input className="login-input" type="number" min={1} max={500} step={5} value={profitPct}
+                  onChange={(ev) => setProfitPct(Math.max(1, Math.min(500, Number(ev.target.value) || 0)))}
+                  style={{ width: 60, padding: "4px 6px" }} />
+                ％で「💰 利確検討」
+              </label>
+            </div>
           )}
 
           {holdings.length === 0 ? (
@@ -179,6 +192,7 @@ export default function PortfolioPage() {
                     });
                     const e = earningsLabel(f?.next_earnings_date ?? null);
                     const sl = assessStopLoss(ret, stopPct);
+                    const tp = assessTakeProfit(ret, profitPct);
                     const editing = edit?.ticker === h.ticker;
                     return (
                       <tr key={h.ticker}>
@@ -223,6 +237,7 @@ export default function PortfolioPage() {
                           <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
                             <span className={`sell-badge ${a.badge.cls}`} title={a.tooltip}>{a.badge.label}</span>
                             {sl.triggered && <span className="sell-badge sb-stop" title={sl.tooltip}>{sl.label}</span>}
+                            {tp.triggered && <span className="sell-badge sb-profit" title={tp.tooltip}>{tp.label}</span>}
                           </div>
                         </td>
                         <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon && <ConceptIcon name="warn" size={12} />} {e.text}</td>
@@ -262,6 +277,7 @@ export default function PortfolioPage() {
             ※ <strong>🔻 損切り検討</strong>＝取得単価からの下落率が損切りラインを超えた状態。過熱度ベースの売りシグナルは
             <strong>高値圏（売り時）を捉える一方、株価下落は「🟢継続」となり塩漬けを見逃す</strong>ため、含み損ベースの独立基準として併設。
             機械的な損切りはテーマの構造的成長を取りに行く長期保有方針とは相反するので、方針に応じて目安としてご利用ください（取得単価未入力の銘柄は判定対象外）。
+            <strong>💰 利確検討</strong>＝取得単価から利確ラインを超えて上昇した状態。含み益確定の目安（ただし大化けを逃す面もあるため一部利確など柔軟に）。
           </p>
         </>
       )}

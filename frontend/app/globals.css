@@ -197,6 +197,7 @@ a { color: inherit; text-decoration: none; }
 .sb-none { color: var(--muted); background: var(--panel-2); border: 1px solid var(--border); }
 .sb-event { color: #c084fc; background: rgba(192,132,252,0.14); border: 1px solid rgba(192,132,252,0.35); }
 .sb-stop { color: #fff; background: #dc2626; border: 1px solid #b91c1c; }
+.sb-profit { color: #fff; background: #15a34a; border: 1px solid #128a3f; }
 
 /* ---------- レイヤー見出し ---------- */
 .layer { margin-top: 40px; }

@@ -98,6 +98,31 @@ export function assessStopLoss(ret: number | null, thresholdPct: number): StopLo
   };
 }
 
+// 利確ライン：取得単価からの上昇率がしきい値以上で「利確検討」。損切りラインの上昇版。
+export interface TakeProfitAssessment {
+  triggered: boolean;
+  gainPct: number | null;
+  label: string;
+  tooltip: string;
+}
+
+export function assessTakeProfit(ret: number | null, thresholdPct: number): TakeProfitAssessment {
+  if (ret == null || !(thresholdPct > 0)) {
+    return { triggered: false, gainPct: ret, label: "", tooltip: "" };
+  }
+  const triggered = ret >= thresholdPct;
+  return {
+    triggered,
+    gainPct: ret,
+    label: triggered ? `💰 利確検討 +${ret.toFixed(0)}%` : "",
+    tooltip: triggered
+      ? `取得単価から ${ret.toFixed(1)}% 上昇（利確ライン +${thresholdPct}%）。`
+        + `含み益を確定する目安。ただし機械的な利確は長期の大化けを逃すこともあるため、`
+        + `テーマの構造的成長を取りに行く方針なら一部利確など柔軟に。`
+      : "",
+  };
+}
+
 // 売りシグナルの総合評価（過熱度＋ファンダ＋決算接近）。
 export function assessSell(p: {
   overheat: number | null;
