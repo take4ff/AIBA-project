@@ -51,7 +51,7 @@ export default function GuidePage() {
         <table className="def-table">
           <thead><tr><th>階層</th><th>狙い</th><th className="num">w_tech</th><th className="num">w_sent</th></tr></thead>
           <tbody>
-            <tr><td>第1層：現在のブーム</td><td>過熱が収まった押し目を狙う</td><td className="num">0.70</td><td className="num">0.30</td></tr>
+            <tr><td>第1層：現在のブーム</td><td>過熱が収まった押し目を狙う</td><td className="num">0.40</td><td className="num">0.60</td></tr>
             <tr><td>第2層：次なる波</td><td>バランス成長を捉える</td><td className="num">0.50</td><td className="num">0.50</td></tr>
             <tr><td>第3層：未来の開拓地</td><td>水面下の研究熱量を先取り</td><td className="num">0.30</td><td className="num">0.70</td></tr>
           </tbody>
