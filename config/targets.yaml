@@ -26,8 +26,8 @@ domains:
         stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "285A.T", name: キオクシア }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }, { ticker: "2802.T", name: 味の素（ABF基板材料） }, { ticker: "4063.T", name: 信越化学工業 }, { ticker: "3436.T", name: SUMCO }, { ticker: "4186.T", name: 東京応化工業 }, { ticker: "4004.T", name: レゾナック（後工程材料） }]
       row:
         stocks: [{ ticker: "2330.TW", name: TSMC（台湾） }, { ticker: "005930.KS", name: サムスン電子（韓国） }]
-    github_keywords: ["cuda", "gpu kernel", "tensorrt"]
-    arxiv_keywords: ["GPU accelerator", "AI chip"]
+    github_keywords: ["cuda", "gpu kernel", "tensorrt", "kv cache", "llm inference", "flash attention", "nvme ssd", "memory bandwidth"]
+    arxiv_keywords: ["GPU accelerator", "AI chip", "kv cache offloading", "memory efficient inference", "flash attention"]
 
   - id: generative_ai
     name: 生成AI基盤
@@ -42,8 +42,8 @@ domains:
         stocks: [{ ticker: "9984.T", name: ソフトバンクグループ }, { ticker: "3993.T", name: PKSHA }, { ticker: "4259.T", name: エクサウィザーズ }, { ticker: "4488.T", name: AI inside }, { ticker: "9432.T", name: NTT（tsuzumi） }, { ticker: "9433.T", name: KDDI }, { ticker: "9434.T", name: ソフトバンク（通信） }]
       row:
         stocks: [{ ticker: SAP, name: SAP（独） }, { ticker: "9988.HK", name: アリババ（中国） }]
-    github_keywords: ["llm", "transformer", "diffusion model"]
-    arxiv_keywords: ["large language model", "generative model"]
+    github_keywords: ["llm", "transformer", "diffusion model", "vllm", "inference engine", "speculative decoding"]
+    arxiv_keywords: ["large language model", "generative model", "inference optimization", "kv cache"]
 
   - id: cloud_infra
     name: クラウドインフラ
@@ -207,6 +207,22 @@ domains:
         stocks: [{ ticker: "1211.HK", name: BYD（中国） }]
     github_keywords: ["solid state battery", "battery management", "lithium battery"]
     arxiv_keywords: ["solid-state battery", "lithium metal anode", "battery electrolyte"]
+
+  # キオクシアケーススタディ(2024-25)を受けて追加：AI推論のメモリ層は compute と別に追跡が必要
+  - id: ai_memory_storage
+    name: AIメモリ・ストレージ（推論インフラ）
+    layer: 2
+    instruments:
+      global: { etf: { ticker: SMH } }   # 専用メモリETF未採用のため半導体広域ETFで代替
+      us:
+        etf: { ticker: SMH }
+        stocks: [{ ticker: WDC, name: Western Digital（NAND/HDD） }, { ticker: MU, name: Micron（DRAM/NAND）, tags: [advanced_semiconductor] }]
+      jp:
+        stocks: [{ ticker: "285A.T", name: キオクシア（NAND）, tags: [advanced_semiconductor] }]
+      row:
+        stocks: [{ ticker: "000660.KS", name: SK Hynix（韓国・HBM/NAND） }]
+    github_keywords: ["kv cache", "nvme kv offload", "lmcache", "hbm", "flash memory", "storage class memory"]
+    arxiv_keywords: ["kv cache offloading", "LLM inference storage", "memory hierarchy", "CXL memory", "HBM memory"]
 
   # ---------------- 常時需要（ディフェンシブ成長） ----------------
   - id: cybersecurity
