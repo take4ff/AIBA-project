@@ -35,10 +35,26 @@ async function selectAll<T = any>(
   return out;
 }
 
+// domains を取得。tags 列が未マイグレーションでも壊れないよう、失敗したら tags 抜きで再取得。
+async function fetchDomains(): Promise<any[]> {
+  try {
+    const out: any[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase.from("domains").select("id,name,layer,ticker,tags").range(from, from + PAGE - 1);
+      if (error) throw error;
+      out.push(...(data ?? []));
+      if (!data || data.length < PAGE) break;
+    }
+    return out;
+  } catch {
+    return selectAll<any>("domains", "id,name,layer,ticker");
+  }
+}
+
 /** 全ドメインの最新 RankingRow を1回のfetchで構築する（地域・種別すべて）。 */
 async function buildAllRows(): Promise<RankingRow[]> {
   const [domains, metrics, preds] = await Promise.all([
-    selectAll<any>("domains", "id,name,layer,ticker,tags"),
+    fetchDomains(),
     selectAll<any>("daily_metrics",
       "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price",
       (q) => q.gte("trade_date", cutoffDate())),
@@ -278,6 +294,33 @@ export async function getFundamentalsMap(): Promise<Record<string, { forward_pe:
   }
   return map;
 }
+
+export interface FullFundamentals {
+  revenue_growth: number | null; eps_growth: number | null; forward_pe: number | null;
+  operating_margin: number | null; roe: number | null; debt_to_equity: number | null;
+  current_ratio: number | null; free_cashflow: number | null; market_cap: number | null;
+}
+/** ticker → 全ファンダ（未来GAFAM/品質スコア用）。10分キャッシュ。列未マイグレーションでも安全。 */
+export const getFundamentalsFull = unstable_cache(
+  async (): Promise<Record<string, FullFundamentals>> => {
+    // select("*") で未マイグレーション列（market_cap 等）があっても壊れないように。
+    const { data, error } = await supabase.from("ticker_fundamentals").select("*");
+    const map: Record<string, FullFundamentals> = {};
+    if (error) return map;
+    const num = (v: any) => (v != null ? Number(v) : null);
+    for (const r of data ?? []) {
+      map[(r as any).ticker] = {
+        revenue_growth: num((r as any).revenue_growth), eps_growth: num((r as any).eps_growth),
+        forward_pe: num((r as any).forward_pe), operating_margin: num((r as any).operating_margin),
+        roe: num((r as any).roe), debt_to_equity: num((r as any).debt_to_equity),
+        current_ratio: num((r as any).current_ratio), free_cashflow: num((r as any).free_cashflow),
+        market_cap: num((r as any).market_cap),
+      };
+    }
+    return map;
+  },
+  ["aiba-fundamentals-full"], { revalidate: CACHE_TTL },
+);
 
 /** Pickup: 地域・種別を問わず「今買い」候補（AIBA≥閾値 or 乖離）をAIBA順で。 */
 export async function getPickup(): Promise<RankingRow[]> {
