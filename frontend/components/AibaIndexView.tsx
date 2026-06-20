@@ -9,8 +9,10 @@ import { SnapshotRow, BenchmarkPoint } from "@/lib/data";
 import { RankingRow } from "@/lib/types";
 import { parseDomainId } from "@/lib/regions";
 
-type Variant = "ge60" | "top20" | "diversified";
+type Variant = "ge60" | "top20" | "diversified" | "core_lt";
+const ENTER_LT = 65, EXIT_LT = 45;  // コア長期: 組入/除外のヒステリシス閾値
 const VARIANTS: { key: Variant; label: string; desc: string }[] = [
+  { key: "core_lt", label: "コア長期（低入替）", desc: `AIBA≥${ENTER_LT}で組入、${EXIT_LT}を割るまで保有。ヒステリシスで入替を大幅に抑え、勝ち銘柄を長く握る長期保有型。` },
   { key: "ge60", label: "AIBA≥60 全銘柄", desc: "毎月 AIBA≥60 を等ウェイト保有・入替（該当無しは現金）。検証で頑健だった水準。" },
   { key: "top20", label: "AIBA上位20", desc: "毎月 AIBA上位20銘柄を等ウェイト。常にフル投資・銘柄数一定。" },
   { key: "diversified", label: "地域・テーマ分散", desc: "各テーマからAIBA最上位を1銘柄ずつ。業界偏重を抑えた分散型。" },
@@ -38,22 +40,48 @@ function selectByVariant(rows: SnapshotRow[], variant: Variant): SnapshotRow[] {
   return picked.sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
 }
 
-// 1ヶ月コホート選択：variant に応じてその月の保有銘柄の ret_1m 平均（％）を返す
-function monthReturn(rows: SnapshotRow[], variant: Variant): number | null {
-  const withRet = rows.filter((r) => r.ret_1m != null && r.aiba_score != null);
-  if (withRet.length === 0) return null;
-  const picked = selectByVariant(withRet, variant);
-  if (variant === "ge60" && picked.length === 0) return 0; // 該当無し＝現金（0%）
-  return mean(picked.map((r) => r.ret_1m as number));
-}
-
 export default function AibaIndexView({
   snaps, rows, bench, usdjpy,
 }: { snaps: SnapshotRow[]; rows: RankingRow[]; bench: BenchmarkPoint[]; usdjpy: number }) {
-  const [variant, setVariant] = useState<Variant>("ge60");
+  const [variant, setVariant] = useState<Variant>("core_lt");
   const [monthly, setMonthly] = useState(30000);
 
   const dates = useMemo(() => Array.from(new Set(snaps.map((s) => s.snapshot_date))).sort(), [snaps]);
+
+  // 月別のスナップショット行（aiba有のみ）
+  const byDate = useMemo(() => {
+    const m = new Map<string, SnapshotRow[]>();
+    for (const s of snaps) {
+      if (s.aiba_score == null) continue;
+      const arr = m.get(s.snapshot_date); if (arr) arr.push(s); else m.set(s.snapshot_date, [s]);
+    }
+    return m;
+  }, [snaps]);
+
+  // 月別の保有銘柄（AIBA降順）。コア長期はヒステリシスで状態を持ち越す（低入替）。
+  const perMonth = useMemo(() => {
+    const res = new Map<string, SnapshotRow[]>();
+    if (variant === "core_lt") {
+      const held = new Set<string>();
+      for (const d of dates) {
+        const rs = byDate.get(d) ?? [];
+        const avail = new Map<string, SnapshotRow>(rs.filter((r) => r.domain_id).map((r) => [r.domain_id as string, r]));
+        for (const id of [...held]) { const r = avail.get(id); if (!r || (r.aiba_score as number) < EXIT_LT) held.delete(id); }  // 除外
+        for (const r of rs) if (r.domain_id && (r.aiba_score as number) >= ENTER_LT) held.add(r.domain_id);                     // 組入
+        res.set(d, [...held].map((id) => avail.get(id)).filter((x): x is SnapshotRow => !!x).sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number)));
+      }
+    } else {
+      for (const d of dates) res.set(d, selectByVariant(byDate.get(d) ?? [], variant));
+    }
+    return res;
+  }, [byDate, dates, variant]);
+
+  // 保有銘柄群の翌1ヶ月リターン平均（％）。空=現金0、評価未済=null（直近月で打ち切り）。
+  const monthRetOf = (held: SnapshotRow[]): number | null => {
+    if (held.length === 0) return 0;
+    const rets = held.map((r) => r.ret_1m).filter((x): x is number => x != null);
+    return rets.length ? mean(rets) : null;
+  };
 
   // 月次インデックス系列（100スタート）＋ ACWI を同窓で連結
   const series = useMemo(() => {
@@ -66,7 +94,7 @@ export default function AibaIndexView({
     let v = 100, ei = 100; let idxStarted = false;
     for (let i = 0; i < dates.length; i++) {
       const d = dates[i];
-      const mr = monthReturn(snaps.filter((s) => s.snapshot_date === d), variant);
+      const mr = monthRetOf(perMonth.get(d) ?? []);
       if (mr == null) break; // 直近の未評価月で打ち切り
       v *= 1 + mr / 100;
       const c0 = benchClose(d), c1 = dates[i + 1] ? benchClose(dates[i + 1]) : null;
@@ -74,7 +102,7 @@ export default function AibaIndexView({
       out.push({ date: d, idx: Math.round(v * 10) / 10, acwi: idxStarted ? Math.round(ei * 10) / 10 : null });
     }
     return out;
-  }, [snaps, dates, bench, variant]);
+  }, [perMonth, dates, bench]);
 
   // 積立シミュレーション（毎月 monthly 円をインデックス値で購入）
   const sim = useMemo(() => {
@@ -96,9 +124,16 @@ export default function AibaIndexView({
     return { n, invested, dcaValue, lumpValue, acwiVal };
   }, [series, monthly]);
 
-  // 現在の構成銘柄（最新AIBAにルール適用）。ETF/個別株を含む監視ユニバース全体。
+  // 現在の構成銘柄。コア長期は最新月のヒステリシス保有集合、他は最新AIBAにルール適用。
   const holdings = useMemo(() => {
     const valid = rows.filter((r) => r.aiba_score != null);
+    if (variant === "core_lt") {
+      const last = dates.at(-1);
+      const held = last ? (perMonth.get(last) ?? []) : [];
+      const rmap = new Map(rows.map((r) => [r.domain_id, r]));
+      return held.map((h) => rmap.get(h.domain_id as string)).filter((x): x is RankingRow => !!x)
+        .sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
+    }
     if (variant === "ge60") return valid.filter((r) => (r.aiba_score as number) >= 60).sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
     if (variant === "top20") return [...valid].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number)).slice(0, 20);
     const best = new Map<string, RankingRow>();
@@ -107,20 +142,17 @@ export default function AibaIndexView({
       if (!cur || (r.aiba_score as number) > (cur.aiba_score as number)) best.set(r.theme_name, r);
     }
     return [...best.values()].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
-  }, [rows, variant]);
+  }, [rows, variant, perMonth, dates]);
 
   // 過去の構成（月別・AIBA順）＋前月比の IN(新規)/OUT(除外=売り)。
   const monthlyComp = useMemo(() => {
     const nm = new Map(rows.map((r) => [r.domain_id, { name: r.domain_name, ticker: r.ticker }]));
     const nameOf = (id?: string) => (id ? (nm.get(id)?.name ?? id) : "?");
     const TOP = 10;
-    // 各月のフル構成（AIBA降順）
-    const perMonth = dates.map((d) => ({
-      date: d,
-      picked: selectByVariant(snaps.filter((s) => s.snapshot_date === d && s.aiba_score != null), variant),
-    }));
-    return perMonth.map((m, i) => {
-      const prev = i > 0 ? perMonth[i - 1].picked : [];
+    // 各月のフル構成（共有 perMonth を使用＝コア長期のヒステリシスも反映）
+    const months = dates.map((d) => ({ date: d, picked: perMonth.get(d) ?? [] }));
+    return months.map((m, i) => {
+      const prev = i > 0 ? months[i - 1].picked : [];
       const prevSet = new Set(prev.map((p) => p.domain_id));
       const thisSet = new Set(m.picked.map((p) => p.domain_id));
       const items = m.picked.slice(0, TOP).map((p) => ({
@@ -130,7 +162,7 @@ export default function AibaIndexView({
       const outNames = i > 0 ? prev.filter((p) => !thisSet.has(p.domain_id)).map((p) => nameOf(p.domain_id)) : [];
       return { date: m.date, items, outNames };
     }).reverse();
-  }, [snaps, dates, rows, variant]);
+  }, [perMonth, dates, rows]);
 
   // 積立額を等ウェイト配分し、各銘柄の買付株数を整数で算出。端数・不足は上位(AIBA順)優先で充当。
   const buyPlan = useMemo(() => {
