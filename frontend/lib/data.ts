@@ -155,7 +155,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
 }
 
 // 全ドメインの集計（重い）を 10 分キャッシュ。全ランキング系がこれを共有・再利用する。
-const cachedAllRows = unstable_cache(buildAllRows, ["aiba-all-rows"], { revalidate: CACHE_TTL });
+const cachedAllRows = unstable_cache(buildAllRows, ["aiba-all-rows-v2"], { revalidate: CACHE_TTL });
 
 /** 指定地域・種別の最新ランキング。 */
 export async function getRanking(region: Region, kind: Kind): Promise<RankingRow[]> {
@@ -221,7 +221,7 @@ export const getSnapshots = unstable_cache(
   async (): Promise<SnapshotRow[]> =>
     selectAll<SnapshotRow>("score_snapshots",
       "snapshot_date,domain_id,is_buy,aiba_score,ret_1m,ret_3m,ret_6m,ret_12m"),
-  ["aiba-snapshots"], { revalidate: CACHE_TTL },
+  ["aiba-snapshots-v2"], { revalidate: CACHE_TTL },
 );
 
 export interface BenchmarkPoint { trade_date: string; close: number }
@@ -254,7 +254,7 @@ export const getThemeTone = unstable_cache(
     for (const r of data ?? []) if ((r as any).tone != null) out[(r as any).theme_id] = Number((r as any).tone);
     return out;
   },
-  ["aiba-theme-tone"], { revalidate: CACHE_TTL },
+  ["aiba-theme-tone-v2"], { revalidate: CACHE_TTL },
 );
 
 export interface CandidateTheme {
@@ -319,7 +319,7 @@ export const getFundamentalsFull = unstable_cache(
     }
     return map;
   },
-  ["aiba-fundamentals-full"], { revalidate: CACHE_TTL },
+  ["aiba-fundamentals-full-v2"], { revalidate: CACHE_TTL },
 );
 
 /** Pickup: 地域・種別を問わず「今買い」候補（AIBA≥閾値 or 乖離）をAIBA順で。 */
