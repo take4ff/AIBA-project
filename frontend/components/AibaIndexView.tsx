@@ -19,25 +19,31 @@ const TOOLTIP = { background: "#fff", border: "1px solid #e6e8ec", borderRadius:
 const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
 const yen = (n: number) => "¥" + Math.round(n).toLocaleString();
 
-// 1ヶ月コホート選択：variant に応じてその月の保有銘柄の ret_1m 平均（％）を返す
-function monthReturn(rows: SnapshotRow[], variant: Variant): number | null {
-  const withRet = rows.filter((r) => r.ret_1m != null && r.aiba_score != null);
-  if (withRet.length === 0) return null;
+// variant に応じてその月の保有銘柄を選ぶ（AIBA降順で返す）。
+function selectByVariant(rows: SnapshotRow[], variant: Variant): SnapshotRow[] {
   let picked: SnapshotRow[];
   if (variant === "ge60") {
-    picked = withRet.filter((r) => (r.aiba_score as number) >= 60);
-    if (picked.length === 0) return 0; // 該当無し＝現金（0%）
+    picked = rows.filter((r) => (r.aiba_score as number) >= 60);
   } else if (variant === "top20") {
-    picked = [...withRet].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number)).slice(0, 20);
+    picked = [...rows].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number)).slice(0, 20);
   } else {
     const best = new Map<string, SnapshotRow>();
-    for (const r of withRet) {
+    for (const r of rows) {
       const theme = r.domain_id ? parseDomainId(r.domain_id).theme : "?";
       const cur = best.get(theme);
       if (!cur || (r.aiba_score as number) > (cur.aiba_score as number)) best.set(theme, r);
     }
     picked = [...best.values()];
   }
+  return picked.sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
+}
+
+// 1ヶ月コホート選択：variant に応じてその月の保有銘柄の ret_1m 平均（％）を返す
+function monthReturn(rows: SnapshotRow[], variant: Variant): number | null {
+  const withRet = rows.filter((r) => r.ret_1m != null && r.aiba_score != null);
+  if (withRet.length === 0) return null;
+  const picked = selectByVariant(withRet, variant);
+  if (variant === "ge60" && picked.length === 0) return 0; // 該当無し＝現金（0%）
   return mean(picked.map((r) => r.ret_1m as number));
 }
 
@@ -102,6 +108,16 @@ export default function AibaIndexView({
     }
     return [...best.values()].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
   }, [rows, variant]);
+
+  // 過去の構成（月別・AIBA順）。domain_id→ticker は最新ランキングから引く。
+  const monthlyComp = useMemo(() => {
+    const tk = new Map(rows.map((r) => [r.domain_id, r.ticker]));
+    const TOP = 10;
+    return [...dates].reverse().map((d) => {
+      const picked = selectByVariant(snaps.filter((s) => s.snapshot_date === d && s.aiba_score != null), variant).slice(0, TOP);
+      return { date: d, items: picked.map((p) => ({ ticker: p.domain_id ? (tk.get(p.domain_id) ?? p.domain_id) : "?", aiba: Math.round(p.aiba_score as number) })) };
+    });
+  }, [snaps, dates, rows, variant]);
 
   const last = series.at(-1);
   const vsAcwi = last && last.acwi != null ? last.idx - last.acwi : null;
@@ -176,6 +192,36 @@ export default function AibaIndexView({
                 ))}
               </div>
             )}
+          </section>
+
+          <section className="layer" style={{ marginTop: 20 }}>
+            <h2 className="layer-title">過去の構成（月別・AIBA順 上位{Math.min(10, monthlyComp[0]?.items.length || 10)}）</h2>
+            <p className="layer-subtitle">各月末にこのルールで組み入れた銘柄を AIBA の高い順に表示（直近が上）。空欄は該当数がそれ未満。</p>
+            <div className="table-scroll">
+              <table className="table idx-month-table">
+                <thead>
+                  <tr>
+                    <th>月</th>
+                    {Array.from({ length: 10 }, (_, i) => <th key={i} className="num">{i + 1}位</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlyComp.map((m) => (
+                    <tr key={m.date}>
+                      <td className="date" style={{ whiteSpace: "nowrap" }}>{m.date.slice(0, 7)}</td>
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const it = m.items[i];
+                        return (
+                          <td key={i} className="num">
+                            {it ? <span title={`AIBA ${it.aiba}`}>{it.ticker}<span className="idx-mc-aiba"> {it.aiba}</span></span> : ""}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
         </>
       )}

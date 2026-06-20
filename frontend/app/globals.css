@@ -253,6 +253,9 @@ a { color: inherit; text-decoration: none; }
 .table .tech-sig { background: rgba(255,255,255,0.04); border-color: var(--navy-border); }
 .idx-holding { text-decoration: none; color: inherit; }
 .idx-holding:hover { border-color: var(--accent); }
+.idx-month-table td, .idx-month-table th { font-size: 12px; padding: 5px 8px; }
+.idx-month-table .num { text-align: left; white-space: nowrap; }
+.idx-mc-aiba { color: var(--muted); font-size: 10px; }
 
 /* 折りたたみ式の二次セクション（銘柄詳細の整理） */
 .collapse-section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
