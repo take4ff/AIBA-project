@@ -175,7 +175,8 @@ RSI勢い  = clamp(RSI − max(0, RSI−80) × 2)   ← 80超は過熱で減衰
         <h2 className="layer-title">銘柄詳細・ポートフォリオの分析</h2>
         <ul className="def-list">
           <li><strong>フェアバリュー（相対PER）</strong>：自社の予想PER vs 同一地域・同テーマのピア予想PER中央値。「◯%割安/割高」（表示は±60%上限）。成長率差が大きい銘柄は参考程度。</li>
-          <li><strong>健康度レーダー</strong>：AIBA／割安(テク)／熱量／非過熱(=100−RSI)／押し目度／業績 を0–100で可視化。外側ほど良好。</li>
+          <li><strong>健康度レーダー</strong>：AIBA／割安(テク)／熱量／非過熱(=100−RSI)／押し目度／事業の頑丈さ を0–100で可視化。外側ほど良好。同業界平均を重ねて比較。</li>
+          <li><strong>事業の頑丈さ（品質スコア 0–100）</strong>：<strong>収益性</strong>（営業利益率・ROE）／<strong>財務健全性</strong>（D/E・流動比率）／<strong>キャッシュ創出</strong>（FCFの符号）の合成。高いほど業績が崩れにくく下方リスクが小さい目安（頑健/良好/標準/やや脆弱/脆弱）。利用可能な指標のみで平均。</li>
           <li><strong>配分分析</strong>：保有のテーマ別・地域別ウェイト。<strong>実効銘柄数 = 1 / HHI</strong>（HHI=各ウェイトの二乗和）。実効銘柄数が実銘柄数に近いほど分散。</li>
         </ul>
       </section>

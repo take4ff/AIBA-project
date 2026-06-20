@@ -10,7 +10,7 @@ import logging
 
 from aiba.config import load_domains, settings
 from aiba.db import _serialize
-from portfolio_job import fetch_fundamentals
+from portfolio_job import fetch_fundamentals, upsert_fundamentals
 
 log = logging.getLogger("aiba.fundamentals")
 
@@ -31,7 +31,7 @@ def main() -> int:
 
     funds = [_serialize(fetch_fundamentals(t)) for t in tickers]
     if funds:
-        client.table("ticker_fundamentals").upsert(funds, on_conflict="ticker").execute()
+        upsert_fundamentals(client, funds)
     log.info("完了: ticker_fundamentals %d 件", len(funds))
     return 0
 

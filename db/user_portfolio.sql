@@ -65,6 +65,12 @@ create table if not exists ticker_fundamentals (
     revenue_growth     numeric(10, 4),
     updated_at         timestamptz
 );
+-- 事業の頑丈さ（品質スコア）用の指標。収益性・財務健全性・キャッシュ創出。
+alter table ticker_fundamentals add column if not exists operating_margin numeric(8, 4);   -- 営業利益率（比率）
+alter table ticker_fundamentals add column if not exists roe              numeric(8, 4);   -- 自己資本利益率（比率）
+alter table ticker_fundamentals add column if not exists debt_to_equity   numeric(10, 2);  -- D/E（％表記・yfinance準拠）
+alter table ticker_fundamentals add column if not exists current_ratio    numeric(8, 2);   -- 流動比率
+alter table ticker_fundamentals add column if not exists free_cashflow    numeric(20, 0);  -- フリーCF（通貨建て）
 alter table ticker_fundamentals enable row level security;
 drop policy if exists "public read ticker_fundamentals" on ticker_fundamentals;
 create policy "public read ticker_fundamentals" on ticker_fundamentals for select using (true);

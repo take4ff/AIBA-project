@@ -64,11 +64,29 @@ def metrics_for(ticker: str) -> list[dict[str, Any]]:
     return rows
 
 
+QUALITY_COLS = ("operating_margin", "roe", "debt_to_equity", "current_ratio", "free_cashflow")
+
+
+def upsert_fundamentals(client: Any, funds: list[dict[str, Any]]) -> None:
+    """ticker_fundamentals へ upsert。品質カラム未マイグレーション時は既存カラムのみで再試行。"""
+    try:
+        client.table("ticker_fundamentals").upsert(funds, on_conflict="ticker").execute()
+    except Exception as e:  # noqa: BLE001
+        if any(c in str(e) for c in QUALITY_COLS):
+            stripped = [{k: v for k, v in f.items() if k not in QUALITY_COLS} for f in funds]
+            client.table("ticker_fundamentals").upsert(stripped, on_conflict="ticker").execute()
+            log.warning("品質カラム未適用のため既存カラムのみ保存。db/user_portfolio.sql を実行してください。")
+        else:
+            raise
+
+
 def fetch_fundamentals(ticker: str) -> dict[str, Any]:
     out: dict[str, Any] = {
         "ticker": ticker, "quote_type": None, "next_earnings_date": None,
         "last_surprise_pct": None, "trailing_pe": None, "forward_pe": None,
         "eps_growth": None, "revenue_growth": None,
+        "operating_margin": None, "roe": None, "debt_to_equity": None,
+        "current_ratio": None, "free_cashflow": None,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     try:
@@ -81,6 +99,16 @@ def fetch_fundamentals(ticker: str) -> dict[str, Any]:
     out["forward_pe"] = _num(info.get("forwardPE"))
     out["eps_growth"] = _num(info.get("earningsQuarterlyGrowth"))
     out["revenue_growth"] = _num(info.get("revenueGrowth"))
+    # 事業の頑丈さ（品質）指標。FCF は桁が大きいため _num のクランプを通さず符号込みで保存。
+    out["operating_margin"] = _num(info.get("operatingMargins"))
+    out["roe"] = _num(info.get("returnOnEquity"))
+    out["debt_to_equity"] = _num(info.get("debtToEquity"))
+    out["current_ratio"] = _num(info.get("currentRatio"))
+    try:
+        fcf = info.get("freeCashflow")
+        out["free_cashflow"] = None if fcf is None else round(float(fcf))
+    except (TypeError, ValueError):
+        pass
     if info.get("quoteType") == "EQUITY":
         try:
             ed = tk.get_earnings_dates(limit=12)
@@ -126,7 +154,7 @@ def main() -> int:
         funds.append(_serialize(fetch_fundamentals(t)))
 
     if funds:
-        client.table("ticker_fundamentals").upsert(funds, on_conflict="ticker").execute()
+        upsert_fundamentals(client, funds)
     log.info("完了: ticker_metrics %d 件 / fundamentals %d 件", total, len(funds))
     return 0
 

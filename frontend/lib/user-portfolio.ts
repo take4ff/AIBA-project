@@ -31,6 +31,11 @@ export interface TickerFundamentals {
   forward_pe: number | null;
   eps_growth: number | null;
   revenue_growth: number | null;
+  operating_margin?: number | null;
+  roe?: number | null;
+  debt_to_equity?: number | null;
+  current_ratio?: number | null;
+  free_cashflow?: number | null;
 }
 
 export async function getHoldings(): Promise<UserHolding[]> {

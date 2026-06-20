@@ -8,9 +8,67 @@ export interface Fundamentals {
   forward_pe: number | null;
   eps_growth: number | null;     // 比率（0.1 = +10%）
   revenue_growth: number | null; // 比率
+  // 事業の頑丈さ（品質）指標
+  operating_margin?: number | null;  // 営業利益率（比率）
+  roe?: number | null;               // 自己資本利益率（比率）
+  debt_to_equity?: number | null;    // D/E（％・yfinance準拠）
+  current_ratio?: number | null;     // 流動比率
+  free_cashflow?: number | null;     // フリーCF（通貨建て）
 }
 
 export interface Interpretation { tone: "pos" | "neg" | "neutral"; text: string }
+
+const clampQ = (x: number) => Math.max(0, Math.min(100, x));
+
+export interface QualityScore {
+  score: number | null;                 // 0-100（高いほど頑丈）
+  label: "頑健" | "良好" | "標準" | "やや脆弱" | "脆弱" | null;
+  parts: { name: string; pts: number; note: string }[];
+}
+
+/**
+ * 事業の頑丈さ（品質）スコア：収益性・財務健全性・キャッシュ創出 から 0-100。
+ * 利用可能な指標のみで加重平均（取得不可は除外）。下方リスクの低い「崩れにくい事業」の目安。
+ */
+export function qualityScore(f: Fundamentals): QualityScore {
+  const parts: { name: string; pts: number; note: string }[] = [];
+
+  // 収益性：営業利益率（0%→40, 20%→80, 40%以上→100、赤字→0〜30）
+  if (f.operating_margin != null) {
+    const m = f.operating_margin * 100;
+    const pts = m < 0 ? clampQ(30 + m) : clampQ(40 + m * 1.5);
+    parts.push({ name: "収益性(営業利益率)", pts, note: `${m.toFixed(0)}%` });
+  }
+  // 資本効率：ROE（0%→40, 15%→80, 25%以上→100、マイナス→0〜30）
+  if (f.roe != null) {
+    const r = f.roe * 100;
+    const pts = r < 0 ? clampQ(30 + r) : clampQ(40 + r * 2.4);
+    parts.push({ name: "資本効率(ROE)", pts, note: `${r.toFixed(0)}%` });
+  }
+  // 財務健全性：D/E（％。0→100, 100%→55, 200%以上→20）
+  if (f.debt_to_equity != null) {
+    const de = f.debt_to_equity;
+    const pts = clampQ(100 - de * 0.45);
+    parts.push({ name: "財務健全性(D/E)", pts, note: `${de.toFixed(0)}%` });
+  }
+  // 流動性：流動比率（1.0→50, 2.0→90, 0.5以下→20）
+  if (f.current_ratio != null) {
+    const cr = f.current_ratio;
+    const pts = clampQ(10 + cr * 40);
+    parts.push({ name: "流動性(流動比率)", pts, note: cr.toFixed(2) });
+  }
+  // キャッシュ創出：FCFの符号（プラス→85, マイナス→25）
+  if (f.free_cashflow != null) {
+    const pts = f.free_cashflow > 0 ? 85 : 25;
+    parts.push({ name: "キャッシュ創出(FCF)", pts, note: f.free_cashflow > 0 ? "プラス" : "マイナス" });
+  }
+
+  if (parts.length < 2) return { score: null, label: null, parts };
+  const score = Math.round(parts.reduce((a, b) => a + b.pts, 0) / parts.length);
+  const label: QualityScore["label"] =
+    score >= 80 ? "頑健" : score >= 65 ? "良好" : score >= 50 ? "標準" : score >= 35 ? "やや脆弱" : "脆弱";
+  return { score, label, parts };
+}
 
 const daysUntil = (d: string | null) => {
   if (!d) return null;

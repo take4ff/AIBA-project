@@ -8,7 +8,7 @@ import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm, downsideProfi
 import TechSummary from "@/components/TechSummary";
 import HoldingHorizons from "@/components/HoldingHorizons";
 import { money } from "@/lib/sell-signal";
-import { interpretFundamentals, Fundamentals } from "@/lib/fundamentals";
+import { interpretFundamentals, qualityScore, Fundamentals } from "@/lib/fundamentals";
 import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
 import ConceptIcon from "@/components/ConceptIcon";
 import { narrative } from "@/lib/narrative";
@@ -189,8 +189,11 @@ export default async function DomainPage({ params }: { params: { id: string } })
     if (latest.ma_deviation != null) {
       radar.push({ axis: "押し目度", value: dipScore(latest.ma_deviation), avg: peerAgg?.maDev != null ? dipScore(peerAgg.maDev) : undefined });
     }
-    // 業績（ファンダがあれば）
-    if (fundamentals && (fundamentals.eps_growth != null || fundamentals.revenue_growth != null)) {
+    // 事業の頑丈さ（品質スコア）。無ければ従来の簡易業績スコアにフォールバック。
+    const q = fundamentals ? qualityScore(fundamentals) : null;
+    if (q && q.score != null) {
+      radar.push({ axis: "頑丈さ", value: q.score });
+    } else if (fundamentals && (fundamentals.eps_growth != null || fundamentals.revenue_growth != null)) {
       const pe = fundamentals.forward_pe && fundamentals.forward_pe > 0 ? fundamentals.forward_pe
         : fundamentals.trailing_pe && fundamentals.trailing_pe > 0 ? fundamentals.trailing_pe : null;
       let f = 50;
@@ -352,6 +355,27 @@ export default async function DomainPage({ params }: { params: { id: string } })
             <div className="fund-cell"><span className="fund-k">直近サプライズ</span><span className="fund-v">{fundamentals.last_surprise_pct != null ? (fundamentals.last_surprise_pct >= 0 ? "+" : "") + fundamentals.last_surprise_pct.toFixed(0) + "%" : "—"}</span></div>
             <div className="fund-cell"><span className="fund-k">次回決算</span><span className="fund-v">{fundamentals.next_earnings_date ?? "—"}</span></div>
           </div>
+          {(() => {
+            const q = qualityScore(fundamentals);
+            if (q.score == null) return null;
+            const col = q.score >= 65 ? "#15a34a" : q.score < 35 ? "#dc2626" : "var(--muted)";
+            return (
+              <div style={{ marginTop: 14 }}>
+                <p className="forecast-line" style={{ marginTop: 0 }}>
+                  <ConceptIcon name="guide" size={14} /> 事業の頑丈さ：<span style={{ fontWeight: 800, color: col }}>{q.score}</span>（{q.label}）
+                  <span className="forecast-note">収益性・財務健全性・キャッシュ創出から算出。高いほど崩れにくく下方リスクが小さい目安。</span>
+                </p>
+                <div className="fund-grid">
+                  {q.parts.map((p) => (
+                    <div key={p.name} className="fund-cell" title={`${p.pts}点`}>
+                      <span className="fund-k">{p.name}</span>
+                      <span className="fund-v" style={{ color: p.pts >= 65 ? "#15a34a" : p.pts < 35 ? "#dc2626" : undefined }}>{p.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
           <ul className="fund-interp">
             {interpretFundamentals(fundamentals).map((it, i) => (
               <li key={i} className={`fi-${it.tone}`}>{it.text}</li>
