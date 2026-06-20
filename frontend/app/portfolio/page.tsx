@@ -8,7 +8,7 @@ import {
   UserHolding, TickerMetric, TickerFundamentals,
   getHoldings, getTickerData, getTickerThemes, getFundAcqCloses, addHolding, updateHolding, deleteHolding,
 } from "@/lib/user-portfolio";
-import { assessSell, assessStopLoss, assessTakeProfit, money, pct, earningsLabel, overheatColor, daysUntil } from "@/lib/sell-signal";
+import { assessSell, assessStopLoss, assessTakeProfit, money, pct, overheatColor, daysUntil } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -173,7 +173,7 @@ export default function PortfolioPage() {
                 <thead><tr>
                   <th>銘柄</th><th className="num">平均取得単価</th><th className="num">株数</th><th className="num">現在値</th>
                   <th className="num">損益</th><th className="num">過熱度</th><th>売りシグナル</th>
-                  <th>次回決算</th><th>操作</th>
+                  <th>操作</th>
                 </tr></thead>
                 <tbody>
                   {holdings.map((h) => {
@@ -190,7 +190,6 @@ export default function PortfolioPage() {
                       forward_pe: f?.forward_pe, trailing_pe: f?.trailing_pe,
                       eps_growth: f?.eps_growth, next_earnings_date: f?.next_earnings_date,
                     });
-                    const e = earningsLabel(f?.next_earnings_date ?? null);
                     const sl = assessStopLoss(ret, stopPct);
                     const tp = assessTakeProfit(ret, profitPct);
                     const editing = edit?.ticker === h.ticker;
@@ -240,7 +239,6 @@ export default function PortfolioPage() {
                             {tp.triggered && <span className="sell-badge sb-profit" title={tp.tooltip}>{tp.label}</span>}
                           </div>
                         </td>
-                        <td style={{ color: e.soon ? "#d97706" : "var(--muted)", fontWeight: e.soon ? 700 : 400 }}>{e.soon && <ConceptIcon name="warn" size={12} />} {e.text}</td>
                         <td>
                           {editing ? (
                             <>
