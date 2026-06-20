@@ -282,6 +282,16 @@ export async function getAllRows(): Promise<RankingRow[]> {
   return (await cachedAllRows()).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
 }
 
+/** 日次バッチの最終反映日（ナビ表示用）。10分キャッシュ。 */
+export const getLatestTradeDate = unstable_cache(
+  async (): Promise<string | null> => {
+    const { data } = await supabase.from("daily_metrics").select("trade_date").order("trade_date", { ascending: false }).limit(1);
+    return (data?.[0] as any)?.trade_date ?? null;
+  },
+  ["latest-trade-date"],
+  { revalidate: CACHE_TTL },
+);
+
 /** ticker → 予想PER・EPS成長 のマップ（スクリーナーのファンダ条件用）。 */
 export async function getFundamentalsMap(): Promise<Record<string, { forward_pe: number | null; eps_growth: number | null }>> {
   const { data } = await supabase.from("ticker_fundamentals").select("ticker,forward_pe,eps_growth");

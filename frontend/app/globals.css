@@ -129,6 +129,7 @@ a { color: inherit; text-decoration: none; }
 .tab-active, .tab-active:hover { color: #fff; background: var(--ink); font-weight: 700; }
 .tab-ico { color: var(--accent); flex: none; }           /* Lucide アイコン（アクセント色） */
 .tab-active .tab-ico { color: #fff; }                      /* アクティブ時は白 */
+.nav-freshness { font-size: 11px; color: var(--muted); margin-left: auto; align-self: flex-end; padding-bottom: 4px; white-space: nowrap; }
 @media (max-width: 720px) {
   .nav { gap: 10px 16px; }
   .nav-group { width: 100%; }
