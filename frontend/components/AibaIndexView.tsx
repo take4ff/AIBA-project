@@ -48,8 +48,8 @@ function monthReturn(rows: SnapshotRow[], variant: Variant): number | null {
 }
 
 export default function AibaIndexView({
-  snaps, rows, bench,
-}: { snaps: SnapshotRow[]; rows: RankingRow[]; bench: BenchmarkPoint[] }) {
+  snaps, rows, bench, usdjpy,
+}: { snaps: SnapshotRow[]; rows: RankingRow[]; bench: BenchmarkPoint[]; usdjpy: number }) {
   const [variant, setVariant] = useState<Variant>("ge60");
   const [monthly, setMonthly] = useState(30000);
 
@@ -119,6 +119,28 @@ export default function AibaIndexView({
     });
   }, [snaps, dates, rows, variant]);
 
+  // 積立額を等ウェイト配分し、各銘柄の買付株数を整数で算出。端数・不足は上位(AIBA順)優先で充当。
+  const buyPlan = useMemo(() => {
+    const N = holdings.length;
+    if (N === 0) return null;
+    const perStock = monthly / N;
+    const items = holdings.map((h) => {
+      const priceJPY = h.close_price == null ? null : (h.region === "jp" ? h.close_price : h.close_price * usdjpy);
+      const shares = priceJPY && priceJPY > 0 ? Math.floor(perStock / priceJPY) : 0;
+      return { id: h.domain_id, priceJPY, shares };
+    });
+    let leftover = monthly - items.reduce((a, it) => a + (it.priceJPY ? it.shares * it.priceJPY : 0), 0);
+    // 上位優先：rank順に1株ずつ周回して余りを充当（買えなくなるまで）
+    let bought = true;
+    while (bought) {
+      bought = false;
+      for (const it of items) {
+        if (it.priceJPY && it.priceJPY <= leftover) { it.shares++; leftover -= it.priceJPY; bought = true; }
+      }
+    }
+    return { map: new Map(items.map((it) => [it.id, it])), spent: monthly - leftover, leftover };
+  }, [holdings, monthly, usdjpy]);
+
   const last = series.at(-1);
   const vsAcwi = last && last.acwi != null ? last.idx - last.acwi : null;
 
@@ -179,17 +201,24 @@ export default function AibaIndexView({
 
           <section className="layer" style={{ marginTop: 20 }}>
             <h2 className="layer-title">現在の構成銘柄（{holdings.length}）</h2>
-            <p className="layer-subtitle">最新AIBAに同じルールを適用した、いま組み入れ対象の銘柄。等ウェイトを想定。</p>
+            <p className="layer-subtitle">
+              最新AIBAに同じルールを適用した、いま組み入れ対象の銘柄。<strong>毎月 {yen(monthly)} を等ウェイト配分</strong>した場合の買付株数も表示（端数・不足分は上位銘柄を優先）。
+              {buyPlan && <>　→ 買付 <strong>{yen(buyPlan.spent)}</strong>・余り {yen(buyPlan.leftover)}</>}
+            </p>
             {holdings.length === 0 ? (
               <div className="notice">現在の基準を満たす銘柄がありません（AIBA≥60該当なし＝現金）。</div>
             ) : (
               <div className="hh-grid">
-                {holdings.map((r) => (
-                  <Link key={r.domain_id} href={`/domain/${r.domain_id}`} className="tech-sig idx-holding" title={`${r.theme_name}（クリックで詳細）`}>
-                    <span className="tech-sig-name">{r.domain_name}<span className="ticker" style={{ marginLeft: 6 }}>{r.ticker}</span></span>
-                    <span className="tech-sig-verdict" style={{ color: "#15a34a", marginLeft: "auto" }}>{(r.aiba_score as number).toFixed(0)}</span>
-                  </Link>
-                ))}
+                {holdings.map((r) => {
+                  const b = buyPlan?.map.get(r.domain_id);
+                  return (
+                    <Link key={r.domain_id} href={`/domain/${r.domain_id}`} className="tech-sig idx-holding" title={`${r.theme_name}（クリックで詳細）`}>
+                      <span className="tech-sig-name">{r.domain_name}<span className="ticker" style={{ marginLeft: 6 }}>{r.ticker}</span></span>
+                      {b && <span style={{ marginLeft: "auto", marginRight: 10, fontWeight: 700, color: b.shares > 0 ? "var(--ink)" : "var(--muted)" }}>{b.shares}株</span>}
+                      <span className="tech-sig-verdict" style={{ color: "#15a34a" }}>{(r.aiba_score as number).toFixed(0)}</span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </section>
