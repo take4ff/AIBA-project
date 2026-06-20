@@ -251,6 +251,8 @@ a { color: inherit; text-decoration: none; }
 .tech-sig-verdict { font-weight: 800; font-size: 13px; }
 .tech-sig-detail { font-size: 11px; color: var(--muted); margin-left: auto; text-align: right; }
 .table .tech-sig { background: rgba(255,255,255,0.04); border-color: var(--navy-border); }
+.idx-holding { text-decoration: none; color: inherit; }
+.idx-holding:hover { border-color: var(--accent); }
 
 /* 保有期間別の売り/継続判定 */
 .hh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }

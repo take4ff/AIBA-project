@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine,
@@ -109,7 +110,7 @@ export default function AibaIndexView({
     <>
       <div className="kind-toggle" style={{ marginBottom: 14 }}>
         {VARIANTS.map((v) => (
-          <button key={v.key} className={variant === v.key ? "kind-active" : ""} onClick={() => setVariant(v.key)}>{v.label}</button>
+          <button key={v.key} type="button" className={`kind-btn${variant === v.key ? " kind-active" : ""}`} onClick={() => setVariant(v.key)}>{v.label}</button>
         ))}
       </div>
       <p className="layer-subtitle">{VARIANTS.find((v) => v.key === variant)!.desc}</p>
@@ -168,10 +169,10 @@ export default function AibaIndexView({
             ) : (
               <div className="hh-grid">
                 {holdings.map((r) => (
-                  <div key={r.domain_id} className="tech-sig" title={`${r.theme_name}`}>
+                  <Link key={r.domain_id} href={`/domain/${r.domain_id}`} className="tech-sig idx-holding" title={`${r.theme_name}（クリックで詳細）`}>
                     <span className="tech-sig-name">{r.domain_name}<span className="ticker" style={{ marginLeft: 6 }}>{r.ticker}</span></span>
                     <span className="tech-sig-verdict" style={{ color: "#15a34a", marginLeft: "auto" }}>{(r.aiba_score as number).toFixed(0)}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
