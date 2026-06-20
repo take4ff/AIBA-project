@@ -260,8 +260,11 @@ export default async function DomainPage({ params }: { params: { id: string } })
         </>
       )}
 
+      {(compare && vsDelta != null) || guide.fair != null || ds.floorStrong != null || lt.dev200 != null || momentum != null ? (
+      <section className="layer">
+        <h2 className="layer-title">サマリー指標</h2>
       {compare && vsDelta != null && (
-        <p className="forecast-line">
+        <p className="forecast-line" style={{ marginTop: 0 }}>
           <ConceptIcon name="both" size={14} /> 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
           <span style={{ color: vsDelta >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>
             {vsDelta >= 0 ? `業界より割安（+${vsDelta.toFixed(0)}）` : `業界より割高/過熱（${vsDelta.toFixed(0)}）`}
@@ -313,12 +316,17 @@ export default async function DomainPage({ params }: { params: { id: string } })
           <span style={{ marginLeft: 8, fontWeight: 700, color: momentum >= 55 ? "#15a34a" : momentum < 45 ? "#dc2626" : "var(--muted)" }}>
             {momentumLabel(momentum)}
           </span>
-          <span className="forecast-note">（AIBA＝押し目/逆張りと対の「勢いに乗る」視点。MA上・RSI強・直近上昇で高い）</span>
+          <span className="forecast-note">（勢いに乗る視点。詳細は下の「テクニカル総合判定」）</span>
         </p>
       )}
+      </section>
+      ) : null}
+
+      <HoldingHorizons closes={closes} rsi={latest?.rsi_14 ?? null} overheat={hhOverheat} sentimentTrend={hhSentTrend} />
+
       {radar.length >= 3 && (
-        <section className="layer">
-          <h2 className="layer-title">健康度（スコア・レーダー）</h2>
+        <details className="collapse-section">
+          <summary>健康度（スコア・レーダー）</summary>
           <HealthRadar data={radar} showAvg={peerAgg != null} avgLabel={peerAgg != null ? `業界平均(n=${peerAgg.n})` : undefined} />
           {peerAgg != null && (
             <p className="guide-note" style={{ marginTop: 4 }}>
@@ -327,14 +335,13 @@ export default async function DomainPage({ params }: { params: { id: string } })
               ※最新断面の単純平均で、サンプルが少ない（n小）テーマは振れやすい点に注意。
             </p>
           )}
-        </section>
+        </details>
       )}
-      <HoldingHorizons closes={closes} rsi={latest?.rsi_14 ?? null} overheat={hhOverheat} sentimentTrend={hhSentTrend} />
-      <TechSummary closes={closes} rsi={latest?.rsi_14 ?? null} />
+      <TechSummary closes={closes} rsi={latest?.rsi_14 ?? null} collapsible />
 
       {fundamentals && (fundamentals.trailing_pe != null || fundamentals.forward_pe != null || fundamentals.next_earnings_date != null) && (
-        <section className="layer">
-          <h2 className="layer-title">決算・ファンダと解釈</h2>
+        <details className="collapse-section">
+          <summary>決算・ファンダ・事業の頑丈さ</summary>
           {fairValue && (() => {
             const capped = Math.max(-60, Math.min(60, fairValue.discountPct));
             const over = Math.abs(fairValue.discountPct) > 60 ? "超" : "";
@@ -383,7 +390,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
             ))}
           </ul>
           <p className="guide-note">※ 解釈は指標からの自動生成（簡易ルール）。投資助言ではありません。</p>
-        </section>
+        </details>
       )}
     </main>
   );

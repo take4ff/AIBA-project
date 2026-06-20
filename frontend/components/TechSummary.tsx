@@ -10,12 +10,15 @@ const vColor = (v: "買い" | "売り" | "中立") => (v === "買い" ? "#15a34a
  * RSI・ボリンジャー・ストキャスティクス（オシレーター系）を 買い/売り/中立 で一覧化する。
  * 銘柄詳細（ランキング経由）とポートフォリオ詳細の両方で共有。
  */
-export default function TechSummary({ closes, rsi }: { closes: (number | null)[]; rsi: number | null }) {
+export default function TechSummary({ closes, rsi, collapsible = false }: { closes: (number | null)[]; rsi: number | null; collapsible?: boolean }) {
   const tech = technicalSummary(closes, rsi);
   if (tech.signals.length < 3) return null;
+  const Wrap = collapsible ? "details" : "section";
   return (
-    <section className="layer">
-      <h2 className="layer-title">テクニカル総合判定（買い・売り目安の網羅）</h2>
+    <Wrap className={collapsible ? "collapse-section" : "layer"}>
+      {collapsible
+        ? <summary>テクニカル総合判定（買い・売り目安の網羅）</summary>
+        : <h2 className="layer-title">テクニカル総合判定（買い・売り目安の網羅）</h2>}
       <p className="layer-subtitle">
         主要指標の現在のシグナルを一覧化。総合：
         <span style={{ fontWeight: 800, marginLeft: 6, color: tech.overall.includes("買") ? "#15a34a" : tech.overall.includes("売") ? "#dc2626" : "var(--muted)" }}>{tech.overall}</span>
@@ -39,6 +42,6 @@ export default function TechSummary({ closes, rsi }: { closes: (number | null)[]
         ※ トレンド系（移動平均25/200・MACD・一目均衡表）は順張りの方向、オシレーター系（RSI・ボリンジャー・ストキャス）は逆張り（押し目/過熱＝売り）の目安。
         指標は終値ベースの目安で、売買を保証するものではありません。
       </p>
-    </section>
+    </Wrap>
   );
 }
