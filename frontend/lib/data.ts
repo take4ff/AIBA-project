@@ -282,11 +282,20 @@ export async function getAllRows(): Promise<RankingRow[]> {
   return (await cachedAllRows()).sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
 }
 
-/** 日次バッチの最終反映日（ナビ表示用）。10分キャッシュ。 */
+/** 日次バッチの最終反映日時（ナビ表示用）。10分キャッシュ。"YYYY-MM-DD HH:MM" 形式で返す。 */
 export const getLatestTradeDate = unstable_cache(
   async (): Promise<string | null> => {
-    const { data } = await supabase.from("daily_metrics").select("trade_date").order("trade_date", { ascending: false }).limit(1);
-    return (data?.[0] as any)?.trade_date ?? null;
+    const { data } = await supabase.from("daily_metrics").select("trade_date,created_at").order("trade_date", { ascending: false }).limit(1);
+    const row = data?.[0] as any;
+    if (!row) return null;
+    const date: string = row.trade_date;
+    const ts: string | null = row.created_at ?? null;
+    if (!ts) return date;
+    // created_at は UTC timestamptz → JST (UTC+9) に変換して HH:MM を付加
+    const jst = new Date(ts);
+    const hh = String((jst.getUTCHours() + 9) % 24).padStart(2, "0");
+    const mm = String(jst.getUTCMinutes()).padStart(2, "0");
+    return `${date} ${hh}:${mm}`;
   },
   ["latest-trade-date"],
   { revalidate: CACHE_TTL },

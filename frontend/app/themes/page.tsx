@@ -50,7 +50,6 @@ export default async function ThemesPage() {
   // 「話題上昇中」＝センチメント傾き上位3テーマ
   [...cards].sort((a, b) => b.trend - a.trend).slice(0, 3).forEach((c) => { if (c.trend > 1) c.rising = true; });
 
-  const tradeDate = rows.map((r) => r.trade_date).filter(Boolean).sort().at(-1);
   const byLayer = [1, 2, 3].map((l) => ({
     layer: l,
     items: cards.filter((c) => c.layer === l).sort((a, b) => (b.sentiment ?? 0) - (a.sentiment ?? 0)),
@@ -63,7 +62,6 @@ export default async function ThemesPage() {
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           監視テーマを階層別に俯瞰。各テーマの<strong>研究熱量</strong>（関連ワードの活動量＝センチメント）と業界AIBAを併記。
-          {tradeDate && <> 最新: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
 

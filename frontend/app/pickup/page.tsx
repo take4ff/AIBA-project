@@ -41,7 +41,6 @@ export default async function PickupPage({
     }
     return true;
   });
-  const tradeDate = rows.map((r) => r.trade_date).filter(Boolean).sort().at(-1);
   const sym = cur === "JPY" ? "¥" : "$";
 
   // 前日順位との差：同じ候補集合を「前営業日のAIBA」で並べ替えた順位と当日順位を比較
@@ -62,7 +61,6 @@ export default async function PickupPage({
         <p className="fullname">Advanced Investment &amp; Behavior Analytics</p>
         <p>
           地域・ETF/個別株を問わず、AIBAスコアが買い水準（60以上）または乖離（仕込み好機）の銘柄を横断抽出。
-          {tradeDate && <> 最新: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
 

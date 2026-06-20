@@ -24,8 +24,6 @@ export default async function IndustryPage({
   const rows = await getIndustry(params.theme, region);
   const etf = rows.find((r) => r.kind === "etf");
   const themeName = etf?.domain_name ?? rows[0]?.theme_name ?? params.theme;
-  const tradeDate = rows.map((r) => r.trade_date).filter(Boolean).sort().at(-1);
-
   return (
     <main className="container">
       <header className="header">
@@ -36,7 +34,6 @@ export default async function IndustryPage({
         </h1>
         <p>
           業界ETF（最上部）と主要個別株のAIBAスコア比較。
-          {tradeDate && <> 最新: <span className="date">{tradeDate}</span></>}
         </p>
       </header>
 
