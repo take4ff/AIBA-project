@@ -161,13 +161,17 @@ RSI勢い  = clamp(RSI − max(0, RSI−80) × 2)   ← 80超は過熱で減衰
 
       {/* 保有目安バッジ */}
       <section className="layer def-section">
-        <h2 className="layer-title">保有目安バッジ</h2>
-        <p>買い場候補（AIBA≥55）の性質を示す：</p>
+        <h2 className="layer-title">保有目安バッジ（買いの“型”）</h2>
+        <p>買い場候補（AIBA≥55）が<strong>どんな性質の買いか</strong>を示す（保有「期間」の判定ではない）：</p>
         <ul className="def-list">
-          <li><ConceptIcon name="long" /> <strong>長期</strong>：第2/3層＋熱量で構造的成長が見込める</li>
-          <li><ConceptIcon name="short" /> <strong>短期</strong>：売られすぎからの技術的リバウンド狙い</li>
-          <li><ConceptIcon name="both" /> <strong>両面</strong>：その両方</li>
+          <li><ConceptIcon name="long" /> <strong>成長型</strong>：第2/3層＋熱量で構造的成長が見込める（長期保有のサテライト向き）</li>
+          <li><ConceptIcon name="short" /> <strong>反発型</strong>：売られすぎからの技術的リバウンド狙い（短期の値幅取り向き）</li>
+          <li><ConceptIcon name="both" /> <strong>両取り</strong>：その両方</li>
         </ul>
+        <p className="guide-note">
+          ※ これは<strong>買いの“型”</strong>で、銘柄詳細の<strong>「保有期間別の判定」（短期/中期/長期それぞれの 売り/継続）</strong>とは別の軸です。
+          例：成長型🌱（長期向き）の銘柄が、短期は過熱で「売り」ということは普通に起こります（＝長期保有だが今は短期の押し目待ち）。
+        </p>
       </section>
 
       {/* 分析系 */}
