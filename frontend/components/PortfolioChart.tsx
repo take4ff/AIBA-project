@@ -38,53 +38,58 @@ export default function PortfolioChart({
   const cutoff = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
 
   const chartData = useMemo(() => {
-    // 有効な保有ティッカー（終値履歴あり）
     const validTickers = holdings
       .filter((h) => !h.is_fund)
       .map((h) => h.ticker)
       .filter((t) => (histories.get(t)?.length ?? 0) > 0);
     if (!validTickers.length) return [];
 
-    // 共通日付セット（全ティッカーに存在する日付のみ）
-    const datesByTicker = validTickers.map((t) =>
-      new Set((histories.get(t) ?? []).filter((r) => r.date >= cutoff).map((r) => r.date))
-    );
-    const allDates = [...datesByTicker[0]].filter((d) =>
-      datesByTicker.every((s) => s.has(d))
-    ).sort();
-    if (allDates.length < 2) return [];
-
-    const t0 = allDates[0];
-    // 各ティッカーの基準終値
-    const base = new Map<string, number>();
-    for (const t of validTickers) {
-      const p = histories.get(t)!.find((r) => r.date === t0);
-      if (p) base.set(t, p.close);
-    }
-    // ポートフォリオ等ウェイト指数
-    const priceByTickerDate = new Map<string, Map<string, number>>();
+    // 各ティッカーの日付→終値マップ（全期間）
+    const priceMap = new Map<string, Map<string, number>>();
     for (const t of validTickers) {
       const m = new Map<string, number>();
       for (const r of histories.get(t) ?? []) m.set(r.date, r.close);
-      priceByTickerDate.set(t, m);
+      priceMap.set(t, m);
     }
 
-    // ACWI 基準値
+    // 日付はユニオン（米国・日本の休日差を吸収）
+    const allDates = [...new Set(
+      validTickers.flatMap((t) =>
+        (histories.get(t) ?? []).filter((r) => r.date >= cutoff).map((r) => r.date)
+      )
+    )].sort();
+    if (allDates.length < 2) return [];
+
+    const t0 = allDates[0];
+    // 基準値: period 開始日以前で最後の既知終値
+    const base = new Map<string, number>();
+    for (const t of validTickers) {
+      const sorted = (histories.get(t) ?? []).filter((r) => r.date <= t0).sort((a, b) => (a.date < b.date ? 1 : -1));
+      if (sorted[0]) base.set(t, sorted[0].close);
+    }
+
+    // ACWI
     const acwiFiltered = acwi.filter((r) => r.date >= cutoff);
     const acwiBase = acwiFiltered.find((r) => r.date >= t0)?.close ?? null;
     const acwiByDate = new Map(acwiFiltered.map((r) => [r.date, r.close]));
 
+    // forward-fill: 当日データがない場合は前日値を使用
+    const lastPrice = new Map<string, number>(base);
     return allDates.map((date) => {
-      const returns = validTickers.map((t) => {
-        const b = base.get(t) ?? 1;
-        const c = priceByTickerDate.get(t)?.get(date) ?? b;
-        return (c / b) * 100;
-      });
+      const returns: number[] = [];
+      for (const t of validTickers) {
+        const b = base.get(t);
+        if (!b) continue;
+        const p = priceMap.get(t)?.get(date);
+        if (p != null) lastPrice.set(t, p);
+        returns.push(((lastPrice.get(t) ?? b) / b) * 100);
+      }
+      if (!returns.length) return null;
       const portfolio = returns.reduce((s, v) => s + v, 0) / returns.length;
       const acwiClose = acwiByDate.get(date) ?? null;
       const acwiIdx = acwiBase && acwiClose ? (acwiClose / acwiBase) * 100 : null;
       return { date, portfolio: Math.round(portfolio * 10) / 10, acwi: acwiIdx ? Math.round(acwiIdx * 10) / 10 : null };
-    });
+    }).filter(Boolean) as { date: string; portfolio: number; acwi: number | null }[];
   }, [holdings, histories, acwi, cutoff]);
 
   if (chartData.length < 2) return null;
