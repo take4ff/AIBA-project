@@ -23,7 +23,7 @@ domains:
         stocks: [{ ticker: NVDA, name: NVIDIA, tags: [generative_ai, data_center, edge_ai_robotics] }, { ticker: AMD, name: AMD }, { ticker: AVGO, name: Broadcom, tags: [cloud_infra, cybersecurity] }, { ticker: ARM, name: Arm }, { ticker: TSM, name: TSMC }, { ticker: ASML, name: ASML }, { ticker: MU, name: Micron }, { ticker: QCOM, name: Qualcomm }, { ticker: LRCX, name: Lam Research }, { ticker: AMAT, name: Applied Materials }, { ticker: KLAC, name: KLA }, { ticker: ENTG, name: Entegris }, { ticker: UCTT, name: Ultra Clean }]
       jp:
         etf: { ticker: "2644.T", name: "Global X 日本半導体" }
-        stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }, { ticker: "2802.T", name: 味の素（ABF基板材料） }, { ticker: "4063.T", name: 信越化学工業 }, { ticker: "3436.T", name: SUMCO }, { ticker: "4186.T", name: 東京応化工業 }, { ticker: "4004.T", name: レゾナック（後工程材料） }]
+        stocks: [{ ticker: "8035.T", name: 東京エレクトロン }, { ticker: "6857.T", name: アドバンテスト }, { ticker: "6146.T", name: ディスコ }, { ticker: "285A.T", name: キオクシア }, { ticker: "4062.T", name: イビデン }, { ticker: "6323.T", name: ローツェ }, { ticker: "6920.T", name: レーザーテック }, { ticker: "6963.T", name: ローム }, { ticker: "2802.T", name: 味の素（ABF基板材料） }, { ticker: "4063.T", name: 信越化学工業 }, { ticker: "3436.T", name: SUMCO }, { ticker: "4186.T", name: 東京応化工業 }, { ticker: "4004.T", name: レゾナック（後工程材料） }]
       row:
         stocks: [{ ticker: "2330.TW", name: TSMC（台湾） }, { ticker: "005930.KS", name: サムスン電子（韓国） }]
     github_keywords: ["cuda", "gpu kernel", "tensorrt"]
