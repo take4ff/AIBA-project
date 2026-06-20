@@ -28,9 +28,9 @@ export default function RankingTableMore({
     <>
       <RankingTable rows={shown} {...rest} />
       {remaining > 0 && (
-        <div style={{ textAlign: "center", marginTop: 12 }}>
-          <button className="kind-active" onClick={() => setN((v) => v + step)}>
-            もっと見る（残り {remaining}）
+        <div style={{ textAlign: "center", marginTop: 10 }}>
+          <button className="more-link" onClick={() => setN((v) => v + step)}>
+            もっと見る <span className="more-count">＋{Math.min(step, remaining)}</span>（残り {remaining}）
           </button>
         </div>
       )}
