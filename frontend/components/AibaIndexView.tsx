@@ -109,20 +109,27 @@ export default function AibaIndexView({
     return [...best.values()].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
   }, [rows, variant]);
 
-  // 過去の構成（月別・AIBA順）。domain_id→企業名/ティッカー は最新ランキングから引く。
+  // 過去の構成（月別・AIBA順）＋前月比の IN(新規)/OUT(除外=売り)。
   const monthlyComp = useMemo(() => {
     const nm = new Map(rows.map((r) => [r.domain_id, { name: r.domain_name, ticker: r.ticker }]));
+    const nameOf = (id?: string) => (id ? (nm.get(id)?.name ?? id) : "?");
     const TOP = 10;
-    return [...dates].reverse().map((d) => {
-      const picked = selectByVariant(snaps.filter((s) => s.snapshot_date === d && s.aiba_score != null), variant).slice(0, TOP);
-      return {
-        date: d,
-        items: picked.map((p) => {
-          const info = p.domain_id ? nm.get(p.domain_id) : undefined;
-          return { name: info?.name ?? p.domain_id ?? "?", ticker: info?.ticker ?? "", aiba: Math.round(p.aiba_score as number) };
-        }),
-      };
-    });
+    // 各月のフル構成（AIBA降順）
+    const perMonth = dates.map((d) => ({
+      date: d,
+      picked: selectByVariant(snaps.filter((s) => s.snapshot_date === d && s.aiba_score != null), variant),
+    }));
+    return perMonth.map((m, i) => {
+      const prev = i > 0 ? perMonth[i - 1].picked : [];
+      const prevSet = new Set(prev.map((p) => p.domain_id));
+      const thisSet = new Set(m.picked.map((p) => p.domain_id));
+      const items = m.picked.slice(0, TOP).map((p) => ({
+        name: nameOf(p.domain_id), ticker: p.domain_id ? (nm.get(p.domain_id)?.ticker ?? "") : "",
+        aiba: Math.round(p.aiba_score as number), isNew: i > 0 && !prevSet.has(p.domain_id),
+      }));
+      const outNames = i > 0 ? prev.filter((p) => !thisSet.has(p.domain_id)).map((p) => nameOf(p.domain_id)) : [];
+      return { date: m.date, items, outNames };
+    }).reverse();
   }, [snaps, dates, rows, variant]);
 
   // 積立額を等ウェイト配分し、各銘柄の買付株数を整数で算出。端数・不足は上位(AIBA順)優先で充当。
@@ -231,13 +238,17 @@ export default function AibaIndexView({
 
           <section className="layer" style={{ marginTop: 20 }}>
             <h2 className="layer-title">過去の構成（月別・AIBA順 上位{Math.min(10, monthlyComp[0]?.items.length || 10)}）</h2>
-            <p className="layer-subtitle">各月末にこのルールで組み入れた銘柄を AIBA の高い順に表示（直近が上）。空欄は該当数がそれ未満。</p>
+            <p className="layer-subtitle">
+              各月末にこのルールで組み入れた銘柄を AIBA 順に表示（直近が上）。
+              <span className="mc-new">新</span>＝前月から新規組入（買い）、最終列の <span style={{ color: "#dc2626" }}>除外</span>＝前月にあって外れた銘柄（＝月次リバランスで売り）。
+            </p>
             <div className="table-scroll">
               <table className="table idx-month-table">
                 <thead>
                   <tr>
                     <th>月</th>
                     {Array.from({ length: 10 }, (_, i) => <th key={i} className="num">{i + 1}位</th>)}
+                    <th className="num">除外（売り）</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -248,10 +259,13 @@ export default function AibaIndexView({
                         const it = m.items[i];
                         return (
                           <td key={i} className="num">
-                            {it ? <span title={`${it.ticker} ・ AIBA ${it.aiba}`}>{it.name}<span className="idx-mc-aiba"> {it.aiba}</span></span> : ""}
+                            {it ? <span title={`${it.ticker} ・ AIBA ${it.aiba}`}>{it.isNew && <span className="mc-new">新</span>}{it.name}<span className="idx-mc-aiba"> {it.aiba}</span></span> : ""}
                           </td>
                         );
                       })}
+                      <td className="num mc-out">
+                        {m.outNames.length === 0 ? "—" : m.outNames.slice(0, 6).join("・") + (m.outNames.length > 6 ? ` 他${m.outNames.length - 6}` : "")}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
