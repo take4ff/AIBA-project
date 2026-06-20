@@ -108,9 +108,11 @@ export default function PortfolioChart({
         <span style={{ fontSize: 13, color: ret >= 0 ? "#15a34a" : "#dc2626", fontWeight: 700 }}>
           {ret >= 0 ? "+" : ""}{ret.toFixed(1)}%
         </span>
-        <span style={{ fontSize: 12, color: "var(--muted)" }}>
-          vs ACWI {acwiRet >= 0 ? "+" : ""}{acwiRet.toFixed(1)}%
-        </span>
+        {acwi.length > 0 && (
+          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+            vs ACWI {acwiRet >= 0 ? "+" : ""}{acwiRet.toFixed(1)}%
+          </span>
+        )}
         <div style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
           {PERIODS.map((p) => (
             <button key={p.label} type="button"

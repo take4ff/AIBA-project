@@ -56,8 +56,8 @@ export default function PortfolioPage() {
       getTickerData(hs.map((h) => h.ticker)),
       getTickerThemes(),
       getAllTickerHistories(stockTickers),
-      supabaseBrowser.from("ticker_metrics")
-        .select("trade_date,close_price").eq("ticker", "ACWI")
+      supabaseBrowser.from("benchmark_prices")
+        .select("trade_date,close").eq("ticker", "ACWI")
         .gte("trade_date", cutoff).order("trade_date", { ascending: true }),
     ]);
     setMetrics(metrics);
@@ -66,8 +66,8 @@ export default function PortfolioPage() {
     setHistories(hist);
     setAcwiHistory(
       ((acwiRes.data ?? []) as any[])
-        .filter((r) => r.close_price != null)
-        .map((r) => ({ date: r.trade_date as string, close: Number(r.close_price) }))
+        .filter((r) => r.close != null)
+        .map((r) => ({ date: r.trade_date as string, close: Number(r.close) }))
     );
     // 投信は代用ETFの取得日終値を取り、リターンで評価
     const fundList = hs.filter((h) => h.is_fund && h.acquired_on).map((h) => ({ ticker: h.ticker, acquired_on: h.acquired_on as string }));
