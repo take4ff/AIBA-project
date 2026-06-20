@@ -58,8 +58,8 @@ domains:
         stocks: [{ ticker: "3778.T", name: さくらインターネット }, { ticker: "4478.T", name: freee }, { ticker: "3994.T", name: マネーフォワード }, { ticker: "4684.T", name: オービック }, { ticker: "4307.T", name: 野村総合研究所 }]
       row:
         stocks: [{ ticker: INFY, name: Infosys（印） }]
-    github_keywords: ["kubernetes", "serverless", "terraform"]
-    arxiv_keywords: ["cloud computing", "datacenter scheduling"]
+    github_keywords: ["kubernetes", "serverless", "terraform", "gpu cloud", "inference endpoint", "model serving", "opentofu", "ebpf"]
+    arxiv_keywords: ["cloud computing", "datacenter scheduling", "GPU cloud computing", "AI inference service", "multi-cloud orchestration"]
 
   # ---------------- 第2層：次なる波 ----------------
   - id: cooling_power_infra
@@ -75,8 +75,8 @@ domains:
         stocks: [{ ticker: "6594.T", name: ニデック }, { ticker: "6501.T", name: 日立製作所 }, { ticker: "6503.T", name: 三菱電機 }, { ticker: "5803.T", name: フジクラ }, { ticker: "6504.T", name: 富士電機 }]
       row:
         stocks: [{ ticker: "SU.PA", name: シュナイダーエレクトリック（仏） }]
-    github_keywords: ["liquid cooling", "power management", "smart grid"]
-    arxiv_keywords: ["data center cooling", "power grid optimization"]
+    github_keywords: ["liquid cooling", "power management", "smart grid", "immersion cooling", "direct liquid cooling", "power density", "nuclear datacenter"]
+    arxiv_keywords: ["data center cooling", "power grid optimization", "liquid immersion cooling", "power usage effectiveness", "ai datacenter power"]
 
   - id: edge_ai_robotics
     name: エッジAI・ロボティクス
@@ -91,8 +91,8 @@ domains:
         stocks: [{ ticker: "6954.T", name: ファナック }, { ticker: "6506.T", name: 安川電機 }, { ticker: "6645.T", name: オムロン }, { ticker: "6324.T", name: ハーモニック・ドライブ }, { ticker: "6273.T", name: SMC }]
       row:
         stocks: [{ ticker: "ABBN.SW", name: ABB（スイス） }]
-    github_keywords: ["edge ai", "ros2", "tinyml"]
-    arxiv_keywords: ["edge inference", "robot learning"]
+    github_keywords: ["edge ai", "ros2", "tinyml", "on device llm", "npu inference", "humanoid robot", "mobile inference"]
+    arxiv_keywords: ["edge inference", "robot learning", "on-device inference", "model compression", "humanoid locomotion"]
 
   - id: bioinformatics
     name: バイオインフォマティクス
@@ -107,8 +107,8 @@ domains:
         stocks: [{ ticker: "4587.T", name: ペプチドリーム }, { ticker: "4565.T", name: そーせい }, { ticker: "4519.T", name: 中外製薬 }]
       row:
         stocks: [{ ticker: AZN, name: アストラゼネカ（英） }, { ticker: NVO, name: ノボノルディスク（デンマーク） }]
-    github_keywords: ["bioinformatics", "genomics", "protein folding"]
-    arxiv_keywords: ["computational biology", "protein structure prediction"]
+    github_keywords: ["bioinformatics", "genomics", "protein folding", "alphafold", "protein language model", "drug discovery ai", "cell foundation model"]
+    arxiv_keywords: ["computational biology", "protein structure prediction", "protein language model", "AlphaFold", "AI drug discovery", "foundation model biology"]
 
   - id: entertainment_content
     name: エンタメ・コンテンツ
@@ -237,8 +237,8 @@ domains:
         stocks: [{ ticker: "4704.T", name: トレンドマイクロ }, { ticker: "3692.T", name: FFRIセキュリティ }, { ticker: "2326.T", name: デジタルアーツ }]
       row:
         stocks: [{ ticker: CHKP, name: チェック・ポイント（イスラエル） }]
-    github_keywords: ["cybersecurity", "vulnerability scanner", "zero trust"]
-    arxiv_keywords: ["network security", "intrusion detection", "malware detection"]
+    github_keywords: ["cybersecurity", "vulnerability scanner", "zero trust", "llm security", "adversarial attack", "ai red team", "prompt injection"]
+    arxiv_keywords: ["network security", "intrusion detection", "malware detection", "LLM security", "adversarial machine learning", "AI system vulnerabilities"]
 
   - id: data_center
     name: データセンター
