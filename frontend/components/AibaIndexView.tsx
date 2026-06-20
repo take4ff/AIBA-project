@@ -273,8 +273,10 @@ export default function AibaIndexView({
                   return (
                     <Link key={r.domain_id} href={`/domain/${r.domain_id}`} className="tech-sig idx-holding" title={`${r.theme_name}（クリックで詳細）`}>
                       <span className="tech-sig-name">{r.domain_name}<span className="ticker" style={{ marginLeft: 6 }}>{r.ticker}</span></span>
-                      {b && <span style={{ marginLeft: "auto", marginRight: 10, fontWeight: 700, color: b.shares > 0 ? "var(--ink)" : "var(--muted)" }}>{b.shares}株</span>}
-                      <span className="tech-sig-verdict" style={{ color: "#15a34a" }}>{(r.aiba_score as number).toFixed(0)}</span>
+                      <span className="tech-sig-row2">
+                        <span className="tech-sig-verdict" style={{ color: "#15a34a" }}>{(r.aiba_score as number).toFixed(0)}</span>
+                        {b && <span style={{ fontWeight: 700, color: b.shares > 0 ? "var(--ink)" : "var(--muted)" }}>{b.shares}株</span>}
+                      </span>
                     </Link>
                   );
                 })}
@@ -290,7 +292,9 @@ export default function AibaIndexView({
                   {soldSincePrev.map((r) => (
                     <Link key={r.domain_id} href={`/domain/${r.domain_id}`} className="tech-sig idx-holding" title={`${r.theme_name}（クリックで詳細）`}>
                       <span className="tech-sig-name">{r.domain_name}<span className="ticker" style={{ marginLeft: 6 }}>{r.ticker}</span></span>
-                      <span className="tech-sig-verdict" style={{ marginLeft: "auto", color: "#dc2626" }}>{r.aiba_score == null ? "—" : (r.aiba_score as number).toFixed(0)}</span>
+                      <span className="tech-sig-row2">
+                        <span className="tech-sig-verdict" style={{ color: "#dc2626" }}>{r.aiba_score == null ? "—" : (r.aiba_score as number).toFixed(0)}</span>
+                      </span>
                     </Link>
                   ))}
                 </div>

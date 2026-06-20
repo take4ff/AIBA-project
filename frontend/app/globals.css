@@ -246,8 +246,9 @@ a { color: inherit; text-decoration: none; }
 
 /* テクニカル総合判定 */
 .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
-.tech-sig { display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
-.tech-sig-name { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.tech-sig { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); min-width: 0; }
+.tech-sig-name { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.tech-sig-row2 { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
 .tech-sig-verdict { font-weight: 800; font-size: 13px; }
 .tech-sig-detail { font-size: 11px; color: var(--muted); margin-left: auto; text-align: right; }
 .table .tech-sig { background: rgba(255,255,255,0.04); border-color: var(--navy-border); }
