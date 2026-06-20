@@ -38,7 +38,7 @@ async function selectAll<T = any>(
 /** 全ドメインの最新 RankingRow を1回のfetchで構築する（地域・種別すべて）。 */
 async function buildAllRows(): Promise<RankingRow[]> {
   const [domains, metrics, preds] = await Promise.all([
-    selectAll<any>("domains", "id,name,layer,ticker"),
+    selectAll<any>("domains", "id,name,layer,ticker,tags"),
     selectAll<any>("daily_metrics",
       "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price",
       (q) => q.gte("trade_date", cutoffDate())),
@@ -132,6 +132,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
       combo_score: comboScore,
       momentum_score: momentumScore,
       order_key: etfScore.get(`${p.region}|${p.theme}`) ?? aiba,
+      tags: Array.isArray(d.tags) ? d.tags : [],
     });
   }
   return rows;

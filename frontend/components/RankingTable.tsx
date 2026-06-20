@@ -6,6 +6,7 @@ import { holdingStance } from "@/lib/stance";
 import { money } from "@/lib/sell-signal";
 import StarButton from "@/components/StarButton";
 import ConceptIcon from "@/components/ConceptIcon";
+import { themeLabel } from "@/lib/theme-meta";
 
 const STANCE_ICON: Record<string, string> = { "st-long": "long", "st-short": "short", "st-both": "both", "st-neutral": "neutral" };
 
@@ -117,6 +118,9 @@ export default function RankingTable({
                       <span className="mom-badge" title="順張りモメンタム：MAより上・RSI強い・直近上昇。勢いに乗る視点（AIBAの逆張りと対）"><ConceptIcon name="momentum" /> 順張り{r.momentum_score}</span>
                     )}
                     {showTheme && <span className="row2-theme">{r.theme_name}</span>}
+                    {r.tags?.length > 0 && r.tags.map((t) => (
+                      <span key={t} className="multi-tag" title="この企業が展開する他テーマ">＋{themeLabel(t)}</span>
+                    ))}
                   </span>
                 </Link>
               </td>

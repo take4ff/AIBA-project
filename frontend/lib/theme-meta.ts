@@ -16,4 +16,26 @@ export const THEME_KEYWORDS: Record<string, string[]> = {
   synthetic_biology: ["synthetic biology", "genome design", "directed evolution"],
   hydrogen_fuelcell: ["hydrogen fuel cell", "water electrolysis", "green hydrogen"],
   solid_state_battery: ["solid-state battery", "lithium metal anode", "battery electrolyte"],
+  cybersecurity: ["network security", "intrusion detection", "malware detection"],
+  data_center: ["data center networking", "datacenter energy", "server consolidation"],
 };
+
+// テーマID→日本語表示名（マルチ事業企業のタグ表示などに使用）。yaml とミラー。
+export const THEME_NAMES: Record<string, string> = {
+  advanced_semiconductor: "先端半導体",
+  generative_ai: "生成AI",
+  cloud_infra: "クラウド",
+  cooling_power_infra: "冷却・電力",
+  edge_ai_robotics: "エッジAI・ロボ",
+  bioinformatics: "バイオインフォ",
+  entertainment_content: "エンタメ",
+  quantum_computing: "量子",
+  space_infra: "宇宙",
+  nextgen_energy: "次世代エネルギー",
+  synthetic_biology: "合成生物学",
+  hydrogen_fuelcell: "水素",
+  solid_state_battery: "固体電池",
+  cybersecurity: "サイバーセキュリティ",
+  data_center: "データセンター",
+};
+export const themeLabel = (id: string) => THEME_NAMES[id] ?? id;
