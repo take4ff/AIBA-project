@@ -4,8 +4,7 @@ import {
   GraduationCap, LineChart, Rocket,
   type LucideIcon,
 } from "lucide-react";
-import { getLatestTradeDate } from "@/lib/data";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import NavFreshness from "@/components/NavFreshness";
 
 interface Tab { key: string; label: string; href: string; Icon: LucideIcon }
 
@@ -42,9 +41,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
   },
 ];
 
-export default async function NavTabs({ active }: { active: string }) {
-  const tradeDate = isSupabaseConfigured ? await getLatestTradeDate() : null;
-
+export default function NavTabs({ active }: { active: string }) {
   return (
     <nav className="nav">
       {GROUPS.map((g) => (
@@ -60,9 +57,7 @@ export default async function NavTabs({ active }: { active: string }) {
           </div>
         </div>
       ))}
-      {tradeDate && (
-        <span className="nav-freshness">データ更新: {tradeDate}</span>
-      )}
+      <NavFreshness />
     </nav>
   );
 }
