@@ -109,13 +109,19 @@ export default function AibaIndexView({
     return [...best.values()].sort((a, b) => (b.aiba_score as number) - (a.aiba_score as number));
   }, [rows, variant]);
 
-  // 過去の構成（月別・AIBA順）。domain_id→ticker は最新ランキングから引く。
+  // 過去の構成（月別・AIBA順）。domain_id→企業名/ティッカー は最新ランキングから引く。
   const monthlyComp = useMemo(() => {
-    const tk = new Map(rows.map((r) => [r.domain_id, r.ticker]));
+    const nm = new Map(rows.map((r) => [r.domain_id, { name: r.domain_name, ticker: r.ticker }]));
     const TOP = 10;
     return [...dates].reverse().map((d) => {
       const picked = selectByVariant(snaps.filter((s) => s.snapshot_date === d && s.aiba_score != null), variant).slice(0, TOP);
-      return { date: d, items: picked.map((p) => ({ ticker: p.domain_id ? (tk.get(p.domain_id) ?? p.domain_id) : "?", aiba: Math.round(p.aiba_score as number) })) };
+      return {
+        date: d,
+        items: picked.map((p) => {
+          const info = p.domain_id ? nm.get(p.domain_id) : undefined;
+          return { name: info?.name ?? p.domain_id ?? "?", ticker: info?.ticker ?? "", aiba: Math.round(p.aiba_score as number) };
+        }),
+      };
     });
   }, [snaps, dates, rows, variant]);
 
@@ -242,7 +248,7 @@ export default function AibaIndexView({
                         const it = m.items[i];
                         return (
                           <td key={i} className="num">
-                            {it ? <span title={`AIBA ${it.aiba}`}>{it.ticker}<span className="idx-mc-aiba"> {it.aiba}</span></span> : ""}
+                            {it ? <span title={`${it.ticker} ・ AIBA ${it.aiba}`}>{it.name}<span className="idx-mc-aiba"> {it.aiba}</span></span> : ""}
                           </td>
                         );
                       })}
