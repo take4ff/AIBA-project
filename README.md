@@ -153,7 +153,6 @@ AIBA-project/
 ### 分析・可視化）
 - **複数銘柄の比較チャート**：銘柄詳細から2〜3銘柄の株価を正規化して重ねてテーマ内の相対強弱を確認
 - トレンドライン自動描画（スイング高安/回帰チャネル。移動平均・MACD・一目・RSI・ボリンジャー・ストキャスは実装済み）
-- 2,3年内のキオクシアをもとに、評価改善？
 
 ### UX・利便性
 - デザイン一新（現状はテンプレ感が残る。配布デザインの活用も検討）
@@ -289,4 +288,38 @@ out-of-sample で定点観測し、重み調整の判断材料を残す（`backe
 - 🟡 **通知の長期化**（強い長期買い場のみ・LINE/メール）：未了（「今後のアイデア」参照）。
 - ✅ **ニュース報道量**：GDELT（無料・キー不要）の記事量増加率を補助センチメントに統合（v1）。質的トーンは段階的に検討（バックログ）。
 - ⛔ **自前NLPの質的センチメント／決算コール頻度**：無料枠では計算量・データ取得が非現実的で見送り（GDELTの事前計算トーンで代替可能）。
+
+---
+
+## ⏳ 保留中のバックフィル作業
+
+### キーワード強化テーマの過去データ再取得（2026-06-21 予定）
+
+2026-06-21 に以下 5テーマのセンチメントキーワードを強化した。  
+新キーワードは次回日次ジョブから反映されるが、**2025-01〜強化前の過去データはキーワード追加前のスコアのまま**。  
+精度向上のため、`ai_memory_storage` バックフィル完了後に順次再実行する。
+
+**実行順序（並列禁止・直列で実行）：**
+
+```bash
+cd backend && source .venv/bin/activate
+
+# 1. cloud_infra（AIクラウド・GPU cloud キーワード追加）
+python backfill.py --since 2025-01-01 --only cloud_infra
+
+# 2. cooling_power_infra（液浸冷却・AI DC電力キーワード追加）
+python backfill.py --since 2025-01-01 --only cooling_power_infra
+
+# 3. edge_ai_robotics（オンデバイスLLM・ヒューマノイドキーワード追加）
+python backfill.py --since 2025-01-01 --only edge_ai_robotics
+
+# 4. bioinformatics（AlphaFold・タンパク質LMキーワード追加）
+python backfill.py --since 2025-01-01 --only bioinformatics
+
+# 5. cybersecurity（LLMセキュリティ・adversarial attackキーワード追加）
+python backfill.py --since 2025-01-01 --only cybersecurity
+```
+
+> ⚠️ `--no-sentiment` フラグは絶対に使わない（2025-01以降のセンチメントが flat 50 に上書きされる）。  
+> 全完了後に `python snapshot.py --backfill` → `python backtest.py --save` で評価指標を再生成。
 
