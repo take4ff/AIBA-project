@@ -674,6 +674,102 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ================================================================
+   センチメント急騰ランキング (SentimentSurgeSection.tsx)
+================================================================ */
+.surge-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.surge-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-2);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+.surge-card:hover { background: var(--panel); }
+.surge-rank {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  width: 22px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.surge-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.surge-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.surge-badge-div {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #7c3aed;
+  color: #fff;
+  flex-shrink: 0;
+}
+.surge-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.surge-bar {
+  height: 5px;
+  border-radius: 3px;
+  min-width: 4px;
+  max-width: 140px;
+  transition: width 0.3s;
+}
+.surge-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.surge-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.surge-trend {
+  font-size: 14px;
+  font-weight: 700;
+}
+.surge-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+.surge-aiba {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ================================================================
    ナビゲーション プログレスバー (NavigationProgress.tsx)
    ページ遷移中に画面最上部へ固定表示される細いバー。
    現ページのコンテンツはそのまま表示したまま重なる。

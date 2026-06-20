@@ -344,3 +344,11 @@ export async function getPickup(): Promise<RankingRow[]> {
     .filter((r) => (r.aiba_score ?? 0) >= BUY_LEVEL || r.divergence)
     .sort((a, b) => (b.aiba_score ?? 0) - (a.aiba_score ?? 0));
 }
+
+/** センチメント急騰ランキング：45日間のセンチメント上昇幅が大きい順。 */
+export async function getSentimentSurge(limit = 30): Promise<RankingRow[]> {
+  return (await cachedAllRows())
+    .filter((r) => r.sentiment_trend > 0 && r.sentiment_score != null)
+    .sort((a, b) => b.sentiment_trend - a.sentiment_trend)
+    .slice(0, limit);
+}

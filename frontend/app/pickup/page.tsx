@@ -1,6 +1,7 @@
-import { getPickup, getUsdJpy } from "@/lib/data";
+import { getPickup, getSentimentSurge, getUsdJpy } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import RankingTableMore from "@/components/RankingTableMore";
+import SentimentSurgeSection from "@/components/SentimentSurgeSection";
 import NavTabs from "@/components/NavTabs";
 import ConceptIcon from "@/components/ConceptIcon";
 
@@ -24,7 +25,7 @@ export default async function PickupPage({
   const maxV = searchParams.max ? Number(searchParams.max) : null;
   const usdjpy = await getUsdJpy();
 
-  const all = await getPickup();
+  const [all, surgeRows] = await Promise.all([getPickup(), getSentimentSurge()]);
   // 表示通貨に換算した株価
   const disp = (r: { close_price: number | null; region: string }) => {
     if (r.close_price == null) return null;
@@ -90,6 +91,8 @@ export default async function PickupPage({
           <RankingTableMore rows={rows} showTheme showRegion linkMode="auto" displayCurrency={cur} usdjpy={usdjpy} rankDelta={rankDelta} />
         </section>
       )}
+
+      <SentimentSurgeSection rows={surgeRows} />
     </main>
   );
 }
