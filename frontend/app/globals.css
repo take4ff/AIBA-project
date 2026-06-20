@@ -181,6 +181,7 @@ a { color: inherit; text-decoration: none; }
 .tc-metrics { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .tc-heat { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tc-heat strong { font-size: 15px; }
+.tc-tone { font-size: 12px; font-weight: 600; }
 .tc-heat.heat-up strong { color: #15a34a; }
 .tc-heat.heat-down strong { color: #dc2626; }
 .theme-tags { display: flex; flex-wrap: wrap; gap: 6px; }

@@ -228,6 +228,18 @@ export async function getUsdJpy(): Promise<number> {
   }
 }
 
+/** テーマ別ニュース論調（GDELT平均トーン）。テーブル未作成でも空Mapで安全。10分キャッシュ。 */
+export const getThemeTone = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const { data, error } = await supabase.from("theme_news_tone").select("theme_id,tone");
+    if (error) return {};
+    const out: Record<string, number> = {};
+    for (const r of data ?? []) if ((r as any).tone != null) out[(r as any).theme_id] = Number((r as any).tone);
+    return out;
+  },
+  ["aiba-theme-tone"], { revalidate: CACHE_TTL },
+);
+
 export interface CandidateTheme {
   candidate_id: string;
   name: string;

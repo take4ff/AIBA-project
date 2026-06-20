@@ -383,10 +383,10 @@ def fetch_patents_score(keywords: list[str], as_of: datetime | None = None) -> f
 GDELT_DOC_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 
 
-def _gdelt_daily(query: str, since: datetime, until: datetime) -> list[dict] | None:
-    """GDELT DOC 2.0 の日次記事量（timelinevolraw）。取得不可は None。"""
+def _gdelt_timeline(query: str, since: datetime, until: datetime, mode: str) -> list[dict] | None:
+    """GDELT DOC 2.0 の日次時系列（timeline*）。timeline[0].data の [{date,value},...]。取得不可は None。"""
     params = {
-        "query": query, "mode": "timelinevolraw", "format": "json",
+        "query": query, "mode": mode, "format": "json",
         "startdatetime": since.strftime("%Y%m%d%H%M%S"),
         "enddatetime": until.strftime("%Y%m%d%H%M%S"),
     }
@@ -399,6 +399,32 @@ def _gdelt_daily(query: str, since: datetime, until: datetime) -> list[dict] | N
         return tl[0].get("data", []) if tl else None
     except (requests.RequestException, ValueError):
         return None
+
+
+def _gdelt_daily(query: str, since: datetime, until: datetime) -> list[dict] | None:
+    """GDELT DOC 2.0 の日次記事量（timelinevolraw）。取得不可は None。"""
+    return _gdelt_timeline(query, since, until, "timelinevolraw")
+
+
+def fetch_news_tone(keywords: list[str], as_of: datetime | None = None) -> float | None:
+    """キーワードのニュース論調（GDELT平均トーン）。直近30日の平均（おおむね -10〜+10、0=中立）。
+
+    増加率ではなく「水準」のため統合スコアには混ぜず、表示用の独立指標として扱う。取得不可は None。
+    """
+    if not keywords:
+        return None
+    start, mid, base = _windows(as_of)
+    query = f'"{keywords[0]}"'
+    data = _gdelt_timeline(query, start, base, "timelinetone")
+    time.sleep(5)  # GDELT レート制限（1req/5s）
+    if not data:
+        return None
+    mid_day = mid.strftime("%Y%m%d")
+    vals = [p["value"] for p in data
+            if p.get("value") is not None and str(p.get("date", ""))[:8] >= mid_day]
+    if not vals:  # 直近窓が空なら全期間の平均
+        vals = [p["value"] for p in data if p.get("value") is not None]
+    return round(sum(vals) / len(vals), 2) if vals else None
 
 
 def fetch_news_score(keywords: list[str], as_of: datetime | None = None) -> float | None:

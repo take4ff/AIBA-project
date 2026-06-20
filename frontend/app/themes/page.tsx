@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllRows, getCandidates } from "@/lib/data";
+import { getAllRows, getCandidates, getThemeTone } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { parseDomainId } from "@/lib/regions";
 import { LAYER_META } from "@/lib/types";
@@ -15,7 +15,15 @@ const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
 
 interface ThemeCard {
   theme: string; name: string; layer: number;
-  aiba: number | null; sentiment: number | null; trend: number; rising: boolean;
+  aiba: number | null; sentiment: number | null; trend: number; rising: boolean; tone: number | null;
+}
+
+// ニュース論調（GDELT平均トーン）→ ラベル＋色。おおむね -10〜+10、0=中立。
+function toneInfo(t: number | null): { label: string; color: string } | null {
+  if (t == null) return null;
+  if (t >= 2) return { label: "ポジティブ", color: "#15a34a" };
+  if (t <= -2) return { label: "ネガティブ", color: "#dc2626" };
+  return { label: "中立", color: "var(--muted)" };
 }
 
 export default async function ThemesPage() {
@@ -27,7 +35,7 @@ export default async function ThemesPage() {
     );
   }
 
-  const [rows, candidates] = await Promise.all([getAllRows(), getCandidates()]);
+  const [rows, candidates, tone] = await Promise.all([getAllRows(), getCandidates(), getThemeTone()]);
   // テーマごとの代表＝global ETF 行（センチメントはテーマ共通）
   const cards: ThemeCard[] = [];
   for (const r of rows) {
@@ -36,6 +44,7 @@ export default async function ThemesPage() {
     cards.push({
       theme: p.theme, name: r.theme_name, layer: r.layer,
       aiba: r.aiba_score, sentiment: r.sentiment_score, trend: r.sentiment_trend, rising: false,
+      tone: tone[p.theme] ?? null,
     });
   }
   // 「話題上昇中」＝センチメント傾き上位3テーマ
@@ -78,6 +87,11 @@ export default async function ThemesPage() {
                   <span className={`tc-heat heat-${trendDir(c.trend)}`} title="研究熱量（センチメント）と傾き">
                     熱量 {fmt(c.sentiment)} <strong>{trendArrow(c.trend)}</strong>
                   </span>
+                  {toneInfo(c.tone) && (
+                    <span className="tc-tone" style={{ color: toneInfo(c.tone)!.color }} title={`ニュース論調（GDELT平均トーン ${c.tone}）`}>
+                      論調 {toneInfo(c.tone)!.label}
+                    </span>
+                  )}
                 </div>
                 <div className="theme-tags">
                   {(THEME_KEYWORDS[c.theme] ?? []).map((k) => (
