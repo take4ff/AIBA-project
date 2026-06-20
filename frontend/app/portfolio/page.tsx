@@ -7,11 +7,14 @@ import NavTabs from "@/components/NavTabs";
 import {
   UserHolding, TickerMetric, TickerFundamentals,
   getHoldings, getTickerData, getTickerThemes, getFundAcqCloses, addHolding, updateHolding, deleteHolding,
+  getAllTickerHistories,
 } from "@/lib/user-portfolio";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 import { assessSell, assessStopLoss, assessTakeProfit, money, pct, overheatColor, daysUntil } from "@/lib/sell-signal";
 import { fmt } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
+import PortfolioChart from "@/components/PortfolioChart";
 
 const EMPTY = {
   kind: "stock" as "stock" | "fund",
@@ -29,6 +32,8 @@ export default function PortfolioPage() {
   const [form, setForm] = useState({ ...EMPTY });
   const [err, setErr] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ ticker: string; name: string; avg_cost: string; shares: string; is_fund: boolean; principal: string; acquired_on: string } | null>(null);
+  const [histories, setHistories] = useState<Map<string, { date: string; close: number }[]>>(new Map());
+  const [acwiHistory, setAcwiHistory] = useState<{ date: string; close: number }[]>([]);
   const [stopPct, setStopPct] = useState(20);  // 損切りライン[%]（取得単価からの下落率）
   const [profitPct, setProfitPct] = useState(30);  // 利確ライン[%]（取得単価からの上昇率）
 
@@ -45,13 +50,25 @@ export default function PortfolioPage() {
   const reload = useCallback(async () => {
     const hs = await getHoldings();
     setHoldings(hs);
-    const [{ metrics, funds }, tm] = await Promise.all([
+    const stockTickers = hs.filter((h) => !h.is_fund).map((h) => h.ticker);
+    const cutoff = new Date(Date.now() - 400 * 86_400_000).toISOString().slice(0, 10);
+    const [{ metrics, funds }, tm, hist, acwiRes] = await Promise.all([
       getTickerData(hs.map((h) => h.ticker)),
       getTickerThemes(),
+      getAllTickerHistories(stockTickers),
+      supabaseBrowser.from("ticker_metrics")
+        .select("trade_date,close_price").eq("ticker", "ACWI")
+        .gte("trade_date", cutoff).order("trade_date", { ascending: true }),
     ]);
     setMetrics(metrics);
     setFunds(funds);
     setThemeMap(tm);
+    setHistories(hist);
+    setAcwiHistory(
+      ((acwiRes.data ?? []) as any[])
+        .filter((r) => r.close_price != null)
+        .map((r) => ({ date: r.trade_date as string, close: Number(r.close_price) }))
+    );
     // 投信は代用ETFの取得日終値を取り、リターンで評価
     const fundList = hs.filter((h) => h.is_fund && h.acquired_on).map((h) => ({ ticker: h.ticker, acquired_on: h.acquired_on as string }));
     setFundAcq(fundList.length ? await getFundAcqCloses(fundList) : new Map());
@@ -288,6 +305,10 @@ export default function PortfolioPage() {
               </div>
             );
           })()}
+
+          {holdings.length > 0 && histories.size > 0 && (
+            <PortfolioChart holdings={holdings} histories={histories} acwi={acwiHistory} />
+          )}
 
           {holdings.length > 0 && (
             <AllocationAnalysis holdings={holdings} metrics={metrics} themeMap={themeMap} />

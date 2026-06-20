@@ -220,6 +220,43 @@ export async function getTickerThemes(): Promise<Map<string, { id: string; theme
   return map;
 }
 
+/** 複数ティッカーの過去終値を一括取得（ポートフォリオ推移チャート用）。ticker → 日付昇順の {date,close} 配列。 */
+export async function getAllTickerHistories(
+  tickers: string[], days = 400,
+): Promise<Map<string, { date: string; close: number }[]>> {
+  if (!tickers.length) return new Map();
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const { data: tm } = await supabaseBrowser.from("ticker_metrics")
+    .select("ticker,trade_date,close_price").in("ticker", tickers)
+    .gte("trade_date", cutoff).order("trade_date", { ascending: true });
+  const result = new Map<string, { date: string; close: number }[]>();
+  for (const r of (tm ?? []) as any[]) {
+    if (r.close_price == null) continue;
+    const arr = result.get(r.ticker) ?? [];
+    arr.push({ date: r.trade_date, close: Number(r.close_price) });
+    result.set(r.ticker, arr);
+  }
+  const missing = tickers.filter((t) => !result.has(t));
+  if (missing.length) {
+    const { data: doms } = await supabaseBrowser.from("domains").select("id,ticker").in("ticker", missing);
+    const tkByDom = new Map<string, string>();
+    for (const d of (doms ?? []) as any[]) tkByDom.set(d.id, d.ticker);
+    if (tkByDom.size) {
+      const { data: dm } = await supabaseBrowser.from("daily_metrics")
+        .select("domain_id,trade_date,close_price").in("domain_id", [...tkByDom.keys()])
+        .gte("trade_date", cutoff).order("trade_date", { ascending: true });
+      for (const r of (dm ?? []) as any[]) {
+        if (r.close_price == null) continue;
+        const tk = tkByDom.get(r.domain_id)!;
+        const arr = result.get(tk) ?? [];
+        arr.push({ date: r.trade_date, close: Number(r.close_price) });
+        result.set(tk, arr);
+      }
+    }
+  }
+  return result;
+}
+
 export async function getTickerHistory(ticker: string): Promise<TickerMetric[]> {
   const { data } = await supabaseBrowser.from("ticker_metrics")
     .select("ticker,trade_date,close_price,rsi_14,ma_deviation,overheat")
