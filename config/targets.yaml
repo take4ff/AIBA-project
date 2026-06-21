@@ -29,6 +29,7 @@ domains:
     github_keywords: ["cuda", "gpu kernel", "tensorrt", "kv cache", "llm inference", "flash attention", "nvme ssd", "memory bandwidth"]
     arxiv_keywords: ["GPU accelerator", "AI chip", "kv cache offloading", "memory efficient inference", "flash attention"]
     gdelt_keywords: ["semiconductor demand"]
+    fred_series: IPG3344S  # Industrial Production: Semiconductors & Electronic Components (SA, 月次)
 
   - id: generative_ai
     name: 生成AI基盤
@@ -219,9 +220,9 @@ domains:
     name: AIメモリ・ストレージ（推論インフラ）
     layer: 2
     instruments:
-      global: { etf: { ticker: SMH } }   # 専用メモリETF未採用のため半導体広域ETFで代替
+      global: { etf: { ticker: SMH } }   # 広域半導体ETF（テーマのベンチマーク・並び順キー用）
       us:
-        etf: { ticker: SMH }
+        etf: { ticker: DRAM, name: Roundhill Memory ETF }
         stocks: [{ ticker: WDC, name: Western Digital（NAND/HDD） }, { ticker: MU, name: Micron（DRAM/NAND）, tags: [advanced_semiconductor] }]
       jp:
         stocks: [{ ticker: "285A.T", name: キオクシア（NAND）, tags: [advanced_semiconductor] }]
@@ -230,6 +231,7 @@ domains:
     github_keywords: ["kv cache", "nvme kv offload", "lmcache", "hbm", "flash memory", "storage class memory"]
     arxiv_keywords: ["kv cache offloading", "LLM inference storage", "memory hierarchy", "CXL memory", "HBM memory"]
     gdelt_keywords: ["NAND price"]
+    fred_series: IPG3344S  # 半導体生産指数（NANDも含む需要サイクル）
 
   # ---------------- 常時需要（ディフェンシブ成長） ----------------
   - id: cybersecurity

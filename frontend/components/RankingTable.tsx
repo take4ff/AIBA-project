@@ -117,6 +117,9 @@ export default function RankingTable({
                     {r.momentum_score >= 65 && (
                       <span className="mom-badge" title="順張りモメンタム：MAより上・RSI強い・直近上昇。勢いに乗る視点（AIBAの逆張りと対）"><ConceptIcon name="momentum" /> 順張り{r.momentum_score}</span>
                     )}
+                    {r.peer_avg_aiba != null && r.peer_avg_aiba >= 55 && (r.aiba_score ?? 0) < r.peer_avg_aiba - 10 && (
+                      <span className="peer-badge" title={`テーマ内ピア平均AIBA ${r.peer_avg_aiba} に対してこの銘柄は出遅れ中。テーマが熱い中で追随が遅い＝仕込み候補`}>ピア上昇中</span>
+                    )}
                     {showTheme && <span className="row2-theme">{r.theme_name}</span>}
                     {r.tags?.length > 0 && r.tags.map((t) => (
                       <span key={t} className="multi-tag" title="この企業が展開する他テーマ">＋{themeLabel(t)}</span>

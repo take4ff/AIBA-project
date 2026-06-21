@@ -151,6 +151,28 @@ async function buildAllRows(): Promise<RankingRow[]> {
       tags: Array.isArray(d.tags) ? d.tags : [],
     });
   }
+
+  // ピアモメンタム：テーマ別の個別株AIBA平均を算出し各行に付与
+  const themeScores = new Map<string, number[]>();
+  for (const r of rows) {
+    if (r.kind !== "stock" || r.aiba_score == null) continue;
+    const { theme } = parseDomainId(r.domain_id);
+    const arr = themeScores.get(theme) ?? [];
+    arr.push(r.aiba_score);
+    themeScores.set(theme, arr);
+  }
+  const themeAvg = new Map<string, number>();
+  for (const [theme, scores] of themeScores) {
+    if (scores.length > 0)
+      themeAvg.set(theme, Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10);
+  }
+  for (const r of rows) {
+    if (r.kind !== "stock") continue;
+    const { theme } = parseDomainId(r.domain_id);
+    const avg = themeAvg.get(theme);
+    if (avg != null) r.peer_avg_aiba = avg;
+  }
+
   return rows;
 }
 

@@ -72,6 +72,7 @@ def run_pipeline(
             group[0].github_keywords,
             group[0].arxiv_keywords,
             group[0].gdelt_keywords or None,
+            group[0].fred_series,
         )
         if sent.sentiment_score is None:  # 有効信号<MIN_SIGNALS → 前回値でフォワードフィル
             ff = last_sentiment.get(theme_id, NEUTRAL)

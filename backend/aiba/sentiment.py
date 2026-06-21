@@ -50,6 +50,7 @@ class SentimentSnapshot:
     trends_score: float | None = None      # 0-100（Google Trends 検索関心の増加率）
     patents_score: float | None = None     # 0-100（特許公開件数の増加率・EPO OPS）
     news_score: float | None = None        # 0-100（ニュース報道量の増加率・GDELT）
+    fred_score: float | None = None        # 0-100（FRED 月次出荷量の成長率。テーマ指定時のみ）
 
 
 def _growth_to_score(recent: int, prior: int) -> float:
@@ -462,15 +463,18 @@ def fetch_sentiment(
     github_keywords: list[str],
     arxiv_keywords: list[str],
     gdelt_keywords: list[str] | None = None,
+    fred_series: str = "",
     as_of: datetime | None = None,
 ) -> SentimentSnapshot:
-    """GitHub・arXiv・Hacker News・Google Trends・特許・ニュース の熱量を統合する。
+    """GitHub・arXiv・Hacker News・Google Trends・特許・ニュース・FRED の熱量を統合する。
 
     HN/Trends/特許 はタイトル・検索語が自然文のため arxiv_keywords（自然言語）を流用。
     ニュース（GDELT）は gdelt_keywords が指定されていればそちらを使う。
-    gdelt_keywords が空/None の場合は arxiv_keywords にフォールバック。
+    FRED 月次シリーズは fred_series が指定されているテーマのみ追加補助信号として使用する。
     取得できた指標のみの平均をとる（失敗した指標は中立で薄めず除外）。
     """
+    from .fred import fetch_fred_score
+
     news_kw = gdelt_keywords if gdelt_keywords else arxiv_keywords
     gh = fetch_github_score(github_keywords, as_of)
     ax = fetch_arxiv_score(arxiv_keywords, as_of)
@@ -478,11 +482,13 @@ def fetch_sentiment(
     gt = fetch_google_trends_score(arxiv_keywords, as_of)
     pt = fetch_patents_score(arxiv_keywords, as_of)
     nw = fetch_news_score(news_kw, as_of)
+    fd = fetch_fred_score(fred_series, as_of) if fred_series else None
 
-    # 本体(GitHub/arXiv)と補助(HN/Trends/特許/ニュース)を重み付けし、取得できた指標のみで加重平均。
+    # 本体(GitHub/arXiv)と補助(HN/Trends/特許/ニュース/FRED)を重み付けし、取得できた指標のみで加重平均。
     weighted = [(s, w) for s, w in (
         (gh, WEIGHT_CORE), (ax, WEIGHT_CORE),
         (hn, WEIGHT_SUPP), (gt, WEIGHT_SUPP), (pt, WEIGHT_SUPP), (nw, WEIGHT_SUPP),
+        (fd, WEIGHT_SUPP),
     ) if s is not None]
     # 有効信号が少なすぎる日は単一ソースの極値を刻まないよう None（後段でフォワードフィル）。
     if len(weighted) < MIN_SIGNALS:
@@ -492,4 +498,5 @@ def fetch_sentiment(
     return SentimentSnapshot(
         github_score=gh, arxiv_score=ax, sentiment_score=combined,
         hackernews_score=hn, trends_score=gt, patents_score=pt, news_score=nw,
+        fred_score=fd,
     )

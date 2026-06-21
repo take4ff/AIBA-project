@@ -42,6 +42,9 @@ class Domain:
     # GDELT ニュース取得専用キーワード。空リストの場合は arxiv_keywords[0] にフォールバック。
     # arxiv_keywords が研究寄りすぎて市場ニュースを拾えないテーマで設定する。
     gdelt_keywords: list[str] = field(default_factory=list)
+    # FRED 経済シリーズID（例: VPNSN232R = 半導体出荷額）。空文字はスキップ。
+    # 設定したテーマのみマクロ需要信号を補助指標として追加する。
+    fred_series: str = ""
     tags: tuple[str, ...] = ()   # 副テーマ（マルチ事業企業の他テーマ展開・表示用）
 
 
@@ -56,6 +59,9 @@ class Settings:
     # 無料登録で取得でき、米国SSN等の本人確認は不要（日本からも利用可）。
     epo_ops_key: str | None = os.getenv("EPO_OPS_KEY")
     epo_ops_secret: str | None = os.getenv("EPO_OPS_SECRET")
+    # FRED API キー（無料取得: https://fredaccount.stlouisfed.org/apikeys）。
+    # 設定しない場合は FRED 信号をスキップ（他の指標には影響なし）。
+    fred_api_key: str | None = os.getenv("FRED_API_KEY")
 
     @property
     def has_supabase(self) -> bool:
@@ -77,6 +83,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
         gh = list(d.get("github_keywords", []))
         ax = list(d.get("arxiv_keywords", []))
         gd = list(d.get("gdelt_keywords", []))
+        fs = str(d.get("fred_series", "") or "")
         theme_name = d["name"]
         layer = int(d["layer"])
         instruments: dict = d.get("instruments", {})
@@ -91,7 +98,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
                     name=etf.get("name") or theme_name,
                     region=region, kind="etf", layer=layer,
                     ticker=str(etf["ticker"]),
-                    github_keywords=gh, arxiv_keywords=ax, gdelt_keywords=gd,
+                    github_keywords=gh, arxiv_keywords=ax, gdelt_keywords=gd, fred_series=fs,
                 ))
 
             for stock in reg.get("stocks", []):
@@ -102,6 +109,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
                     region=region, kind="stock", layer=layer,
                     ticker=str(stock["ticker"]),
                     github_keywords=gh, arxiv_keywords=ax,
+                    fred_series=fs,
                     tags=tuple(stock.get("tags", []) or []),
                 ))
     return domains

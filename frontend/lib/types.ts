@@ -30,6 +30,8 @@ export interface RankingRow {
   // 並び順キー：その地域の業界ETFスコア（ETF/個別株で同じ業界順に揃えるため）
   order_key: number;
   tags: string[];   // 副テーマ（theme_id配列・マルチ事業企業）
+  // ピアモメンタム：同テーマ内の個別株AIBA平均。高いのに自分だけ低い=出遅れ候補。
+  peer_avg_aiba?: number;
 }
 
 export interface MetricHistoryRow {
