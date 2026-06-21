@@ -7,22 +7,30 @@ import ICHistoryChart from "@/components/ICHistoryChart";
 import EventStudyChart from "@/components/EventStudyChart";
 import ConceptIcon from "@/components/ConceptIcon";
 
-export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
+export const revalidate = 0; // 常時SSR（IC推移など分析データは常に最新を表示）
 
 const f3 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(3));
 const f2 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%");
+
+// 上下各5%トリム平均（n≥6 で最低1件ずつ除外）
+function trimmedMean(vals: number[], pct = 0.05): number | null {
+  if (vals.length === 0) return null;
+  const s = [...vals].sort((a, b) => a - b);
+  const cut = s.length >= 6 ? Math.max(1, Math.floor(s.length * pct)) : 0;
+  const t = s.slice(cut, s.length - cut);
+  return t.length ? t.reduce((a, b) => a + b, 0) / t.length : null;
+}
 
 // 定点ログの集計：買い判定の平均リターン・勝率を horizon 別に
 function aggregate(rows: SnapshotRow[], key: "ret_1m" | "ret_3m" | "ret_6m" | "ret_12m") {
   const buys = rows.filter((r) => r.is_buy && r[key] != null).map((r) => r[key] as number);
   const all = rows.filter((r) => r[key] != null).map((r) => r[key] as number);
   if (all.length === 0) return null;
-  const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
   const win = buys.length ? (buys.filter((x) => x > 0).length / buys.length) * 100 : null;
   return {
     buyN: buys.length,
-    buyAvg: buys.length ? mean(buys) : null,
-    allAvg: mean(all),
+    buyAvg: trimmedMean(buys),
+    allAvg: trimmedMean(all) ?? 0,
     win,
   };
 }
@@ -42,9 +50,9 @@ export default async function VerifyPage() {
   const hasEval = agg.ret_1m || agg.ret_3m || agg.ret_6m || agg.ret_12m;
 
   // 記録日ごとに「買い判定 / 全体」の 1/3/6ヶ月先リターン平均（時系列グラフ用）
-  const mean = (a: number[]) => (a.length ? Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 100) / 100 : null);
+  const trimmedMeanRounded = (a: number[]) => { const v = trimmedMean(a); return v == null ? null : Math.round(v * 100) / 100; };
   const horizonAvg = (rows: SnapshotRow[], k: "ret_1m" | "ret_3m" | "ret_6m" | "ret_12m", buyOnly: boolean) =>
-    mean(rows.filter((s) => (buyOnly ? s.is_buy : true) && s[k] != null).map((s) => s[k] as number));
+    trimmedMeanRounded(rows.filter((s) => (buyOnly ? s.is_buy : true) && s[k] != null).map((s) => s[k] as number));
   const series = snapDates.map((d) => {
     const rows = snaps.filter((s) => s.snapshot_date === d);
     return {
@@ -63,7 +71,7 @@ export default async function VerifyPage() {
   };
   // 閾値別の買いコホート平均1ヶ月先リターン（該当が無い月は現金＝0%）
   const cohortAvg = (rows: SnapshotRow[], th: number) =>
-    mean(rows.filter((s) => (s.aiba_score ?? 0) >= th && s.ret_1m != null).map((s) => s.ret_1m as number));
+    trimmedMean(rows.filter((s) => (s.aiba_score ?? 0) >= th && s.ret_1m != null).map((s) => s.ret_1m as number));
   const equity: { date: string; buy50: number; buy: number; buy70: number; all: number; idx: number | null }[] = [];
   let eb50 = 100, eb = 100, eb70 = 100, ea = 100, ei = 100;
   let idxStarted = false;

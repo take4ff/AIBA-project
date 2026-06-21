@@ -74,9 +74,17 @@ def main() -> int:
                                     "snapshot_date,domain_id,close_price,ret_1m,ret_3m,ret_6m,ret_12m"))
     existing_months = set(snaps["snapshot_date"].str[:7]) if not snaps.empty else set()
 
+    def _best_anchor(grp: pd.DataFrame) -> str:
+        """月内で全ドメインの85%以上が存在する最新取引日を返す（祝日スキップ）。"""
+        counts = grp.groupby("trade_date")["domain_id"].nunique()
+        threshold = counts.max() * 0.85
+        qualified = counts[counts >= threshold]
+        return qualified.index.max()
+
     if args.backfill:
         # 各月の最終取引日をアンカーに、未記録の月だけ記録
-        anchors = metrics.groupby(metrics["trade_date"].str[:7])["trade_date"].max()
+        metrics_m = metrics.assign(month=metrics["trade_date"].str[:7])
+        anchors = metrics_m.groupby("month").apply(_best_anchor)
         dates = [d for m, d in anchors.items() if m not in existing_months]
         record(dates)
     else:
@@ -84,7 +92,10 @@ def main() -> int:
         if month in existing_months:
             log.info("当月(%s)は記録済み。記録はスキップ。", month)
         else:
-            record([latest_date])
+            # 当月のアンカー日も85%カバー基準で選定
+            month_metrics = metrics[metrics["trade_date"].str[:7] == month]
+            anchor = _best_anchor(month_metrics)
+            record([anchor])
 
     snaps = pd.DataFrame(_fetch_all(client, "score_snapshots",
                                     "snapshot_date,domain_id,close_price,ret_1m,ret_3m,ret_6m,ret_12m"))

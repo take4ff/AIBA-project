@@ -11,6 +11,11 @@ if (!url || !anonKey) {
 
 export const supabase = createClient(url ?? "", anonKey ?? "", {
   auth: { persistSession: false },
+  global: {
+    // Next.js App Router のデフォルト fetch キャッシュを無効化し、
+    // revalidate/unstable_cache の設定のみでキャッシュを制御する
+    fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+  },
 });
 
 export const isSupabaseConfigured = Boolean(url && anonKey);

@@ -25,7 +25,14 @@ const VARIANTS: { key: Variant; label: string; desc: string }[] = [
   { key: "diversified", label: "地域・テーマ分散", desc: "各テーマからAIBA最上位を1銘柄ずつ。業界偏重を抑えた分散型。" },
 ];
 const TOOLTIP = { background: "#fff", border: "1px solid #e6e8ec", borderRadius: 8, color: "#16191f" };
-const mean = (a: number[]) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+// 上下各5%トリム平均（n≥6 で最低1件ずつ除外）
+const trimmedMean = (vals: number[]): number | null => {
+  if (!vals.length) return null;
+  const s = [...vals].sort((a, b) => a - b);
+  const cut = s.length >= 6 ? Math.max(1, Math.floor(s.length * 0.05)) : 0;
+  const t = s.slice(cut, s.length - cut);
+  return t.length ? t.reduce((a, b) => a + b, 0) / t.length : null;
+};
 const yen = (n: number) => "¥" + Math.round(n).toLocaleString();
 
 // variant に応じてその月の保有銘柄を選ぶ（AIBA降順で返す）。
@@ -93,7 +100,7 @@ export default function AibaIndexView({
   const monthRetOf = (held: SnapshotRow[]): number | null => {
     if (held.length === 0) return 0;
     const rets = held.map((r) => r.ret_1m).filter((x): x is number => x != null);
-    return rets.length ? mean(rets) : null;
+    return rets.length ? trimmedMean(rets) : null;
   };
 
   // 月次インデックス系列（100スタート）＋ 各ベンチマークを同窓で連結
