@@ -19,8 +19,8 @@ import { parseDomainId } from "@/lib/regions";
 type Variant = "ge60" | "top20" | "diversified" | "core_lt";
 const ENTER_LT = 65, EXIT_LT = 45;  // コア長期: 組入/除外のヒステリシス閾値
 const VARIANTS: { key: Variant; label: string; desc: string }[] = [
-  { key: "core_lt", label: "コア長期（低入替）", desc: `AIBA≥${ENTER_LT}で組入、${EXIT_LT}を割るまで保有。ヒステリシスで入替を大幅に抑え、勝ち銘柄を長く握る長期保有型。` },
   { key: "ge60", label: "AIBA≥60 全銘柄", desc: "毎月 AIBA≥60 を等ウェイト保有・入替（該当無しは現金）。検証で頑健だった水準。" },
+  { key: "core_lt", label: "コア長期（低入替）", desc: `AIBA≥${ENTER_LT}で組入、${EXIT_LT}を割るまで保有。ヒステリシスで入替を大幅に抑え、勝ち銘柄を長く握る長期保有型。` },
   { key: "top20", label: "AIBA上位20", desc: "毎月 AIBA上位20銘柄を等ウェイト。常にフル投資・銘柄数一定。" },
   { key: "diversified", label: "地域・テーマ分散", desc: "各テーマからAIBA最上位を1銘柄ずつ。業界偏重を抑えた分散型。" },
 ];
@@ -62,7 +62,7 @@ export default function AibaIndexView({
   benchmarks?: Map<string, BenchmarkPoint[]>;
   usdjpy: number;
 }) {
-  const [variant, setVariant] = useState<Variant>("core_lt");
+  const [variant, setVariant] = useState<Variant>("ge60");
   const [monthly, setMonthly] = useState(30000);
   const [activeBenchmarks, setActiveBenchmarks] = useState<Set<string>>(new Set(["ACWI"]));
 
