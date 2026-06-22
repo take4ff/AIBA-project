@@ -11,7 +11,7 @@ import {
 } from "@/lib/user-portfolio";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { assessSell, assessStopLoss, assessTakeProfit, money, pct, overheatColor, daysUntil } from "@/lib/sell-signal";
-import { fmt } from "@/lib/score-color";
+import { fmt, scoreColor } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
 import PortfolioChart from "@/components/PortfolioChart";
@@ -189,7 +189,7 @@ export default function PortfolioPage() {
               <table className="table">
                 <thead><tr>
                   <th>銘柄</th><th className="num">平均取得単価</th><th className="num">株数</th><th className="num">現在値</th>
-                  <th className="num">損益</th><th className="num">過熱度</th><th>売りシグナル</th>
+                  <th className="num">損益</th><th className="num">AIBAスコア</th><th className="num">過熱度</th><th>売りシグナル</th>
                   <th>操作</th>
                 </tr></thead>
                 <tbody>
@@ -246,6 +246,11 @@ export default function PortfolioPage() {
                         </td>
                         <td className="num">{money(close, h.currency)}</td>
                         <td className="num" style={{ color: ret == null ? undefined : ret >= 0 ? "#15a34a" : "#dc2626", fontWeight: sl.triggered ? 700 : 400 }}>{pct(ret)}</td>
+                        <td className="num">
+                          {m?.aiba_score == null
+                            ? <span style={{ color: "var(--muted)" }}>—</span>
+                            : <span className="combo-pill" style={{ background: scoreColor(m.aiba_score) }}>{Math.round(m.aiba_score)}</span>}
+                        </td>
                         <td className="num">
                           {m?.overheat == null ? "—" : <span className="combo-pill" style={{ background: overheatColor(m.overheat) }}>{Math.round(m.overheat)}</span>}
                         </td>

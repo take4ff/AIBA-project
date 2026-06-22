@@ -20,6 +20,7 @@ export interface TickerMetric {
   rsi_14: number | null;
   ma_deviation: number | null;
   overheat: number | null;
+  aiba_score?: number | null;
 }
 
 export interface TickerFundamentals {
@@ -141,6 +142,37 @@ export async function getTickerData(tickers: string[]): Promise<{
 
   const funds = new Map<string, TickerFundamentals>();
   for (const r of (f ?? []) as TickerFundamentals[]) funds.set(r.ticker, r);
+
+  // ticker_metrics に aiba_score がないため、daily_metrics（ユニバース）から補完する。
+  // metrics に存在するティッカーのうち domain が紐づくものだけスコアを付与。
+  const metricsKeys = [...metrics.keys()];
+  if (metricsKeys.length > 0) {
+    const { data: doms } = await supabaseBrowser
+      .from("domains").select("id,ticker").in("ticker", metricsKeys);
+    if (doms?.length) {
+      const tkByDom = new Map<string, string>();
+      for (const d of doms as any[]) tkByDom.set(d.id, d.ticker);
+      const { data: aibaRows } = await supabaseBrowser
+        .from("daily_metrics")
+        .select("domain_id,trade_date,aiba_score")
+        .in("domain_id", [...tkByDom.keys()])
+        .gte("trade_date", cutoff);
+      const latestAiba = new Map<string, { date: string; score: number | null }>();
+      for (const r of (aibaRows ?? []) as any[]) {
+        const cur = latestAiba.get(r.domain_id);
+        if (!cur || r.trade_date > cur.date)
+          latestAiba.set(r.domain_id, { date: r.trade_date, score: r.aiba_score });
+      }
+      for (const [domId, { score }] of latestAiba) {
+        const tk = tkByDom.get(domId);
+        if (tk) {
+          const m = metrics.get(tk);
+          if (m) m.aiba_score = score;
+        }
+      }
+    }
+  }
+
   return { metrics, funds };
 }
 
