@@ -339,7 +339,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
       )}
       <TechSummary closes={closes} rsi={latest?.rsi_14 ?? null} collapsible />
 
-      {fundamentals && (fundamentals.trailing_pe != null || fundamentals.forward_pe != null || fundamentals.next_earnings_date != null) && (
+      {fundamentals && (fundamentals.trailing_pe != null || fundamentals.forward_pe != null || fundamentals.next_earnings_date != null || fundamentals.psr != null || fundamentals.gross_margin != null || fundamentals.burn_rate_monthly != null) && (
         <details className="collapse-section">
           <summary>決算・ファンダ・事業の頑丈さ</summary>
           {fairValue && (() => {
@@ -363,6 +363,50 @@ export default async function DomainPage({ params }: { params: { id: string } })
             <div className="fund-cell"><span className="fund-k">直近サプライズ</span><span className="fund-v">{fundamentals.last_surprise_pct != null ? (fundamentals.last_surprise_pct >= 0 ? "+" : "") + fundamentals.last_surprise_pct.toFixed(0) + "%" : "—"}</span></div>
             <div className="fund-cell"><span className="fund-k">次回決算</span><span className="fund-v">{fundamentals.next_earnings_date ?? "—"}</span></div>
           </div>
+          {(fundamentals.psr != null || fundamentals.gross_margin != null || fundamentals.burn_rate_monthly != null || fundamentals.cash_runway_months != null) && (() => {
+            const hasRunway = fundamentals.burn_rate_monthly != null;
+            const runway = fundamentals.cash_runway_months;
+            const runwayColor = runway == null ? "var(--muted)" : runway < 12 ? "#f87171" : runway < 18 ? "#fbbf24" : "#34d399";
+            const grossPct = fundamentals.gross_margin != null ? fundamentals.gross_margin * 100 : null;
+            const grossColor = grossPct == null ? "var(--muted)" : grossPct >= 60 ? "#34d399" : grossPct >= 40 ? "#2dd4bf" : grossPct >= 20 ? "#60a5fa" : "#fbbf24";
+            const burnVal = fundamentals.burn_rate_monthly;
+            const fmtBurn = (v: number) => v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6).toFixed(0)}M`;
+            return (
+              <div style={{ marginTop: 14 }}>
+                <p className="forecast-line" style={{ marginTop: 0, marginBottom: 8, fontWeight: 700, fontSize: 13 }}>
+                  グロース・キャッシュ指標
+                  <span className="forecast-note">（ハイリスク・グロース銘柄の買い再評価用）</span>
+                </p>
+                <div className="fund-grid">
+                  {fundamentals.psr != null && (
+                    <div className="fund-cell"><span className="fund-k">PSR</span><span className="fund-v">{fundamentals.psr.toFixed(1)}倍</span></div>
+                  )}
+                  {grossPct != null && (
+                    <div className="fund-cell"><span className="fund-k">粗利率</span><span className="fund-v" style={{ color: grossColor }}>{grossPct.toFixed(1)}%</span></div>
+                  )}
+                  {fundamentals.revenue_growth != null && (
+                    <div className="fund-cell">
+                      <span className="fund-k">売上成長率</span>
+                      <span className="fund-v" style={{ color: fundamentals.revenue_growth >= 0.3 ? "#34d399" : fundamentals.revenue_growth >= 0 ? "#60a5fa" : "#f87171" }}>
+                        {fundamentals.revenue_growth >= 0 ? "+" : ""}{(fundamentals.revenue_growth * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                  {hasRunway && burnVal != null && (
+                    <div className="fund-cell"><span className="fund-k">バーンレート/月</span><span className="fund-v" style={{ color: "#f87171" }}>{fmtBurn(burnVal)}</span></div>
+                  )}
+                  {hasRunway && (
+                    <div className="fund-cell">
+                      <span className="fund-k">ランウェイ</span>
+                      <span className="fund-v" style={{ color: runwayColor, fontWeight: 700 }}>
+                        {runway != null ? `${Math.round(runway)}ヶ月` : "—"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           {(() => {
             const q = qualityScore(fundamentals);
             if (q.score == null) return null;

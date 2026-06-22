@@ -14,6 +14,11 @@ export interface Fundamentals {
   debt_to_equity?: number | null;    // D/E（％・yfinance準拠）
   current_ratio?: number | null;     // 流動比率
   free_cashflow?: number | null;     // フリーCF（通貨建て）
+  // ハイリスク・グロース銘柄の買い判断材料
+  psr?: number | null;               // 株価売上高倍率
+  gross_margin?: number | null;      // 売上総利益率（比率）
+  burn_rate_monthly?: number | null; // 月次バーンレート（通貨建て、営業CFマイナス時のみ）
+  cash_runway_months?: number | null; // キャッシュランウェイ（月）
 }
 
 export interface Interpretation { tone: "pos" | "neg" | "neutral"; text: string }
