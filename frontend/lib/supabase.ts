@@ -12,9 +12,10 @@ if (!url || !anonKey) {
 export const supabase = createClient(url ?? "", anonKey ?? "", {
   auth: { persistSession: false },
   global: {
-    // Next.js App Router のデフォルト fetch キャッシュを無効化し、
-    // revalidate/unstable_cache の設定のみでキャッシュを制御する
-    fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    // `cache: "no-store"` はビルド時に Next.js の "Dynamic server usage" エラーを起こすため
+    // `next: { revalidate: 0 }` で代替する（= 常に最新取得、ビルド時制約なし）。
+    // キャッシュ制御は unstable_cache で行う。
+    fetch: (input, init) => fetch(input, { ...init, next: { revalidate: 0 } } as RequestInit),
   },
 });
 
