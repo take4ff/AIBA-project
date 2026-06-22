@@ -315,6 +315,86 @@ export default function PortfolioPage() {
             <PortfolioChart holdings={holdings} histories={histories} acwi={acwiHistory} />
           )}
 
+          {holdings.length > 0 && (() => {
+            const stockHoldings = holdings.filter((h) => !h.is_fund);
+            const hasGrowthData = stockHoldings.some((h) => {
+              const f = funds.get(h.ticker);
+              return f?.psr != null || f?.gross_margin != null || f?.revenue_growth != null
+                || f?.burn_rate_monthly != null || f?.cash_runway_months != null;
+            });
+            if (!hasGrowthData) return null;
+
+            function fmtPct(v: number | null | undefined) {
+              if (v == null) return <span style={{ color: "var(--muted)" }}>—</span>;
+              const pct = v * 100;
+              const color = pct >= 30 ? "#34d399" : pct >= 0 ? "#60a5fa" : "#f87171";
+              return <span style={{ color, fontWeight: 600 }}>{pct >= 0 ? "+" : ""}{pct.toFixed(1)}%</span>;
+            }
+            function fmtGrossMargin(v: number | null | undefined) {
+              if (v == null) return <span style={{ color: "var(--muted)" }}>—</span>;
+              const pct = v * 100;
+              const color = pct >= 60 ? "#34d399" : pct >= 40 ? "#2dd4bf" : pct >= 20 ? "#60a5fa" : "#fbbf24";
+              return <span style={{ color, fontWeight: 600 }}>{pct.toFixed(1)}%</span>;
+            }
+            function fmtBurn(v: number | null | undefined, currency: "JPY" | "USD") {
+              if (v == null) return <span style={{ color: "var(--muted)" }}>—</span>;
+              const s = currency === "JPY"
+                ? v >= 1e8 ? `¥${(v / 1e8).toFixed(1)}億/月` : `¥${(v / 1e6).toFixed(0)}百万/月`
+                : v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B/月` : `$${(v / 1e6).toFixed(0)}M/月`;
+              return <span style={{ color: "#f87171" }}>{s}</span>;
+            }
+            function fmtRunway(v: number | null | undefined) {
+              if (v == null) return <span style={{ color: "var(--muted)" }}>—</span>;
+              const m = Math.round(v);
+              const color = m < 12 ? "#f87171" : m < 18 ? "#fbbf24" : "#34d399";
+              return <span style={{ color, fontWeight: 700 }}>{m}ヶ月</span>;
+            }
+
+            return (
+              <div style={{ marginTop: 28 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, margin: "0 0 8px" }}>グロース・キャッシュ指標</h2>
+                <p style={{ fontSize: 12, color: "var(--muted)", margin: "0 0 8px" }}>
+                  ハイリスク・グロース銘柄の買い再評価用。バーンレートは年次営業CFの月次換算（概算）。
+                </p>
+                <div className="table-scroll">
+                  <table className="table">
+                    <thead><tr>
+                      <th>銘柄</th>
+                      <th className="num">PSR</th>
+                      <th className="num">粗利率</th>
+                      <th className="num">売上成長率</th>
+                      <th className="num">バーンレート</th>
+                      <th className="num">ランウェイ</th>
+                    </tr></thead>
+                    <tbody>
+                      {stockHoldings.map((h) => {
+                        const f = funds.get(h.ticker);
+                        const displayName = (h.name && h.name !== h.ticker) ? h.name : (themeMap.get(h.ticker)?.name ?? h.ticker);
+                        return (
+                          <tr key={h.ticker}>
+                            <td>
+                              <span className="domain-name">{displayName}</span>
+                              <span className="ticker">{h.ticker}</span>
+                            </td>
+                            <td className="num">
+                              {f?.psr == null
+                                ? <span style={{ color: "var(--muted)" }}>—</span>
+                                : <span>{f.psr.toFixed(1)}倍</span>}
+                            </td>
+                            <td className="num">{fmtGrossMargin(f?.gross_margin)}</td>
+                            <td className="num">{fmtPct(f?.revenue_growth)}</td>
+                            <td className="num">{fmtBurn(f?.burn_rate_monthly, h.currency)}</td>
+                            <td className="num">{fmtRunway(f?.cash_runway_months)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
+
           {holdings.length > 0 && (
             <AllocationAnalysis holdings={holdings} metrics={metrics} themeMap={themeMap} />
           )}

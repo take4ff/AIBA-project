@@ -37,6 +37,10 @@ export interface TickerFundamentals {
   debt_to_equity?: number | null;
   current_ratio?: number | null;
   free_cashflow?: number | null;
+  psr?: number | null;
+  gross_margin?: number | null;
+  burn_rate_monthly?: number | null;
+  cash_runway_months?: number | null;
 }
 
 export async function getHoldings(): Promise<UserHolding[]> {

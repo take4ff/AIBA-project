@@ -87,6 +87,8 @@ def fetch_fundamentals(ticker: str) -> dict[str, Any]:
         "eps_growth": None, "revenue_growth": None,
         "operating_margin": None, "roe": None, "debt_to_equity": None,
         "current_ratio": None, "free_cashflow": None, "market_cap": None,
+        "psr": None, "gross_margin": None,
+        "burn_rate_monthly": None, "cash_runway_months": None,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     try:
@@ -99,7 +101,7 @@ def fetch_fundamentals(ticker: str) -> dict[str, Any]:
     out["forward_pe"] = _num(info.get("forwardPE"))
     out["eps_growth"] = _num(info.get("earningsQuarterlyGrowth"))
     out["revenue_growth"] = _num(info.get("revenueGrowth"))
-    # 事業の頑丈さ（品質）指標。FCF は桁が大きいため _num のクランプを通さず符号込みで保存。
+    # 事業の頑丈さ（品質）指標。FCF/市時価総額は桁が大きいため _num のクランプを通さず保存。
     out["operating_margin"] = _num(info.get("operatingMargins"))
     out["roe"] = _num(info.get("returnOnEquity"))
     out["debt_to_equity"] = _num(info.get("debtToEquity"))
@@ -112,6 +114,20 @@ def fetch_fundamentals(ticker: str) -> dict[str, Any]:
     try:
         mc = info.get("marketCap")
         out["market_cap"] = None if mc is None else round(float(mc))
+    except (TypeError, ValueError):
+        pass
+    # グロース・ハイリスク銘柄の買い判断材料
+    out["psr"] = _num(info.get("priceToSalesTrailing12Months"))
+    out["gross_margin"] = _num(info.get("grossMargins"))
+    try:
+        op_cf = info.get("operatingCashflow")
+        total_cash = info.get("totalCash")
+        if op_cf is not None and float(op_cf) < 0:
+            # 営業CFがマイナス = バーン中。月次換算（年次CFを12で割る）。
+            monthly_burn = -float(op_cf) / 12
+            out["burn_rate_monthly"] = round(monthly_burn)
+            if total_cash is not None and monthly_burn > 0:
+                out["cash_runway_months"] = round(float(total_cash) / monthly_burn, 1)
     except (TypeError, ValueError):
         pass
     if info.get("quoteType") == "EQUITY":

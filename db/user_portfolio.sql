@@ -66,12 +66,17 @@ create table if not exists ticker_fundamentals (
     updated_at         timestamptz
 );
 -- 事業の頑丈さ（品質スコア）用の指標。収益性・財務健全性・キャッシュ創出。
-alter table ticker_fundamentals add column if not exists operating_margin numeric(8, 4);   -- 営業利益率（比率）
-alter table ticker_fundamentals add column if not exists roe              numeric(8, 4);   -- 自己資本利益率（比率）
-alter table ticker_fundamentals add column if not exists debt_to_equity   numeric(10, 2);  -- D/E（％表記・yfinance準拠）
-alter table ticker_fundamentals add column if not exists current_ratio    numeric(8, 2);   -- 流動比率
-alter table ticker_fundamentals add column if not exists free_cashflow    numeric(20, 0);  -- フリーCF（通貨建て）
-alter table ticker_fundamentals add column if not exists market_cap       numeric(22, 0);  -- 時価総額（規模の伸びしろ判定用）
+alter table ticker_fundamentals add column if not exists operating_margin    numeric(8, 4);   -- 営業利益率（比率）
+alter table ticker_fundamentals add column if not exists roe                numeric(8, 4);   -- 自己資本利益率（比率）
+alter table ticker_fundamentals add column if not exists debt_to_equity     numeric(10, 2);  -- D/E（％表記・yfinance準拠）
+alter table ticker_fundamentals add column if not exists current_ratio      numeric(8, 2);   -- 流動比率
+alter table ticker_fundamentals add column if not exists free_cashflow      numeric(20, 0);  -- フリーCF（通貨建て）
+alter table ticker_fundamentals add column if not exists market_cap         numeric(22, 0);  -- 時価総額（規模の伸びしろ判定用）
+-- ハイリスク・グロース銘柄の買い判断材料
+alter table ticker_fundamentals add column if not exists psr                numeric(10, 2);  -- 株価売上高倍率（Price/Sales）
+alter table ticker_fundamentals add column if not exists gross_margin       numeric(8, 4);   -- 売上総利益率（比率）
+alter table ticker_fundamentals add column if not exists burn_rate_monthly  numeric(20, 0);  -- 月次バーンレート（通貨建て）。営業CFがマイナスの場合のみ
+alter table ticker_fundamentals add column if not exists cash_runway_months numeric(8, 1);   -- キャッシュランウェイ（月）= 現金 ÷ 月次バーンレート
 alter table ticker_fundamentals enable row level security;
 drop policy if exists "public read ticker_fundamentals" on ticker_fundamentals;
 create policy "public read ticker_fundamentals" on ticker_fundamentals for select using (true);
