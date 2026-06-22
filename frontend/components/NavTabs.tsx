@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Globe, Globe2, Flag, Star, Compass, Search, BarChart3, BookOpen, Bookmark, Briefcase,
-  GraduationCap, LineChart, Rocket,
+  GraduationCap, LineChart, Rocket, Gamepad2,
   type LucideIcon,
 } from "lucide-react";
 import NavFreshness from "@/components/NavFreshness";
@@ -37,6 +37,7 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     tabs: [
       { key: "watchlist", label: "お気に入り", href: "/watchlist", Icon: Bookmark },
       { key: "portfolio", label: "ポートフォリオ", href: "/portfolio", Icon: Briefcase },
+      { key: "simulator", label: "シミュレーター", href: "/simulator", Icon: Gamepad2 },
     ],
   },
 ];

@@ -282,6 +282,27 @@ export async function getUsdJpy(): Promise<number> {
   }
 }
 
+/**
+ * シミュレータ・ゲーム用の週次ラウンド日付リスト。
+ * daily_metrics から基準銘柄(NVDA)の全取引日を取得し、5営業日ごとに間引いて返す（≈週1回）。
+ * 結果は昇順で約200〜220件（2022-01〜現在）。
+ */
+export async function getWeeklyRoundDates(): Promise<string[]> {
+  const rows = await selectAll<{ trade_date: string }>(
+    "daily_metrics",
+    "trade_date",
+    (q) =>
+      q
+        .eq("domain_id", "advanced_semiconductor_us_nvda")
+        .gte("trade_date", "2022-01-01")
+        .not("aiba_score", "is", null)
+        .order("trade_date", { ascending: true }),
+  );
+  const allDates = rows.map((r) => r.trade_date);
+  // 5営業日ごとに1件（インデックス 4, 9, 14, … = 各5日グループの末日）
+  return allDates.filter((_, i) => (i + 1) % 5 === 0);
+}
+
 /** テーマ別ニュース論調（GDELT平均トーン）。テーブル未作成でも空Mapで安全。10分キャッシュ。 */
 export const getThemeTone = unstable_cache(
   async (): Promise<Record<string, number>> => {
