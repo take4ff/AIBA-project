@@ -422,6 +422,71 @@ export async function getSentimentSurge(limit = 30): Promise<RankingRow[]> {
     .slice(0, limit);
 }
 
+// ----------------------------- ハイパースケーラ CAPEX モニター -----------------------------
+
+export interface EtfSentimentPoint {
+  trade_date: string;
+  cloud_infra: number | null;
+  data_center: number | null;
+  semiconductor: number | null;
+}
+
+const HYPERSCALER_ETF_IDS = [
+  "cloud_infra_global_etf",
+  "data_center_global_etf",
+  "advanced_semiconductor_global_etf",
+];
+
+export const HYPERSCALER_STOCK_IDS = [
+  // ハイパースケーラ本体
+  "cloud_infra_us_amzn", "generative_ai_us_msft", "generative_ai_us_googl",
+  // 半導体
+  "advanced_semiconductor_us_nvda", "advanced_semiconductor_us_amd", "advanced_semiconductor_us_avgo",
+  // DC機器・ネットワーク
+  "cloud_infra_us_smci", "cloud_infra_us_anet",
+  // クラウドSaaS
+  "cloud_infra_us_snow", "cloud_infra_us_ddog", "cloud_infra_us_net",
+] as const;
+
+export interface HyperscalerData {
+  etfHistory: EtfSentimentPoint[];
+  stocks: RankingRow[];
+}
+
+/** ハイパースケーラCAPEXモニター用データ。ETF研究熱量推移＋恩恵銘柄スコア。 */
+export async function getHyperscalerData(): Promise<HyperscalerData> {
+  const cutoff = new Date(Date.now() - 380 * 86_400_000).toISOString().slice(0, 10);
+
+  const [metrics, allRows] = await Promise.all([
+    selectAll<any>("daily_metrics", "domain_id,trade_date,sentiment_score",
+      (q) => q.in("domain_id", HYPERSCALER_ETF_IDS)
+               .gte("trade_date", cutoff)
+               .order("trade_date", { ascending: true })),
+    cachedAllRows(),
+  ]);
+
+  // 日付ごとにETF3本のセンチメントをマージ
+  const dateMap = new Map<string, { cloud_infra: number | null; data_center: number | null; semiconductor: number | null }>();
+  for (const m of metrics) {
+    const row = dateMap.get(m.trade_date) ?? { cloud_infra: null, data_center: null, semiconductor: null };
+    if (m.domain_id === "cloud_infra_global_etf") row.cloud_infra = m.sentiment_score;
+    if (m.domain_id === "data_center_global_etf") row.data_center = m.sentiment_score;
+    if (m.domain_id === "advanced_semiconductor_global_etf") row.semiconductor = m.sentiment_score;
+    dateMap.set(m.trade_date, row);
+  }
+
+  // 週次サンプリング（5営業日ごと）でデータ量を削減
+  const allDates = [...dateMap.keys()].sort();
+  const etfHistory: EtfSentimentPoint[] = allDates
+    .filter((_, i) => i % 5 === 0 || i === allDates.length - 1)
+    .map((d) => ({ trade_date: d, ...dateMap.get(d)! }));
+
+  const stockIdSet = new Set<string>(HYPERSCALER_STOCK_IDS);
+  const stocks = allRows.filter((r) => stockIdSet.has(r.domain_id));
+
+  return { etfHistory, stocks };
+}
+
 export interface TopicStats {
   shortBuyCount: number;
   midBuyCount: number;
