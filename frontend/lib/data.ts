@@ -453,6 +453,40 @@ export interface HyperscalerData {
   stocks: RankingRow[];
 }
 
+export interface CapexPoint {
+  quarter: string;           // 四半期末日 "YYYY-MM-DD"
+  AMZN: number | null;       // 単位: 十億ドル (B)
+  MSFT: number | null;
+  GOOGL: number | null;
+  META: number | null;
+}
+
+/** ハイパースケーラ四半期CAPEX推移。テーブル未作成時は空配列。 */
+export async function getHyperscalerCapex(): Promise<CapexPoint[]> {
+  const rows = await selectAll<any>(
+    "hyperscaler_capex", "ticker,quarter,capex_usd",
+    (q) => q.order("quarter", { ascending: true }),
+  );
+  if (rows.length === 0) return [];
+
+  const qMap = new Map<string, Record<string, number>>();
+  for (const r of rows) {
+    const entry = qMap.get(r.quarter) ?? {};
+    entry[r.ticker] = Math.round((Number(r.capex_usd) / 1e9) * 10) / 10; // → 十億ドル (1桁)
+    qMap.set(r.quarter, entry);
+  }
+
+  return [...qMap.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([quarter, d]) => ({
+      quarter,
+      AMZN: d.AMZN ?? null,
+      MSFT: d.MSFT ?? null,
+      GOOGL: d.GOOGL ?? null,
+      META: d.META ?? null,
+    }));
+}
+
 /** ハイパースケーラCAPEXモニター用データ。ETF研究熱量推移＋恩恵銘柄スコア。 */
 export async function getHyperscalerData(): Promise<HyperscalerData> {
   const cutoff = new Date(Date.now() - 380 * 86_400_000).toISOString().slice(0, 10);

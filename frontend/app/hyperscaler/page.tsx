@@ -1,4 +1,4 @@
-import { getHyperscalerData } from "@/lib/data";
+import { getHyperscalerData, getHyperscalerCapex } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
 import ConceptIcon from "@/components/ConceptIcon";
@@ -15,7 +15,10 @@ export default async function HyperscalerPage() {
     );
   }
 
-  const data = await getHyperscalerData();
+  const [data, capex] = await Promise.all([
+    getHyperscalerData(),
+    getHyperscalerCapex(),
+  ]);
 
   return (
     <main className="container">
@@ -32,7 +35,7 @@ export default async function HyperscalerPage() {
       <NavTabs active="hyperscaler" />
 
       <section className="layer" style={{ marginTop: 8 }}>
-        <HyperscalerView etfHistory={data.etfHistory} stocks={data.stocks} />
+        <HyperscalerView etfHistory={data.etfHistory} stocks={data.stocks} capex={capex} />
       </section>
     </main>
   );
