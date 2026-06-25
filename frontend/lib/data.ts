@@ -529,9 +529,9 @@ export interface TopicStats {
   twoBuyCount: number;
 }
 
-const isShortBuy = (r: RankingRow) => r.momentum_score >= 60;
+const isShortBuy = (r: RankingRow) => (r.ma_deviation ?? -1) > 0;
 const isMidBuy = (r: RankingRow) => (r.aiba_score ?? 0) >= 60;
-const isLongBuy = (r: RankingRow) => r.sentiment_trend > 0;
+const isLongBuy = (r: RankingRow) => r.sentiment_trend > 1 && (r.sentiment_score ?? 0) >= 50;
 
 /** トピック（短中長期 全力買い）用データ。3シグナル全買い + 2シグナル買い銘柄をモメンタム降順で返す。 */
 export async function getTopicRows(): Promise<{

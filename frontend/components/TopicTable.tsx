@@ -8,15 +8,15 @@ import { parseDomainId } from "@/lib/regions";
 import { money } from "@/lib/sell-signal";
 import StarButton from "@/components/StarButton";
 
-const IS_SHORT = (r: RankingRow) => r.momentum_score >= 60;
+const IS_SHORT = (r: RankingRow) => (r.ma_deviation ?? -1) > 0;
 const IS_MID = (r: RankingRow) => (r.aiba_score ?? 0) >= 60;
-const IS_LONG = (r: RankingRow) => r.sentiment_trend > 0;
+const IS_LONG = (r: RankingRow) => r.sentiment_trend > 1 && (r.sentiment_score ?? 0) >= 50;
 
 function SignalDots({ row }: { row: RankingRow }) {
   const signals = [
-    { key: "短", active: IS_SHORT(row), tip: `短期: モメンタム ${row.momentum_score}` },
-    { key: "中", active: IS_MID(row), tip: `中期: AIBA ${row.aiba_score ?? "—"}` },
-    { key: "長", active: IS_LONG(row), tip: `長期: センチメント傾き ${row.sentiment_trend > 0 ? "+" : ""}${row.sentiment_trend}` },
+    { key: "短", active: IS_SHORT(row), tip: `短期: 25日線の上 (乖離率 ${row.ma_deviation != null ? (row.ma_deviation > 0 ? "+" : "") + row.ma_deviation.toFixed(1) + "%" : "—"})` },
+    { key: "中", active: IS_MID(row), tip: `中期: AIBAスコア ${row.aiba_score ?? "—"}（≥60で点灯）` },
+    { key: "長", active: IS_LONG(row), tip: `長期: センチメント≥50かつ上昇傾向 (熱量${row.sentiment_score ?? "—"} / 傾き${row.sentiment_trend > 0 ? "+" : ""}${row.sentiment_trend})` },
   ];
   return (
     <span className="signal-dots">
@@ -57,7 +57,7 @@ function TopicTableInner({ rows, showTheme }: { rows: RankingRow[]; showTheme?: 
           </tr>
           <tr>
             <th></th>
-            <th title="短期=モメンタム≥60 / 中期=AIBA≥60 / 長期=センチメント上昇">短/中/長</th>
+            <th title="短=25日線の上（乖離>0） / 中=AIBA≥60 / 長=センチメント≥50かつ傾き>1">短/中/長</th>
             <th>領域</th>
             <th className="num">株価</th>
             <th title="総合的な買い時度(0-100)">AIBAスコア</th>
