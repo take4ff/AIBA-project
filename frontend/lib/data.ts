@@ -256,6 +256,28 @@ export async function getBenchmark(ticker = "ACWI"): Promise<BenchmarkPoint[]> {
   return rows.map((r) => ({ trade_date: r.trade_date, close: Number(r.close) }));
 }
 
+export interface MarketMonthlyRow {
+  index_name: string;
+  sector: string;
+  month: string;
+  avg_return: number | null;
+  median_return: number | null;
+  best_ticker: string | null;
+  best_return: number | null;
+  worst_ticker: string | null;
+  worst_return: number | null;
+  ticker_count: number | null;
+}
+
+/** セクター別月次騰落率。market_summary_job.py が月1回更新。テーブル未作成時は空配列。 */
+export async function getMarketMonthly(indexName: "sp500" | "topix"): Promise<MarketMonthlyRow[]> {
+  return selectAll<MarketMonthlyRow>(
+    "market_monthly",
+    "index_name,sector,month,avg_return,median_return,best_ticker,best_return,worst_ticker,worst_return,ticker_count",
+    (q) => q.eq("index_name", indexName).order("month", { ascending: true }),
+  );
+}
+
 /** 複数ベンチマーク指数を一括取得。ticker → BenchmarkPoint[] の Map を返す。 */
 export async function getAllBenchmarks(
   tickers = ["ACWI", "QQQ", "ARKK", "BUZZ"],
@@ -398,4 +420,50 @@ export async function getSentimentSurge(limit = 30): Promise<RankingRow[]> {
     .filter((r) => r.sentiment_trend > 0 && r.sentiment_score != null)
     .sort((a, b) => b.sentiment_trend - a.sentiment_trend)
     .slice(0, limit);
+}
+
+export interface TopicStats {
+  shortBuyCount: number;
+  midBuyCount: number;
+  longBuyCount: number;
+  allBuyCount: number;
+  twoBuyCount: number;
+}
+
+const isShortBuy = (r: RankingRow) => r.momentum_score >= 60;
+const isMidBuy = (r: RankingRow) => (r.aiba_score ?? 0) >= 60;
+const isLongBuy = (r: RankingRow) => r.sentiment_trend > 0;
+
+/** トピック（短中長期 全力買い）用データ。3シグナル全買い + 2シグナル買い銘柄をモメンタム降順で返す。 */
+export async function getTopicRows(): Promise<{
+  allBuy: RankingRow[];
+  twoBuy: RankingRow[];
+  stats: TopicStats;
+}> {
+  const rows = await cachedAllRows();
+
+  const allBuy = rows
+    .filter((r) => isShortBuy(r) && isMidBuy(r) && isLongBuy(r))
+    .sort((a, b) => b.momentum_score - a.momentum_score);
+
+  const twoBuy = rows
+    .filter((r) => {
+      if (isShortBuy(r) && isMidBuy(r) && isLongBuy(r)) return false;
+      const n = (isShortBuy(r) ? 1 : 0) + (isMidBuy(r) ? 1 : 0) + (isLongBuy(r) ? 1 : 0);
+      return n === 2;
+    })
+    .sort((a, b) => b.momentum_score - a.momentum_score)
+    .slice(0, 40);
+
+  return {
+    allBuy,
+    twoBuy,
+    stats: {
+      shortBuyCount: rows.filter(isShortBuy).length,
+      midBuyCount: rows.filter(isMidBuy).length,
+      longBuyCount: rows.filter(isLongBuy).length,
+      allBuyCount: allBuy.length,
+      twoBuyCount: twoBuy.length,
+    },
+  };
 }

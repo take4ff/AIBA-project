@@ -17,8 +17,8 @@ const CAPS: { key: string; label: string; max: number | null }[] = [
 ];
 
 export default function FutureGafamView({
-  rows, funds,
-}: { rows: RankingRow[]; funds: Record<string, FullFundamentals> }) {
+  rows, funds, limit = 30,
+}: { rows: RankingRow[]; funds: Record<string, FullFundamentals>; limit?: number }) {
   const [cap, setCap] = useState("all");
   const maxCap = CAPS.find((c) => c.key === cap)!.max;
 
@@ -32,7 +32,7 @@ export default function FutureGafamView({
       })
       .map((r) => ({ r, ...platformScore(r, funds[r.ticker]) }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 30);
+      .slice(0, limit);
   }, [rows, funds, maxCap]);
 
   return (

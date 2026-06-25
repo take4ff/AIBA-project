@@ -266,6 +266,36 @@ domains:
     arxiv_keywords: ["data center networking", "datacenter energy", "server consolidation"]
     gdelt_keywords: ["data center investment"]
 
+  - id: infra_materials
+    name: インフラ建設資材（鉄鋼・銅・骨材）
+    layer: 2
+    instruments:
+      global: { etf: { ticker: VAW } }
+      us:
+        etf: { ticker: XLB }
+        stocks: [{ ticker: NUE, name: Nucor（鉄鋼） }, { ticker: STLD, name: Steel Dynamics（鉄鋼） }, { ticker: FCX, name: Freeport-McMoRan（銅） }, { ticker: VMC, name: Vulcan Materials（骨材） }, { ticker: MLM, name: Martin Marietta（骨材） }, { ticker: CRH, name: CRH（建設素材） }]
+      jp:
+        etf: { ticker: "1623.T", name: "鉄鋼・非鉄(TOPIX-17)" }
+        stocks: [{ ticker: "5401.T", name: 日本製鉄 }, { ticker: "5713.T", name: 住友金属鉱山 }, { ticker: "5711.T", name: 三菱マテリアル }, { ticker: "5233.T", name: 太平洋セメント }]
+    github_keywords: ["copper wiring", "steel structure", "data center construction material", "critical minerals"]
+    arxiv_keywords: ["critical mineral supply", "copper demand", "steel manufacturing", "construction material"]
+    gdelt_keywords: ["copper demand", "steel demand"]
+
+  - id: infra_construction
+    name: インフラ建設・重機
+    layer: 2
+    instruments:
+      global: { etf: { ticker: PAVE } }
+      us:
+        etf: { ticker: XLI }
+        stocks: [{ ticker: CAT, name: Caterpillar }, { ticker: URI, name: United Rentals }, { ticker: EME, name: Emcor（電気・機械工事） }, { ticker: FIX, name: Comfort Systems（設備工事） }, { ticker: GNRC, name: Generac（発電機） }, { ticker: DE, name: Deere & Company }]
+      jp:
+        etf: { ticker: "1619.T", name: "建設・資材(TOPIX-17)" }
+        stocks: [{ ticker: "6301.T", name: コマツ }, { ticker: "6305.T", name: 日立建機 }, { ticker: "6326.T", name: クボタ }, { ticker: "1801.T", name: 大成建設 }, { ticker: "1803.T", name: 清水建設 }]
+    github_keywords: ["infrastructure construction", "building automation", "digital twin construction", "smart building"]
+    arxiv_keywords: ["infrastructure investment", "construction automation", "digital twin", "building information modeling"]
+    gdelt_keywords: ["infrastructure spending", "construction demand"]
+
 # =============================================================================
 # 新興テーマ候補（ユニバース未採用）
 # -----------------------------------------------------------------------------

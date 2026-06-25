@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Globe, Globe2, Flag, Star, Compass, Search, BarChart3, BookOpen, Bookmark, Briefcase,
-  GraduationCap, LineChart, Rocket, Gamepad2,
+  GraduationCap, LineChart, Gamepad2, TrendingUp, Flame,
   type LucideIcon,
 } from "lucide-react";
 import NavFreshness from "@/components/NavFreshness";
@@ -23,9 +23,10 @@ const GROUPS: { label: string; tabs: Tab[] }[] = [
     label: "ツール",
     tabs: [
       { key: "pickup", label: "Pickup", href: "/pickup", Icon: Star },
+      { key: "topic", label: "トピック", href: "/topic", Icon: Flame },
       { key: "themes", label: "テーマ", href: "/themes", Icon: Compass },
       { key: "screener", label: "スクリーナー", href: "/screener", Icon: Search },
-      { key: "future-gafam", label: "未来のGAFAM", href: "/future-gafam", Icon: Rocket },
+      { key: "market", label: "マーケット", href: "/market", Icon: TrendingUp },
       { key: "verify", label: "検証", href: "/verify", Icon: BarChart3 },
       { key: "aiba-index", label: "AIBA指数", href: "/aiba-index", Icon: LineChart },
       { key: "guide", label: "スコア定義", href: "/guide", Icon: BookOpen },
