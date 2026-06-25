@@ -142,11 +142,13 @@ export default async function DomainPage({ params }: { params: { id: string } })
   // 補助テクニカル（表示のみ）: ボリンジャーバンドを重ね、MACD状態を表示
   const closes = history.map((h) => h.close_price);
   const bb = bollinger(closes);
+  const ma50series = sma(closes, 50);
   const ma200series = sma(closes, 200);
   const chartData = history.map((h, i) => ({
     ...h,
     bb_upper: bb.upper[i],
     bb_lower: bb.lower[i],
+    ma50: ma50series[i],
     ma200: ma200series[i],
     etf_aiba: compare?.aibaByDate[h.trade_date] ?? null,
   }));

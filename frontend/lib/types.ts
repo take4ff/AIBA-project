@@ -44,6 +44,8 @@ export interface MetricHistoryRow {
   close_price: number | null;
   bb_upper?: number | null;   // ボリンジャーバンド上限（表示用）
   bb_lower?: number | null;   // ボリンジャーバンド下限（表示用）
+  ma50?: number | null;       // 50日移動平均（ゴールデンクロス確認用）
+  ma200?: number | null;      // 200日移動平均（長期トレンド表示用）
 }
 
 export const LAYER_META: Record<number, { title: string; subtitle: string }> = {

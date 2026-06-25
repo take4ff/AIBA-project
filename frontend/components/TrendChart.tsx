@@ -135,7 +135,8 @@ export default function TrendChart({
           <Line yAxisId="price" type="monotone" dataKey="bb_lower" name="BB下限" stroke={C.tech} strokeWidth={1} strokeDasharray="2 3" strokeOpacity={0.5} dot={false} connectNulls hide={!!hidden.bb_lower} />
 
           <Area yAxisId="price" type="monotone" dataKey="close_price" name="株価" stroke={C.price} strokeWidth={2} fill="url(#priceFill)" dot={false} hide={!!hidden.close_price} />
-          <Line yAxisId="price" type="monotone" dataKey="ma200" name="200日線(長期)" stroke="#d97706" strokeWidth={1.6} dot={false} connectNulls hide={!!hidden.ma200} />
+          <Line yAxisId="price" type="monotone" dataKey="ma50" name="50日線" stroke="#a855f7" strokeWidth={1.4} dot={false} connectNulls hide={!!hidden.ma50} />
+          <Line yAxisId="price" type="monotone" dataKey="ma200" name="200日線(長期)" stroke="#f59e0b" strokeWidth={1.6} dot={false} connectNulls hide={!!hidden.ma200} />
 
           <Line yAxisId="score" type="monotone" dataKey="aiba_score" name="AIBA" stroke={C.aiba} strokeWidth={2.8} dot={false} hide={!!hidden.aiba_score} />
           {etfCompare && (
@@ -148,7 +149,8 @@ export default function TrendChart({
       </ResponsiveContainer>
       <p style={{ color: "#71767f", fontSize: 12, marginTop: 10 }}>
         左軸＝各種スコア(0-100)、右軸＝株価(終値・{currency === "JPY" ? "円" : "ドル"})。
-        <span style={{ color: C.buy }}>緑の帯</span>は AIBAスコアが買い閾値({BUY_THRESHOLD})以上だった「買い場」期間。凡例クリックで線の表示/非表示。
+        <span style={{ color: C.buy }}>緑の帯</span>は AIBAスコアが買い閾値({BUY_THRESHOLD})以上だった「買い場」期間。
+        <span style={{ color: "#a855f7" }}>紫線</span>＝50日MA、<span style={{ color: "#f59e0b" }}>黄線</span>＝200日MA（50日線が200日線を上抜けるとゴールデンクロス）。凡例クリックで線の表示/非表示。
         {showTrend && (
           <> ／ <span style={{ color: "#22c55e" }}>緑点線</span>＝支持線（スイング安値）、<span style={{ color: "#ef4444" }}>赤点線</span>＝抵抗線（スイング高値）。</>
         )}
