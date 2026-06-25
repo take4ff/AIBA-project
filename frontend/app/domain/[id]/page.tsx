@@ -258,13 +258,12 @@ export default async function DomainPage({ params }: { params: { id: string } })
       ) : (
         <>
           <TrendChart data={chartData} currency={cur} etfCompare={!!compare} buyLevel={guide.pullback} />
-          <p className="forecast-line" style={{ marginTop: 4 }}><ConceptIcon name="macd" size={14} /> MACD：{macdLabel(macd)}　／　チャートの青破線＝ボリンジャーバンド(20,2σ)</p>
         </>
       )}
 
       {(compare && vsDelta != null) || guide.fair != null || ds.floorStrong != null || lt.dev200 != null || momentum != null ? (
       <section className="layer">
-        <h2 className="layer-title">サマリー指標</h2>
+        <h2 className="layer-title">購入判断の目安</h2>
       {compare && vsDelta != null && (
         <p className="forecast-line" style={{ marginTop: 0 }}>
           <ConceptIcon name="both" size={14} /> 業界比較：この銘柄 AIBA {fmt(stockAiba)} vs 業界ETF {compare.ticker} {fmt(etfAiba)} →{" "}
@@ -303,13 +302,13 @@ export default async function DomainPage({ params }: { params: { id: string } })
       )}
       {lt.dev200 != null && (
         <p className="forecast-line">
-          <ConceptIcon name="longterm" size={14} /> 長期トレンド：200日線乖離 <span className="date">{lt.dev200 >= 0 ? "+" : ""}{lt.dev200}%</span>
+          <ConceptIcon name="longterm" size={14} /> 長期の割安度（新規買い目安）：200日線乖離 <span className="date">{lt.dev200 >= 0 ? "+" : ""}{lt.dev200}%</span>
           {lt.rangePct != null && <> ／ 52週レンジ位置 <span className="date">{lt.rangePct}%</span></>}
           {" → "}
-          <span style={{ fontWeight: 700, color: lt.zone === "長期の買い場" || lt.zone === "やや割安" ? "#15a34a" : lt.zone === "割高" ? "#dc2626" : "var(--muted)" }}>
+          <span style={{ fontWeight: 700, color: lt.zone === "長期の押し目" || lt.zone === "やや割安" ? "#15a34a" : lt.zone === "割高" ? "#dc2626" : "var(--muted)" }}>
             {lt.zone}
           </span>
-          <span className="forecast-note">（長期保有の目安。200日線を下回るほど長期の押し目）</span>
+          <span className="forecast-note">（新規購入の割安感。200日線を大きく下回るほど長期の押し目。保有継続の判断は下の「保有期間別」を参照）</span>
         </p>
       )}
       {momentum != null && (

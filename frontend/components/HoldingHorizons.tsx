@@ -22,7 +22,7 @@ export default function HoldingHorizons({
   return (
     <section className="layer">
       <h2 className="layer-title">保有期間別の判定（売り / 継続保有）</h2>
-      <p className="layer-subtitle">期間ごとに適した指標で「売り時か・保有継続か」を集計。短期＝逆張り/過熱、長期＝トレンド/テーマ成長。</p>
+      <p className="layer-subtitle">すでに保有している前提で「売り時か・継続か」を集計。短期＝逆張り/過熱、長期＝トレンド/テーマ成長。新規購入の割安感は上の「購入判断の目安」を参照。</p>
       <div className="hh-grid">
         {rows.map((r) => (
           <div key={r.label} className="hh-card">

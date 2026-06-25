@@ -155,7 +155,7 @@ export interface LongTerm {
   ma200: number | null;
   dev200: number | null;     // 200日MAからの乖離 [%]
   rangePct: number | null;   // 52週レンジ内の位置 0(安値)〜100(高値)
-  zone: "長期の買い場" | "やや割安" | "中立" | "やや割高" | "割高" | null;
+  zone: "長期の押し目" | "やや割安" | "中立" | "やや割高" | "割高" | null;
 }
 
 /** 長期トレンド/長期押し目の判定（200日MA乖離＋52週レンジ位置）。 */
@@ -176,7 +176,7 @@ export function longTerm(closes: (number | null)[]): LongTerm {
   }
   let zone: LongTerm["zone"] = null;
   if (dev200 != null) {
-    zone = dev200 <= -12 ? "長期の買い場"
+    zone = dev200 <= -12 ? "長期の押し目"
       : dev200 <= -3 ? "やや割安"
       : dev200 <= 8 ? "中立"
       : dev200 <= 20 ? "やや割高" : "割高";
@@ -251,7 +251,7 @@ export function technicalSummary(closes: (number | null)[], rsi: number | null):
   const lt = longTerm(closes);
   if (lt.dev200 != null) {
     push("移動平均(200日)", lt.dev200 >= 0 ? "買い" : "売り",
-      `200日線乖離 ${lt.dev200 >= 0 ? "+" : ""}${lt.dev200}%＝長期${lt.dev200 >= 0 ? "上昇" : "下降"}基調`, "トレンド");
+      `200日線乖離 ${lt.dev200 >= 0 ? "+" : ""}${lt.dev200}%＝長期${lt.dev200 >= 0 ? "上昇（順張り継続）" : "下降（トレンド注意）"}`, "トレンド");
   }
   const macd = macdState(closes);
   if (macd) push("MACD", macd.bullish ? "買い" : "売り",

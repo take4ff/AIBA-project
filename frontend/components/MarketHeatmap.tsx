@@ -78,10 +78,10 @@ export default function MarketHeatmap({
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table className="table" style={{ fontSize: 12, minWidth: 700 }}>
+          <table className="table" style={{ fontSize: 12, tableLayout: "auto" }}>
             <thead>
               <tr>
-                <th style={{ textAlign: "left", minWidth: 160, position: "sticky", left: 0, background: "var(--surface)", zIndex: 1 }}>
+                <th style={{ textAlign: "left", whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--surface)", zIndex: 1, paddingRight: 16 }}>
                   セクター
                 </th>
                 {months.map((m) => (
@@ -92,7 +92,7 @@ export default function MarketHeatmap({
             <tbody>
               {sectors.map((sector) => (
                 <tr key={sector}>
-                  <td style={{ fontWeight: 600, position: "sticky", left: 0, background: "var(--surface)", zIndex: 1, borderRight: "1px solid var(--border)" }}>
+                  <td style={{ fontWeight: 600, whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--surface)", zIndex: 1, borderRight: "1px solid var(--border)", paddingRight: 16 }}>
                     {sector}
                   </td>
                   {months.map((m) => {
@@ -110,7 +110,7 @@ export default function MarketHeatmap({
               ))}
               {/* 全セクター平均行 */}
               <tr style={{ borderTop: "2px solid var(--border)" }}>
-                <td style={{ fontWeight: 700, position: "sticky", left: 0, background: "var(--surface)", zIndex: 1, borderRight: "1px solid var(--border)" }}>
+                <td style={{ fontWeight: 700, whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--surface)", zIndex: 1, borderRight: "1px solid var(--border)", paddingRight: 16 }}>
                   全体平均
                 </td>
                 {monthAvg.map((v, i) => {
