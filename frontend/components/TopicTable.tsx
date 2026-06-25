@@ -10,13 +10,15 @@ import StarButton from "@/components/StarButton";
 
 const IS_SHORT = (r: RankingRow) => (r.ma_deviation ?? -1) > 0;
 const IS_MID = (r: RankingRow) => (r.aiba_score ?? 0) >= 60;
-const IS_LONG = (r: RankingRow) => r.sentiment_trend > 1 && (r.sentiment_score ?? 0) >= 50;
+const IS_LONG = (r: RankingRow) => r.ma200_deviation !== null && (r.ma200_deviation ?? -1) > 0;
 
 function SignalDots({ row }: { row: RankingRow }) {
+  const fmtDev = (v: number | null) =>
+    v == null ? "—" : `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
   const signals = [
-    { key: "短", active: IS_SHORT(row), tip: `短期: 25日線の上 (乖離率 ${row.ma_deviation != null ? (row.ma_deviation > 0 ? "+" : "") + row.ma_deviation.toFixed(1) + "%" : "—"})` },
+    { key: "短", active: IS_SHORT(row), tip: `短期: 25日線の上（25日MA乖離 ${fmtDev(row.ma_deviation)}）` },
     { key: "中", active: IS_MID(row), tip: `中期: AIBAスコア ${row.aiba_score ?? "—"}（≥60で点灯）` },
-    { key: "長", active: IS_LONG(row), tip: `長期: センチメント≥50かつ上昇傾向 (熱量${row.sentiment_score ?? "—"} / 傾き${row.sentiment_trend > 0 ? "+" : ""}${row.sentiment_trend})` },
+    { key: "長", active: IS_LONG(row), tip: `長期: 200日線の上（200日MA乖離 ${fmtDev(row.ma200_deviation)}）` },
   ];
   return (
     <span className="signal-dots">
@@ -57,7 +59,7 @@ function TopicTableInner({ rows, showTheme }: { rows: RankingRow[]; showTheme?: 
           </tr>
           <tr>
             <th></th>
-            <th title="短=25日線の上（乖離>0） / 中=AIBA≥60 / 長=センチメント≥50かつ傾き>1">短/中/長</th>
+            <th title="短=25日線の上（25日MA乖離>0） / 中=AIBA≥60 / 長=200日線の上（長期上昇トレンド）">短/中/長</th>
             <th>領域</th>
             <th className="num">株価</th>
             <th title="総合的な買い時度(0-100)">AIBAスコア</th>

@@ -17,6 +17,7 @@ export interface RankingRow {
   sentiment_score: number | null;
   rsi_14: number | null;
   ma_deviation: number | null;
+  ma200_deviation: number | null;  // 200日MA乖離率（正=200日線の上=長期上昇トレンド）
   close_price: number | null;
   // 1ヶ月先予測
   buyzone_prob: number | null;   // 買い場(AIBA>=60)入り確率 (0-1)

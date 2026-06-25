@@ -56,7 +56,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
   const [domains, metrics, preds] = await Promise.all([
     fetchDomains(),
     selectAll<any>("daily_metrics",
-      "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,close_price",
+      "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,ma200_deviation,close_price",
       (q) => q.gte("trade_date", cutoffDate())),
     selectAll<any>("predictions", "domain_id,as_of_date,buyzone_prob,pred_aiba",
       (q) => q.gte("as_of_date", cutoffDate())),
@@ -139,6 +139,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
       sentiment_score: m.sentiment_score,
       rsi_14: m.rsi_14,
       ma_deviation: m.ma_deviation,
+      ma200_deviation: m.ma200_deviation ?? null,
       close_price: m.close_price,
       buyzone_prob: pred.get(id)?.buyzone_prob ?? null,
       pred_aiba: pred.get(id)?.pred_aiba ?? null,
@@ -531,7 +532,7 @@ export interface TopicStats {
 
 const isShortBuy = (r: RankingRow) => (r.ma_deviation ?? -1) > 0;
 const isMidBuy = (r: RankingRow) => (r.aiba_score ?? 0) >= 60;
-const isLongBuy = (r: RankingRow) => r.sentiment_trend > 1 && (r.sentiment_score ?? 0) >= 50;
+const isLongBuy = (r: RankingRow) => r.ma200_deviation !== null && (r.ma200_deviation ?? -1) > 0;
 
 /** トピック（短中長期 全力買い）用データ。3シグナル全買い + 2シグナル買い銘柄をモメンタム降順で返す。 */
 export async function getTopicRows(): Promise<{

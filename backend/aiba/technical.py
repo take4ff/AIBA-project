@@ -12,9 +12,10 @@ import yfinance as yf
 
 RSI_PERIOD = 14
 MA_PERIOD = 25
+MA200_PERIOD = 200
 MA_SLOPE_LOOKBACK = 20  # MAの傾きを測る営業日窓（トレンド判定用）
-# 指標算出に十分な期間を確保（休場日を見込んで多めに取得）
-LOOKBACK_DAYS = 120
+# 200日MA算出に必要な期間＋ウォームアップ（休場日を見込んで多めに取得）
+LOOKBACK_DAYS = 280
 
 
 @dataclass
@@ -25,8 +26,9 @@ class TechnicalSnapshot:
     close_price: float
     volume: int
     rsi_14: float
-    ma_deviation: float  # 移動平均乖離率 [%]（正=平均より上、負=平均より下）
-    trend_strength: float = 0.0  # MA(25)の傾き [%]（正=上昇トレンド。動的RSI閾値に使用）
+    ma_deviation: float   # 25日MA乖離率 [%]（正=平均より上、負=平均より下）
+    ma200_deviation: float = 0.0  # 200日MA乖離率 [%]（正=200日線の上、負=下）
+    trend_strength: float = 0.0   # MA(25)の傾き [%]（正=上昇トレンド。動的RSI閾値に使用）
 
 
 def compute_rsi(close: pd.Series, period: int = RSI_PERIOD) -> pd.Series:
@@ -52,6 +54,11 @@ def compute_ma_deviation(close: pd.Series, period: int = MA_PERIOD) -> pd.Series
     return (close - ma) / ma * 100.0
 
 
+def compute_ma200_deviation(close: pd.Series) -> pd.Series:
+    """200日移動平均乖離率 [%]。データ不足の行は NaN。"""
+    return compute_ma_deviation(close, period=MA200_PERIOD)
+
+
 def compute_ma_slope(close: pd.Series, period: int = MA_PERIOD,
                      lookback: int = MA_SLOPE_LOOKBACK) -> pd.Series:
     """MA(period) の lookback営業日での変化率 [%]（トレンドの強さ・向き）。"""
@@ -71,6 +78,7 @@ def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
 
     rsi = compute_rsi(close)
     dev = compute_ma_deviation(close)
+    dev200 = compute_ma200_deviation(close)
     slope = compute_ma_slope(close)
 
     snaps: list[TechnicalSnapshot] = []
@@ -79,6 +87,7 @@ def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
         if pd.isna(r) or pd.isna(d):
             continue  # 指標算出に必要な履歴が足りない序盤はスキップ
         s = slope.loc[idx]
+        d200 = dev200.loc[idx]
         snaps.append(
             TechnicalSnapshot(
                 trade_date=idx.date(),
@@ -86,6 +95,7 @@ def _snapshots_from_df(df: pd.DataFrame) -> list[TechnicalSnapshot]:
                 volume=int(df["Volume"].loc[idx]),
                 rsi_14=round(float(r), 2),
                 ma_deviation=round(float(d), 4),
+                ma200_deviation=0.0 if pd.isna(d200) else round(float(d200), 4),
                 trend_strength=0.0 if pd.isna(s) else round(float(s), 4),
             )
         )
@@ -134,6 +144,7 @@ def fetch_technical(ticker: str) -> TechnicalSnapshot | None:
 
     rsi = compute_rsi(close)
     dev = compute_ma_deviation(close)
+    dev200 = compute_ma200_deviation(close)
     slope = compute_ma_slope(close)
 
     last_idx = close.index[-1]
@@ -142,6 +153,7 @@ def fetch_technical(ticker: str) -> TechnicalSnapshot | None:
     if pd.isna(rsi_val) or pd.isna(dev_val):
         return None
     slope_val = slope.loc[last_idx]
+    dev200_val = dev200.loc[last_idx]
 
     return TechnicalSnapshot(
         trade_date=last_idx.date(),
@@ -149,5 +161,6 @@ def fetch_technical(ticker: str) -> TechnicalSnapshot | None:
         volume=int(df["Volume"].loc[last_idx]),
         rsi_14=round(float(rsi_val), 2),
         ma_deviation=round(float(dev_val), 4),
+        ma200_deviation=0.0 if pd.isna(dev200_val) else round(float(dev200_val), 4),
         trend_strength=0.0 if pd.isna(slope_val) else round(float(slope_val), 4),
     )

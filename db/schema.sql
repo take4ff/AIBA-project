@@ -26,7 +26,8 @@ create table if not exists daily_metrics (
     close_price   numeric(14, 4),                   -- 終値
     volume        bigint,                           -- 出来高
     rsi_14        numeric(6, 2),                     -- RSI(14日)
-    ma_deviation  numeric(8, 4),                     -- 移動平均(25日)乖離率 [%]
+    ma_deviation      numeric(8, 4),                 -- 移動平均(25日)乖離率 [%]
+    ma200_deviation   numeric(8, 4),                 -- 移動平均(200日)乖離率 [%]（正=200日線の上）
 
     -- センチメント指標（先行）
     github_score      numeric(8, 4),                 -- GitHub熱量(リポジトリ増減ベース)
