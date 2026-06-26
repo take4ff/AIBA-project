@@ -27,6 +27,7 @@ create table if not exists daily_metrics (
     volume        bigint,                           -- 出来高
     rsi_14        numeric(6, 2),                     -- RSI(14日)
     ma_deviation      numeric(8, 4),                 -- 移動平均(25日)乖離率 [%]
+    ma75_deviation    numeric(8, 4),                 -- 移動平均(75日)乖離率 [%]（ゴールデンクロス: 25日線 vs 75日線）
     ma200_deviation   numeric(8, 4),                 -- 移動平均(200日)乖離率 [%]（正=200日線の上）
 
     -- センチメント指標（先行）

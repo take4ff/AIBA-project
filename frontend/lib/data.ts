@@ -56,7 +56,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
   const [domains, metrics, preds] = await Promise.all([
     fetchDomains(),
     selectAll<any>("daily_metrics",
-      "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,ma200_deviation,close_price",
+      "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,ma75_deviation,ma200_deviation,close_price",
       (q) => q.gte("trade_date", cutoffDate())),
     selectAll<any>("predictions", "domain_id,as_of_date,buyzone_prob,pred_aiba",
       (q) => q.gte("as_of_date", cutoffDate())),
@@ -139,6 +139,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
       sentiment_score: m.sentiment_score,
       rsi_14: m.rsi_14,
       ma_deviation: m.ma_deviation,
+      ma75_deviation: m.ma75_deviation ?? null,
       ma200_deviation: m.ma200_deviation ?? null,
       close_price: m.close_price,
       buyzone_prob: pred.get(id)?.buyzone_prob ?? null,
@@ -528,16 +529,34 @@ export interface TopicStats {
   longBuyCount: number;
   allBuyCount: number;
   twoBuyCount: number;
+  gcActiveCount: number;
+  gcNearCount: number;
 }
 
 const isShortBuy = (r: RankingRow) => (r.ma_deviation ?? -1) > 0;
 const isMidBuy = (r: RankingRow) => (r.aiba_score ?? 0) >= 60;
 const isLongBuy = (r: RankingRow) => r.ma200_deviation !== null && (r.ma200_deviation ?? -1) > 0;
 
-/** トピック（短中長期 全力買い）用データ。3シグナル全買い + 2シグナル買い銘柄をモメンタム降順で返す。 */
+/**
+ * 25日線 vs 75日線のゴールデンクロス状態を返す。
+ * "gc"      = MA25 > MA75（ゴールデンクロス中）
+ * "near_gc" = MA25 が MA75 の 3% 以内に迫っている（接近中）
+ */
+export function gcSignal(ma25Dev: number | null, ma75Dev: number | null): "gc" | "near_gc" | null {
+  if (ma25Dev == null || ma75Dev == null) return null;
+  // MA25/MA75 = (1 + ma75Dev/100) / (1 + ma25Dev/100)
+  const ratio = (1 + ma75Dev / 100) / (1 + ma25Dev / 100);
+  if (ratio >= 1) return "gc";
+  if (ratio > 0.97) return "near_gc";
+  return null;
+}
+
+/** トピック（短中長期 全力買い + GC）用データ。 */
 export async function getTopicRows(): Promise<{
   allBuy: RankingRow[];
   twoBuy: RankingRow[];
+  gcActive: RankingRow[];
+  gcNear: RankingRow[];
   stats: TopicStats;
 }> {
   const rows = await cachedAllRows();
@@ -555,15 +574,32 @@ export async function getTopicRows(): Promise<{
     .sort((a, b) => b.momentum_score - a.momentum_score)
     .slice(0, 40);
 
+  const gcActive = rows
+    .filter((r) => gcSignal(r.ma_deviation, r.ma75_deviation) === "gc")
+    .sort((a, b) => b.momentum_score - a.momentum_score);
+
+  const gcNear = rows
+    .filter((r) => gcSignal(r.ma_deviation, r.ma75_deviation) === "near_gc")
+    .sort((a, b) => {
+      // 75日線に最も近い順（ratio が 1 に近い順）
+      const ra = (1 + (a.ma75_deviation ?? 0) / 100) / (1 + (a.ma_deviation ?? 0) / 100);
+      const rb = (1 + (b.ma75_deviation ?? 0) / 100) / (1 + (b.ma_deviation ?? 0) / 100);
+      return rb - ra;
+    });
+
   return {
     allBuy,
     twoBuy,
+    gcActive,
+    gcNear,
     stats: {
       shortBuyCount: rows.filter(isShortBuy).length,
       midBuyCount: rows.filter(isMidBuy).length,
       longBuyCount: rows.filter(isLongBuy).length,
       allBuyCount: allBuy.length,
       twoBuyCount: twoBuy.length,
+      gcActiveCount: gcActive.length,
+      gcNearCount: gcNear.length,
     },
   };
 }

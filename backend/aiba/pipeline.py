@@ -43,6 +43,7 @@ def process_domain(domain: Domain, sent: SentimentSnapshot) -> dict[str, Any] | 
         "volume": tech.volume,
         "rsi_14": tech.rsi_14,
         "ma_deviation": tech.ma_deviation,
+        "ma75_deviation": tech.ma75_deviation,
         "ma200_deviation": tech.ma200_deviation,
         "github_score": sent.github_score,
         "arxiv_score": sent.arxiv_score,
