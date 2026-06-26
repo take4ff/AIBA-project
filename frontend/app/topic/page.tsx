@@ -134,12 +134,12 @@ export default async function TopicPage() {
 
         <div className="topic-stats">
           <div className="topic-stat-card topic-stat-highlight">
-            <div className="topic-stat-label">GC中</div>
+            <div className="topic-stat-label">直近GC</div>
             <div className="topic-stat-body">
               <span className="topic-stat-val">{stats.gcActiveCount}</span>
               <span className="topic-stat-unit">銘柄</span>
             </div>
-            <div className="topic-stat-desc">25日線が75日線の上（継続中）</div>
+            <div className="topic-stat-desc">25日線が75日線を上抜けて5%以内（直近クロス）</div>
           </div>
           <div className="topic-stat-card">
             <div className="topic-stat-label">GC接近中</div>

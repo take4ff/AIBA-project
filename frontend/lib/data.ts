@@ -539,15 +539,16 @@ const isLongBuy = (r: RankingRow) => r.ma200_deviation !== null && (r.ma200_devi
 
 /**
  * 25日線 vs 75日線のゴールデンクロス状態を返す。
- * "gc"      = MA25 > MA75（ゴールデンクロス中）
- * "near_gc" = MA25 が MA75 の 3% 以内に迫っている（接近中）
+ * ratio = MA25/MA75 = (1 + ma75Dev/100) / (1 + ma25Dev/100)
+ * "gc"      = 1.00 ≤ ratio ≤ 1.05（クロスして間もない・差5%以内）
+ * "near_gc" = 0.97 < ratio < 1.00（75日線まで3%以内・接近中）
+ * null      = ratio > 1.05（差が開きすぎ）または ratio ≤ 0.97（遠い）
  */
 export function gcSignal(ma25Dev: number | null, ma75Dev: number | null): "gc" | "near_gc" | null {
   if (ma25Dev == null || ma75Dev == null) return null;
-  // MA25/MA75 = (1 + ma75Dev/100) / (1 + ma25Dev/100)
   const ratio = (1 + ma75Dev / 100) / (1 + ma25Dev / 100);
-  if (ratio >= 1) return "gc";
-  if (ratio > 0.97) return "near_gc";
+  if (ratio >= 1.0 && ratio <= 1.05) return "gc";
+  if (ratio > 0.97 && ratio < 1.0) return "near_gc";
   return null;
 }
 
