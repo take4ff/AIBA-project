@@ -179,7 +179,9 @@ a { color: inherit; text-decoration: none; }
 .tc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .tc-name { font-size: 16px; font-weight: 800; color: var(--ink); }
 .tc-rising { font-size: 11px; font-weight: 700; color: #d97706; white-space: nowrap; }
-.tc-metrics { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+/* 指標が増えても潰れないよう、行単位で折り返す（要素内では改行させない） */
+.tc-metrics { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 12px; }
+.tc-metrics .combo-pill, .tc-heat, .tc-tone { white-space: nowrap; }
 .tc-heat { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tc-heat strong { font-size: 15px; }
 .tc-tone { font-size: 12px; font-weight: 600; }
@@ -191,7 +193,7 @@ a { color: inherit; text-decoration: none; }
 .theme-card-static:hover { border-color: var(--border); box-shadow: none; }
 .tc-cand-badge { font-size: 11px; font-weight: 700; color: var(--muted); border: 1px dashed var(--border); border-radius: 6px; padding: 2px 8px; }
 /* 大衆注目度（Wikipedia閲覧数）と乖離バッジ */
-.tc-attn { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tc-attn { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tc-attn strong { font-size: 15px; }
 .tc-attn.heat-up strong { color: #d97706; }    /* 注目の加速は過熱方向＝橙 */
 .tc-attn.heat-down strong { color: var(--muted); }
