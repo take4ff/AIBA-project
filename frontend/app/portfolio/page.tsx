@@ -14,7 +14,7 @@ import { assessSell, assessStopLoss, assessTakeProfit, money, pct, overheatColor
 import { fmt, scoreColor } from "@/lib/score-color";
 import AllocationAnalysis from "@/components/AllocationAnalysis";
 import ConceptIcon from "@/components/ConceptIcon";
-import PortfolioChart from "@/components/PortfolioChart";
+import { PortfolioChart } from "@/components/LazyCharts";
 
 const EMPTY = {
   kind: "stock" as "stock" | "fund",

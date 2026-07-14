@@ -41,6 +41,7 @@ Supabase ダッシュボード → SQL Editor で以下を実行：
 - `db/predictions.sql`（1ヶ月先予測）
 - `db/watchlist.sql`（ウォッチリスト・per-user）
 - `db/user_portfolio.sql`（ポートフォリオ：user_holdings / ticker_metrics / ticker_fundamentals）
+- `db/latest_metrics.sql`（ランキング集計ビュー：フロントの取得を約1万行→235行に削減。未作成でもフロントは従来ロジックへ自動フォールバックする）
 
 **認証（ログイン）**：Authentication → Providers の **Email** を有効化（既定ON）。
 新規登録後すぐ使うには **「Confirm email」を OFF** にする（個人利用向け）。
@@ -81,6 +82,13 @@ python backfill.py --months 6 --no-sentiment       # テクニカルのみ高速
 `portfolio_job.py`（売り時）→ `check_data.py`（品質チェック）。
 品質チェックが異常を検知するとジョブが失敗し、**GitHub標準の失敗通知メール**で気づける。
 Slackにも飛ばしたい場合は Secrets に `SLACK_WEBHOOK_URL` を登録（未設定なら何もしない）。
+
+**フロントの即時キャッシュ更新（任意）**：バッチ完了直後に Vercel の ISR キャッシュを
+再検証し、TTL（10分）待ちのコールドミスを防ぐ。
+1. 長いランダム文字列を生成し、Vercel の環境変数 `REVALIDATE_TOKEN` に設定
+2. GitHub Secrets に `REVALIDATE_TOKEN`（同じ値）と `REVALIDATE_URL`
+   （`https://<your-site>/api/revalidate`）を登録
+未設定なら何もしない（従来どおり10分TTLで更新）。
 
 ---
 

@@ -1,13 +1,10 @@
 import { getBacktest, getICMonthly, getSnapshots, getBenchmark, SnapshotRow } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import NavTabs from "@/components/NavTabs";
-import SnapshotChart from "@/components/SnapshotChart";
-import EquityCurve from "@/components/EquityCurve";
-import ICHistoryChart from "@/components/ICHistoryChart";
-import EventStudyChart from "@/components/EventStudyChart";
+import { SnapshotChart, EquityCurve, ICHistoryChart, EventStudyChart } from "@/components/LazyCharts";
 import ConceptIcon from "@/components/ConceptIcon";
 
-export const revalidate = 0; // 常時SSR（IC推移など分析データは常に最新を表示）
+export const revalidate = 600; // ISR: 分析データは日次バッチ更新のため10分キャッシュで十分（2MB超の全行取得を毎回行わない）
 
 const f3 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(3));
 const f2 = (n: number | null) => (n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(2) + "%");

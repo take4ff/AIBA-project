@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 import { getTickerHistory, getTickerThemes, TickerMetric, TickerFundamentals } from "@/lib/user-portfolio";
-import SellChart from "@/components/SellChart";
+import { SellChart } from "@/components/LazyCharts";
 import TechSummary from "@/components/TechSummary";
 import HoldingHorizons from "@/components/HoldingHorizons";
 import { sellBadge, money, pct, daysUntil } from "@/lib/sell-signal";

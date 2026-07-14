@@ -90,6 +90,19 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python check_data.py
 
+      - name: Refresh frontend cache (optional Vercel ISR)
+        env:
+          REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
+          REVALIDATE_TOKEN: ${{ secrets.REVALIDATE_TOKEN }}
+        run: |
+          # データ更新直後にISRキャッシュを即時再検証し、TTL(10分)待ちのコールドミスを防ぐ。
+          # REVALIDATE_URL 例: https://<your-site>/api/revalidate
+          if [ -n "$REVALIDATE_URL" ] && [ -n "$REVALIDATE_TOKEN" ]; then
+            curl -fsS -X POST -H "Authorization: Bearer $REVALIDATE_TOKEN" "$REVALIDATE_URL"
+          else
+            echo "REVALIDATE_URL / REVALIDATE_TOKEN 未設定。ISRのTTL(10分)更新に委ねます。"
+          fi
+
       - name: Daily signal alert (optional Slack)
         working-directory: backend
         env:

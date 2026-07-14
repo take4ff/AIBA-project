@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { MetricHistoryRow } from "@/lib/types";
-import TrendChart from "@/components/TrendChart";
+import { TrendChart, HealthRadar } from "@/components/LazyCharts";
 import { fmt } from "@/lib/score-color";
 import { parseDomainId, REGION_LABEL, REGION_PATH } from "@/lib/regions";
 import { bollinger, macdState, macdLabel, buyGuide, sma, longTerm, downsideProfile } from "@/lib/indicators";
@@ -9,7 +9,7 @@ import TechSummary from "@/components/TechSummary";
 import HoldingHorizons from "@/components/HoldingHorizons";
 import { money } from "@/lib/sell-signal";
 import { interpretFundamentals, qualityScore, Fundamentals } from "@/lib/fundamentals";
-import HealthRadar, { RadarPoint } from "@/components/HealthRadar";
+import type { RadarPoint } from "@/components/HealthRadar";
 import ConceptIcon from "@/components/ConceptIcon";
 import { narrative } from "@/lib/narrative";
 

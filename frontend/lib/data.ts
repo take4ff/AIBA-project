@@ -51,20 +51,41 @@ async function fetchDomains(): Promise<any[]> {
   }
 }
 
-/** 全ドメインの最新 RankingRow を1回のfetchで構築する（地域・種別すべて）。 */
-async function buildAllRows(): Promise<RankingRow[]> {
-  const [domains, metrics, preds] = await Promise.all([
-    fetchDomains(),
+/** 集計に必要な最小セット：最新行＋前営業日AIBA＋約45日前のセンチ/終値＋最新予測。 */
+interface MergedRow {
+  domain_id: string;
+  trade_date: string;
+  aiba_score: number | null;
+  technical_score: number | null;
+  sentiment_score: number | null;
+  rsi_14: number | null;
+  ma_deviation: number | null;
+  ma75_deviation: number | null;
+  ma200_deviation: number | null;
+  close_price: number | null;
+  prev_aiba: number | null;
+  past_sentiment: number | null;
+  past_close: number | null;
+  buyzone_prob: number | null;
+  pred_aiba: number | null;
+}
+
+/** DB側で集約済みの latest_metrics ビュー（db/latest_metrics.sql）。約235行・1リクエストで済む。 */
+async function fetchMergedFromView(): Promise<MergedRow[] | null> {
+  const { data, error } = await supabase.from("latest_metrics").select("*");
+  if (error || !data || data.length === 0) return null; // ビュー未作成時はフォールバック
+  return data as unknown as MergedRow[];
+}
+
+/** フォールバック：daily_metrics 45日分（約1万行・ページング）を取得してクライアント側で集約。 */
+async function fetchMergedLegacy(): Promise<MergedRow[]> {
+  const [metrics, preds] = await Promise.all([
     selectAll<any>("daily_metrics",
       "domain_id,trade_date,aiba_score,technical_score,sentiment_score,rsi_14,ma_deviation,ma75_deviation,ma200_deviation,close_price",
       (q) => q.gte("trade_date", cutoffDate())),
     selectAll<any>("predictions", "domain_id,as_of_date,buyzone_prob,pred_aiba",
       (q) => q.gte("as_of_date", cutoffDate())),
   ]);
-  if (domains.length === 0) {
-    console.error("data fetch error: no domains");
-    return [];
-  }
 
   const pred = new Map<string, any>();
   for (const p of preds) {
@@ -90,10 +111,31 @@ async function buildAllRows(): Promise<RankingRow[]> {
     if (!cur || m.trade_date > cur.trade_date) prevDay.set(m.domain_id, m);
   }
 
+  return [...latest.values()].map((m) => ({
+    ...m,
+    prev_aiba: prevDay.get(m.domain_id)?.aiba_score ?? null,
+    past_sentiment: firstSent.get(m.domain_id)?.sentiment_score ?? null,
+    past_close: firstSent.get(m.domain_id)?.close_price ?? null,
+    buyzone_prob: pred.get(m.domain_id)?.buyzone_prob ?? null,
+    pred_aiba: pred.get(m.domain_id)?.pred_aiba ?? null,
+  }));
+}
+
+/** 全ドメインの最新 RankingRow を構築する（地域・種別すべて）。 */
+async function buildAllRows(): Promise<RankingRow[]> {
+  const [domains, merged] = await Promise.all([
+    fetchDomains(),
+    fetchMergedFromView().then((rows) => rows ?? fetchMergedLegacy()),
+  ]);
+  if (domains.length === 0) {
+    console.error("data fetch error: no domains");
+    return [];
+  }
+
   // 地域×テーマごとの業界ETFスコア（並び順キー）
   const etfScore = new Map<string, number>();
-  for (const [id, m] of latest) {
-    const p = parseDomainId(id);
+  for (const m of merged) {
+    const p = parseDomainId(m.domain_id);
     if (p.kind === "etf") etfScore.set(`${p.region}|${p.theme}`, m.aiba_score ?? -1);
   }
 
@@ -105,19 +147,20 @@ async function buildAllRows(): Promise<RankingRow[]> {
 
   const domMap = new Map(domains.map((d) => [d.id, d]));
   const rows: RankingRow[] = [];
-  for (const [id, m] of latest) {
+  for (const m of merged) {
+    const id = m.domain_id;
     const d = domMap.get(id);
     if (!d) continue;
     const p = parseDomainId(id);
     const sentNow = m.sentiment_score ?? 50;
-    const past = firstSent.get(id);
-    const sentPast = past?.sentiment_score ?? sentNow;
+    const sentPast = m.past_sentiment ?? sentNow;
     const sentimentTrend = Math.round((sentNow - sentPast) * 10) / 10;
     const sentMomentum = clamp(50 + sentimentTrend * 3);
     const aiba = m.aiba_score ?? 0;
     const comboScore = Math.round(0.5 * aiba + 0.5 * sentMomentum);
-    const closePast = past?.close_price ?? m.close_price;
-    const priceTrend = closePast ? Math.round(((m.close_price - closePast) / closePast) * 1000) / 10 : 0;
+    const closePast = m.past_close ?? m.close_price;
+    const priceTrend = closePast && m.close_price != null
+      ? Math.round(((m.close_price - closePast) / closePast) * 1000) / 10 : 0;
     // 順張りモメンタム（0-100）: MAより上・RSI強い・直近上昇 ほど高い（AIBAの逆張りと対の視点）
     const rsi = m.rsi_14 ?? 50;
     const maPos = clamp(50 + (m.ma_deviation ?? 0) * 3);
@@ -134,7 +177,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
       ticker: d.ticker,
       trade_date: m.trade_date,
       aiba_score: m.aiba_score,
-      prev_aiba: prevDay.get(id)?.aiba_score ?? null,
+      prev_aiba: m.prev_aiba,
       technical_score: m.technical_score,
       sentiment_score: m.sentiment_score,
       rsi_14: m.rsi_14,
@@ -142,8 +185,8 @@ async function buildAllRows(): Promise<RankingRow[]> {
       ma75_deviation: m.ma75_deviation ?? null,
       ma200_deviation: m.ma200_deviation ?? null,
       close_price: m.close_price,
-      buyzone_prob: pred.get(id)?.buyzone_prob ?? null,
-      pred_aiba: pred.get(id)?.pred_aiba ?? null,
+      buyzone_prob: m.buyzone_prob,
+      pred_aiba: m.pred_aiba,
       sentiment_trend: sentimentTrend,
       price_trend: priceTrend,
       divergence: sentimentTrend > 1 && priceTrend < 2,
@@ -179,7 +222,7 @@ async function buildAllRows(): Promise<RankingRow[]> {
 }
 
 // 全ドメインの集計（重い）を 10 分キャッシュ。全ランキング系がこれを共有・再利用する。
-const cachedAllRows = unstable_cache(buildAllRows, ["aiba-all-rows-v2"], { revalidate: CACHE_TTL });
+const cachedAllRows = unstable_cache(buildAllRows, ["aiba-all-rows-v2"], { revalidate: CACHE_TTL, tags: ["aiba-data"] });
 
 /** 指定地域・種別の最新ランキング。 */
 export async function getRanking(region: Region, kind: Kind): Promise<RankingRow[]> {
@@ -189,7 +232,7 @@ export async function getRanking(region: Region, kind: Kind): Promise<RankingRow
 /** 指定テーマ×地域の構成銘柄（業界ETF＋個別株）。業界ページ用。
  * global は地域横断：global ETF＋全地域の個別株を表示する。 */
 export async function getIndustry(theme: string, region: Region): Promise<RankingRow[]> {
-  const all = (await buildAllRows()).filter((r) => parseDomainId(r.domain_id).theme === theme);
+  const all = (await cachedAllRows()).filter((r) => parseDomainId(r.domain_id).theme === theme);
   const rows = region === "global"
     ? all.filter((r) => r.region === "global" || r.kind === "stock")  // global ETF＋全個別株
     : all.filter((r) => r.region === region);
@@ -328,7 +371,7 @@ export const getWeeklyRoundDates = unstable_cache(
     return allDates.filter((_, i) => (i + 1) % 5 === 0);
   },
   ["aiba-sim-round-dates-v1"],
-  { revalidate: CACHE_TTL },
+  { revalidate: CACHE_TTL, tags: ["aiba-data"] },
 );
 
 /** テーマ別ニュース論調（GDELT平均トーン）。テーブル未作成でも空Mapで安全。10分キャッシュ。 */
@@ -340,7 +383,7 @@ export const getThemeTone = unstable_cache(
     for (const r of data ?? []) if ((r as any).tone != null) out[(r as any).theme_id] = Number((r as any).tone);
     return out;
   },
-  ["aiba-theme-tone-v2"], { revalidate: CACHE_TTL },
+  ["aiba-theme-tone-v2"], { revalidate: CACHE_TTL, tags: ["aiba-data"] },
 );
 
 export interface CandidateTheme {
@@ -406,7 +449,7 @@ export const getFundamentalsFull = unstable_cache(
     }
     return map;
   },
-  ["aiba-fundamentals-full-v2"], { revalidate: CACHE_TTL },
+  ["aiba-fundamentals-full-v2"], { revalidate: CACHE_TTL, tags: ["aiba-data"] },
 );
 
 /** Pickup: 地域・種別を問わず「今買い」候補（AIBA≥閾値 or 乖離）をAIBA順で。 */
