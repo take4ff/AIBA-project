@@ -190,6 +190,14 @@ a { color: inherit; text-decoration: none; }
 .theme-card-static { cursor: default; }
 .theme-card-static:hover { border-color: var(--border); box-shadow: none; }
 .tc-cand-badge { font-size: 11px; font-weight: 700; color: var(--muted); border: 1px dashed var(--border); border-radius: 6px; padding: 2px 8px; }
+/* 大衆注目度（Wikipedia閲覧数）と乖離バッジ */
+.tc-attn { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tc-attn strong { font-size: 15px; }
+.tc-attn.heat-up strong { color: #d97706; }    /* 注目の加速は過熱方向＝橙 */
+.tc-attn.heat-down strong { color: var(--muted); }
+.tc-attn-badge { font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.tc-attn-quiet { color: #2456e6; background: rgba(36, 86, 230, 0.08); }
+.tc-attn-hot { color: #dc2626; background: rgba(220, 38, 38, 0.08); }
 
 .sell-badge { font-size: 12px; font-weight: 700; padding: 3px 11px; border-radius: 999px; white-space: nowrap; }
 .sb-sell { color: #f87171; background: rgba(248,113,113,0.14); border: 1px solid rgba(248,113,113,0.35); }

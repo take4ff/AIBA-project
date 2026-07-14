@@ -46,6 +46,8 @@ class Domain:
     # 設定したテーマのみマクロ需要信号を補助指標として追加する。
     fred_series: str = ""
     tags: tuple[str, ...] = ()   # 副テーマ（マルチ事業企業の他テーマ展開・表示用）
+    # 大衆注目度用の Wikipedia 記事名（en.wikipedia）。attention_job.py が閲覧数を取得する。
+    wikipedia_articles: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
         ax = list(d.get("arxiv_keywords", []))
         gd = list(d.get("gdelt_keywords", []))
         fs = str(d.get("fred_series", "") or "")
+        wp = list(d.get("wikipedia_articles", []))
         theme_name = d["name"]
         layer = int(d["layer"])
         instruments: dict = d.get("instruments", {})
@@ -99,6 +102,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
                     region=region, kind="etf", layer=layer,
                     ticker=str(etf["ticker"]),
                     github_keywords=gh, arxiv_keywords=ax, gdelt_keywords=gd, fred_series=fs,
+                    wikipedia_articles=wp,
                 ))
 
             for stock in reg.get("stocks", []):
@@ -111,6 +115,7 @@ def load_domains(path: Path | str = DEFAULT_TARGETS_PATH) -> list[Domain]:
                     github_keywords=gh, arxiv_keywords=ax,
                     fred_series=fs,
                     tags=tuple(stock.get("tags", []) or []),
+                    wikipedia_articles=wp,
                 ))
     return domains
 

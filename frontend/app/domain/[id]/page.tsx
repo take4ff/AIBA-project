@@ -12,6 +12,7 @@ import { interpretFundamentals, qualityScore, Fundamentals } from "@/lib/fundame
 import type { RadarPoint } from "@/components/HealthRadar";
 import ConceptIcon from "@/components/ConceptIcon";
 import { narrative } from "@/lib/narrative";
+import { getInsiderActivity, InsiderActivity } from "@/lib/data";
 
 export const revalidate = 600; // ISR: 日次更新データを10分キャッシュ（遷移高速化）
 
@@ -122,7 +123,13 @@ async function getHistory(id: string) {
     }
   }
 
-  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals, fairValue, peerAgg };
+  // インサイダー売買（米国個別株のみ。Form 4 は米国上場企業だけが提出する）
+  let insider: InsiderActivity | null = null;
+  if (kind === "stock" && region === "us" && dom?.ticker) {
+    insider = await getInsiderActivity(dom.ticker);
+  }
+
+  return { dom, history: (data ?? []) as MetricHistoryRow[], prediction, compare, fundamentals, fairValue, peerAgg, insider };
 }
 
 export default async function DomainPage({ params }: { params: { id: string } }) {
@@ -135,7 +142,7 @@ export default async function DomainPage({ params }: { params: { id: string } })
     );
   }
 
-  const { dom, history, prediction, compare, fundamentals, fairValue, peerAgg } = await getHistory(params.id);
+  const { dom, history, prediction, compare, fundamentals, fairValue, peerAgg, insider } = await getHistory(params.id);
   const latest = history[history.length - 1];
   const { region } = parseDomainId(params.id);
 
@@ -437,6 +444,48 @@ export default async function DomainPage({ params }: { params: { id: string } })
           <p className="guide-note">※ 解釈は指標からの自動生成（簡易ルール）。投資助言ではありません。</p>
         </details>
       )}
+
+      {insider && (() => {
+        const fmtUsd = (v: number) =>
+          v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : `$${Math.round(v / 1e3)}K`;
+        const stance = insider.buys > 0 && insider.buyValue >= insider.sellValue
+          ? { label: "役員が買い越し（自信のシグナル）", color: "#15a34a" }
+          : insider.sells >= 3 && insider.buys === 0
+          ? { label: "売りが優勢（計画売却も多く単独では悲観材料にしない）", color: "#d97706" }
+          : null;
+        return (
+          <details className="collapse-section">
+            <summary>インサイダー売買（SEC Form 4・直近90日）</summary>
+            <p className="forecast-line" style={{ marginTop: 0 }}>
+              <ConceptIcon name="guide" size={14} /> 買い <span style={{ color: "#15a34a", fontWeight: 700 }}>{insider.buys}件（{fmtUsd(insider.buyValue)}）</span>
+              {" / "}売り <span style={{ color: "#dc2626", fontWeight: 700 }}>{insider.sells}件（{fmtUsd(insider.sellValue)}）</span>
+              {stance && <span style={{ marginLeft: 8, fontWeight: 700, color: stance.color }}>{stance.label}</span>}
+            </p>
+            <div className="table-scroll">
+              <table className="table">
+                <thead><tr><th>提出日</th><th>売買</th><th>氏名</th><th>役職</th><th className="num">株数</th><th className="num">金額</th></tr></thead>
+                <tbody>
+                  {insider.trades.slice(0, 8).map((t, i) => (
+                    <tr key={i}>
+                      <td>{t.filed_at}</td>
+                      <td style={{ color: t.tx_code === "P" ? "#15a34a" : "#dc2626", fontWeight: 700 }}>{t.tx_code === "P" ? "買い" : "売り"}</td>
+                      <td>{t.insider_name ?? "—"}</td>
+                      <td>{t.insider_role ?? "—"}</td>
+                      <td className="num">{t.shares != null ? Math.round(t.shares).toLocaleString() : "—"}</td>
+                      <td className="num">{t.value_usd != null ? fmtUsd(t.value_usd) : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="guide-note">
+              ※ 公開市場での買い(P)・売り(S)のみ表示（報酬付与・オプション行使・贈与・納税売却は除外）。
+              役員の「買い」は実証的に先行性が確認されている数少ないシグナル。「売り」は報酬の現金化や分散目的も多く、
+              複数役員の連続売りなど件数が目立つ場合のみ注意材料に。
+            </p>
+          </details>
+        );
+      })()}
     </main>
   );
 }

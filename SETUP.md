@@ -42,6 +42,8 @@ Supabase ダッシュボード → SQL Editor で以下を実行：
 - `db/watchlist.sql`（ウォッチリスト・per-user）
 - `db/user_portfolio.sql`（ポートフォリオ：user_holdings / ticker_metrics / ticker_fundamentals）
 - `db/latest_metrics.sql`（ランキング集計ビュー：フロントの取得を約1万行→235行に削減。未作成でもフロントは従来ロジックへ自動フォールバックする）
+- `db/theme_attention.sql`（大衆注目度：Wikipedia閲覧数。attention_job.py が日次更新、/themes に表示）
+- `db/insider_trades.sql`（インサイダー売買：SEC Form 4。insider_job.py が日次更新、米国銘柄の詳細ページに表示）
 
 **認証（ログイン）**：Authentication → Providers の **Email** を有効化（既定ON）。
 新規登録後すぐ使うには **「Confirm email」を OFF** にする（個人利用向け）。

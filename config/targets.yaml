@@ -30,6 +30,8 @@ domains:
     arxiv_keywords: ["GPU accelerator", "AI chip", "kv cache offloading", "memory efficient inference", "flash attention"]
     gdelt_keywords: ["semiconductor demand"]
     fred_series: IPG3344S  # Industrial Production: Semiconductors & Electronic Components (SA, 月次)
+    # 大衆注目度（Wikipedia日次閲覧数）用の記事名（en.wikipedia のタイトル）。attention_job.py が使用。
+    wikipedia_articles: ["Nvidia", "TSMC", "Graphics processing unit", "Semiconductor industry"]
 
   - id: generative_ai
     name: 生成AI基盤
@@ -47,6 +49,7 @@ domains:
     github_keywords: ["llm", "transformer", "diffusion model", "vllm", "inference engine", "speculative decoding"]
     arxiv_keywords: ["large language model", "generative model", "inference optimization", "kv cache"]
     gdelt_keywords: ["generative AI"]
+    wikipedia_articles: ["Generative artificial intelligence", "ChatGPT", "Large language model", "OpenAI"]
 
   - id: cloud_infra
     name: クラウドインフラ
@@ -64,6 +67,7 @@ domains:
     github_keywords: ["kubernetes", "serverless", "terraform", "gpu cloud", "inference endpoint", "model serving", "opentofu", "ebpf"]
     arxiv_keywords: ["cloud computing", "datacenter scheduling", "GPU cloud computing", "AI inference service", "multi-cloud orchestration"]
     gdelt_keywords: ["cloud spending"]
+    wikipedia_articles: ["Cloud computing", "Amazon Web Services", "Microsoft Azure"]
 
   # ---------------- 第2層：次なる波 ----------------
   - id: cooling_power_infra
@@ -82,6 +86,7 @@ domains:
     github_keywords: ["liquid cooling", "power management", "smart grid", "immersion cooling", "direct liquid cooling", "power density", "nuclear datacenter"]
     arxiv_keywords: ["data center cooling", "power grid optimization", "liquid immersion cooling", "power usage effectiveness", "ai datacenter power"]
     gdelt_keywords: ["AI power consumption"]
+    wikipedia_articles: ["Electrical grid", "Vertiv", "Power outage"]
 
   - id: edge_ai_robotics
     name: エッジAI・ロボティクス
@@ -99,6 +104,7 @@ domains:
     github_keywords: ["edge ai", "ros2", "tinyml", "on device llm", "npu inference", "humanoid robot", "mobile inference"]
     arxiv_keywords: ["edge inference", "robot learning", "on-device inference", "model compression", "humanoid locomotion"]
     gdelt_keywords: ["industrial robot"]
+    wikipedia_articles: ["Robotics", "Humanoid robot", "Boston Dynamics", "Edge computing"]
 
   - id: bioinformatics
     name: バイオインフォマティクス
@@ -116,6 +122,7 @@ domains:
     github_keywords: ["bioinformatics", "genomics", "protein folding", "alphafold", "protein language model", "drug discovery ai", "cell foundation model"]
     arxiv_keywords: ["computational biology", "protein structure prediction", "protein language model", "AlphaFold", "AI drug discovery", "foundation model biology"]
     gdelt_keywords: ["drug discovery"]
+    wikipedia_articles: ["Bioinformatics", "AlphaFold", "Drug discovery"]
 
   - id: entertainment_content
     name: エンタメ・コンテンツ
@@ -132,6 +139,7 @@ domains:
         stocks: [{ ticker: "0700.HK", name: テンセント（中国） }]
     github_keywords: ["game engine", "unreal engine", "unity"]
     arxiv_keywords: ["game ai", "procedural content generation"]
+    wikipedia_articles: ["Netflix", "Video game industry", "Streaming media"]
 
   # ---------------- 第3層：未来の開拓地 ----------------
   - id: quantum_computing
@@ -147,6 +155,7 @@ domains:
         stocks: [{ ticker: "6702.T", name: 富士通 }, { ticker: "6701.T", name: NEC }, { ticker: "6613.T", name: QDレーザ }]
     github_keywords: ["qiskit", "quantum circuit", "qubit"]
     arxiv_keywords: ["quantum computing", "quantum error correction"]
+    wikipedia_articles: ["Quantum computing", "Qubit", "Quantum error correction"]
 
   - id: space_infra
     name: 宇宙インフラ・通信網
@@ -160,6 +169,7 @@ domains:
         stocks: [{ ticker: "7011.T", name: 三菱重工業 }, { ticker: "9348.T", name: ispace }, { ticker: "186A.T", name: アストロスケール }, { ticker: "464A.T", name: QPS研究所 }]
     github_keywords: ["satellite", "gnss", "orbital mechanics"]
     arxiv_keywords: ["satellite communication", "low earth orbit"]
+    wikipedia_articles: ["SpaceX", "Starlink", "Rocket Lab"]
 
   - id: nextgen_energy
     name: 次世代エネルギー（原子力・核融合）
@@ -173,6 +183,7 @@ domains:
         stocks: [{ ticker: "485A.T", name: POWER X }, { ticker: "5631.T", name: 日本製鋼所 }]
     github_keywords: ["small modular reactor", "nuclear", "nuclear fusion", "tokamak"]
     arxiv_keywords: ["small modular reactor", "nuclear fusion", "plasma confinement", "grid scale energy storage"]
+    wikipedia_articles: ["Nuclear fusion", "Fusion power", "Small modular reactor"]
 
   - id: synthetic_biology
     name: 合成生物学
@@ -186,6 +197,7 @@ domains:
         stocks: [{ ticker: "2931.T", name: ユーグレナ }, { ticker: "4974.T", name: タカラバイオ }, { ticker: "4587.T", name: ペプチドリーム }]
     github_keywords: ["synthetic biology", "crispr", "genome editing"]
     arxiv_keywords: ["synthetic biology", "genome design", "directed evolution"]
+    wikipedia_articles: ["Synthetic biology", "CRISPR gene editing"]
 
   - id: hydrogen_fuelcell
     name: 水素・燃料電池
@@ -199,6 +211,7 @@ domains:
         stocks: [{ ticker: "7012.T", name: 川崎重工業 }, { ticker: "3402.T", name: 東レ }, { ticker: "1963.T", name: 日揮HD }]
     github_keywords: ["hydrogen fuel cell", "electrolysis", "pem fuel cell"]
     arxiv_keywords: ["hydrogen fuel cell", "water electrolysis", "green hydrogen"]
+    wikipedia_articles: ["Hydrogen economy", "Fuel cell", "Green hydrogen"]
 
   - id: solid_state_battery
     name: 次世代電池（固体電池）
@@ -214,6 +227,7 @@ domains:
         stocks: [{ ticker: "1211.HK", name: BYD（中国） }]
     github_keywords: ["solid state battery", "battery management", "lithium battery"]
     arxiv_keywords: ["solid-state battery", "lithium metal anode", "battery electrolyte"]
+    wikipedia_articles: ["Solid-state battery", "QuantumScape", "Lithium-ion battery"]
 
   # キオクシアケーススタディ(2024-25)を受けて追加：AI推論のメモリ層は compute と別に追跡が必要
   - id: ai_memory_storage
@@ -232,6 +246,7 @@ domains:
     arxiv_keywords: ["kv cache offloading", "LLM inference storage", "memory hierarchy", "CXL memory", "HBM memory"]
     gdelt_keywords: ["NAND price"]
     fred_series: IPG3344S  # 半導体生産指数（NANDも含む需要サイクル）
+    wikipedia_articles: ["High Bandwidth Memory", "Dynamic random-access memory", "Flash memory", "Kioxia"]
 
   # ---------------- 常時需要（ディフェンシブ成長） ----------------
   - id: cybersecurity
@@ -249,6 +264,7 @@ domains:
     github_keywords: ["cybersecurity", "vulnerability scanner", "zero trust", "llm security", "adversarial attack", "ai red team", "prompt injection"]
     arxiv_keywords: ["network security", "intrusion detection", "malware detection", "LLM security", "adversarial machine learning", "AI system vulnerabilities"]
     gdelt_keywords: ["ransomware"]
+    wikipedia_articles: ["Computer security", "Ransomware", "Data breach"]
 
   - id: data_center
     name: データセンター
@@ -265,6 +281,7 @@ domains:
     github_keywords: ["data center", "infrastructure as code", "server provisioning"]
     arxiv_keywords: ["data center networking", "datacenter energy", "server consolidation"]
     gdelt_keywords: ["data center investment"]
+    wikipedia_articles: ["Data center", "Equinix", "Colocation centre"]
 
   - id: infra_materials
     name: インフラ建設資材（鉄鋼・銅・骨材）
@@ -280,6 +297,7 @@ domains:
     github_keywords: ["copper wiring", "steel structure", "data center construction material", "critical minerals"]
     arxiv_keywords: ["critical mineral supply", "copper demand", "steel manufacturing", "construction material"]
     gdelt_keywords: ["copper demand", "steel demand"]
+    wikipedia_articles: ["Copper", "Steel", "Nucor"]
 
   - id: infra_construction
     name: インフラ建設・重機
@@ -295,6 +313,7 @@ domains:
     github_keywords: ["infrastructure construction", "building automation", "digital twin construction", "smart building"]
     arxiv_keywords: ["infrastructure investment", "construction automation", "digital twin", "building information modeling"]
     gdelt_keywords: ["infrastructure spending", "construction demand"]
+    wikipedia_articles: ["Infrastructure", "Caterpillar Inc.", "Heavy equipment"]
 
 # =============================================================================
 # 新興テーマ候補（ユニバース未採用）

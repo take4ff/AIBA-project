@@ -386,6 +386,90 @@ export const getThemeTone = unstable_cache(
   ["aiba-theme-tone-v2"], { revalidate: CACHE_TTL, tags: ["aiba-data"] },
 );
 
+export interface InsiderTrade {
+  filed_at: string;
+  tx_date: string | null;
+  insider_name: string | null;
+  insider_role: string | null;
+  tx_code: "P" | "S";
+  shares: number | null;
+  value_usd: number | null;
+}
+
+export interface InsiderActivity {
+  buys: number;        // 公開市場買い（P）の件数
+  sells: number;       // 公開市場売り（S）の件数
+  buyValue: number;    // 買い合計額 (USD)
+  sellValue: number;   // 売り合計額 (USD)
+  trades: InsiderTrade[]; // 提出日降順
+}
+
+/**
+ * インサイダー売買（SEC Form 4・直近90日・米国銘柄のみ）。
+ * insider_job.py が日次更新。テーブル未作成・データ無しは null。
+ */
+export async function getInsiderActivity(ticker: string): Promise<InsiderActivity | null> {
+  const cutoff = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("insider_trades")
+    .select("filed_at,tx_date,insider_name,insider_role,tx_code,shares,value_usd")
+    .eq("ticker", ticker).gte("filed_at", cutoff)
+    .order("filed_at", { ascending: false }).limit(100);
+  if (error || !data || data.length === 0) return null;
+  const trades = (data as any[]).map((r) => ({
+    ...r,
+    shares: r.shares != null ? Number(r.shares) : null,
+    value_usd: r.value_usd != null ? Number(r.value_usd) : null,
+  })) as InsiderTrade[];
+  const sum = (code: "P" | "S") =>
+    trades.filter((t) => t.tx_code === code).reduce((a, t) => a + (t.value_usd ?? 0), 0);
+  return {
+    buys: trades.filter((t) => t.tx_code === "P").length,
+    sells: trades.filter((t) => t.tx_code === "S").length,
+    buyValue: sum("P"),
+    sellValue: sum("S"),
+    trades,
+  };
+}
+
+export interface ThemeAttention {
+  score: number;   // 大衆注目度 0-100（50=平常）
+  trend: number;   // 約30日前との差分
+}
+
+/**
+ * テーマ別の大衆注目度（Wikipedia閲覧数ベース、attention_job.py が日次更新）。
+ * 最新値＋約30日前との差分を返す。テーブル未作成時は空Mapで安全。10分キャッシュ。
+ */
+export const getThemeAttention = unstable_cache(
+  async (): Promise<Record<string, ThemeAttention>> => {
+    const cutoff = new Date(Date.now() - 40 * 86_400_000).toISOString().slice(0, 10);
+    const rows = await selectAll<{ theme_id: string; obs_date: string; attention_score: number | null }>(
+      "theme_attention", "theme_id,obs_date,attention_score",
+      (q) => q.gte("obs_date", cutoff).order("obs_date", { ascending: true }));
+    const latest = new Map<string, { date: string; score: number }>();
+    const oldest = new Map<string, { date: string; score: number }>();
+    for (const r of rows) {
+      if (r.attention_score == null) continue;
+      const v = { date: r.obs_date, score: Number(r.attention_score) };
+      const lt = latest.get(r.theme_id);
+      if (!lt || v.date > lt.date) latest.set(r.theme_id, v);
+      const od = oldest.get(r.theme_id);
+      if (!od || v.date < od.date) oldest.set(r.theme_id, v);
+    }
+    const out: Record<string, ThemeAttention> = {};
+    for (const [tid, lt] of latest) {
+      const od = oldest.get(tid);
+      out[tid] = {
+        score: Math.round(lt.score * 10) / 10,
+        trend: od ? Math.round((lt.score - od.score) * 10) / 10 : 0,
+      };
+    }
+    return out;
+  },
+  ["aiba-theme-attention-v1"], { revalidate: CACHE_TTL, tags: ["aiba-data"] },
+);
+
 export interface CandidateTheme {
   candidate_id: string;
   name: string;

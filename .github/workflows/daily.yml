@@ -69,6 +69,20 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python benchmark_job.py
 
+      - name: Public attention (Wikipedia pageviews)
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python attention_job.py
+
+      - name: Insider trades (SEC EDGAR Form 4)
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python insider_job.py
+
       - name: Backtest (save results)
         working-directory: backend
         env:

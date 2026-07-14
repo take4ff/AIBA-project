@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllRows, getCandidates, getThemeTone } from "@/lib/data";
+import { getAllRows, getCandidates, getThemeTone, getThemeAttention, ThemeAttention } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { parseDomainId } from "@/lib/regions";
 import { LAYER_META } from "@/lib/types";
@@ -16,6 +16,17 @@ const trendDir = (t: number) => (t > 1 ? "up" : t < -1 ? "down" : "flat");
 interface ThemeCard {
   theme: string; name: string; layer: number;
   aiba: number | null; sentiment: number | null; trend: number; rising: boolean; tone: number | null;
+  attention: ThemeAttention | null;
+}
+
+// 研究熱と大衆注目の乖離バッジ。
+// 研究熱が加速しているのに世間の注目がまだ平常以下 = 熱狂前の仕込み好機。
+// 注目が平常の約1.7倍(score>=70)を超えたら大衆の熱狂 = 高値掴み警戒。
+function attentionBadge(trend: number, attn: ThemeAttention | null): { label: string; kind: "quiet" | "hot" } | null {
+  if (!attn) return null;
+  if (attn.score >= 70) return { label: "🔥 大衆注目 過熱", kind: "hot" };
+  if (trend > 1 && attn.score < 55) return { label: "🌊 世間は未注目", kind: "quiet" };
+  return null;
 }
 
 // ニュース論調（GDELT平均トーン）→ ラベル＋色。実ニュースは概ね ±2 に収まるため ±1 を境界に。
@@ -35,7 +46,9 @@ export default async function ThemesPage() {
     );
   }
 
-  const [rows, candidates, tone] = await Promise.all([getAllRows(), getCandidates(), getThemeTone()]);
+  const [rows, candidates, tone, attention] = await Promise.all([
+    getAllRows(), getCandidates(), getThemeTone(), getThemeAttention(),
+  ]);
   // テーマごとの代表＝global ETF 行（センチメントはテーマ共通）
   const cards: ThemeCard[] = [];
   for (const r of rows) {
@@ -45,6 +58,7 @@ export default async function ThemesPage() {
       theme: p.theme, name: r.theme_name, layer: r.layer,
       aiba: r.aiba_score, sentiment: r.sentiment_score, trend: r.sentiment_trend, rising: false,
       tone: tone[p.theme] ?? null,
+      attention: attention[p.theme] ?? null,
     });
   }
   // 「話題上昇中」＝センチメント傾き上位3テーマ
@@ -85,9 +99,22 @@ export default async function ThemesPage() {
                   <span className={`tc-heat heat-${trendDir(c.trend)}`} title="研究熱量（センチメント）と傾き">
                     熱量 {fmt(c.sentiment)} <strong>{trendArrow(c.trend)}</strong>
                   </span>
+                  {c.attention && (
+                    <span
+                      className={`tc-attn heat-${trendDir(c.attention.trend)}`}
+                      title={`大衆注目度（Wikipedia閲覧数・50=平常）と30日間の変化`}
+                    >
+                      注目 {fmt(c.attention.score)} <strong>{trendArrow(c.attention.trend)}</strong>
+                    </span>
+                  )}
                   {toneInfo(c.tone) && (
                     <span className="tc-tone" style={{ color: toneInfo(c.tone)!.color }} title={`ニュース論調（GDELT平均トーン ${c.tone}）`}>
                       論調 {toneInfo(c.tone)!.label}
+                    </span>
+                  )}
+                  {attentionBadge(c.trend, c.attention) && (
+                    <span className={`tc-attn-badge tc-attn-${attentionBadge(c.trend, c.attention)!.kind}`}>
+                      {attentionBadge(c.trend, c.attention)!.label}
                     </span>
                   )}
                 </div>
@@ -134,6 +161,8 @@ export default async function ThemesPage() {
 
       <p className="guide-note" style={{ marginTop: 16 }}>
         ※ 熱量＝GitHub/arXiv/HN/Trends等の関連ワード活動量から算出したセンチメント（50=横ばい）。
+        注目＝Wikipedia閲覧数ベースの大衆注目度（50=平常・70以上で過熱気味）。研究熱が上がっているのに
+        世間の注目がまだ低いテーマ（🌊）は熱狂前の仕込み候補、注目が過熱したテーマ（🔥）は高値掴みに注意。
         傾き ↑=加速 / ↓=減速。採用済みテーマのカードをクリックすると業界ページ（ETF＋個別株のAIBA比較）へ。
         新興テーマ候補は熱量が高まれば監視ユニバースへ昇格します。
       </p>

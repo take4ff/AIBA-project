@@ -25,6 +25,7 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
   const [aibaByDate, setAibaByDate] = useState<Map<string, number>>(new Map());
   const [stopPct, setStopPct] = useState(20);
   const [profitPct, setProfitPct] = useState(30);
+  const [insider, setInsider] = useState<{ buys: number; sells: number; sellValue: number; buyValue: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +47,23 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
       setHolding(h);
       setHistory(hist);
       setFundamentals((f as TickerFundamentals | null) ?? null);
+
+      // インサイダー売買（SEC Form 4・米国銘柄のみデータあり）。売りシグナルの補助材料。
+      {
+        const cutoff = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10);
+        const { data: ins } = await supabaseBrowser
+          .from("insider_trades").select("tx_code,value_usd")
+          .eq("ticker", ticker).gte("filed_at", cutoff).limit(100);
+        if (ins && ins.length > 0) {
+          const sum = (code: string) => ins.filter((r: any) => r.tx_code === code).reduce((a: number, r: any) => a + Number(r.value_usd ?? 0), 0);
+          setInsider({
+            buys: ins.filter((r: any) => r.tx_code === "P").length,
+            sells: ins.filter((r: any) => r.tx_code === "S").length,
+            buyValue: sum("P"),
+            sellValue: sum("S"),
+          });
+        }
+      }
       const ti = themes.get(ticker);
       setUniName(ti?.name ?? null);
       const did = ti?.id ?? null;
@@ -250,6 +268,20 @@ export default function HoldingPage({ params }: { params: { id: string } }) {
                 )}
                 <p className="guide-note">※ 解釈は指標からの自動生成。投資助言ではありません。</p>
               </details>
+            );
+          })()}
+
+          {insider && (() => {
+            const fmtUsd = (v: number) => v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : `$${Math.round(v / 1e3)}K`;
+            const heavySell = insider.sells >= 3 && insider.buys === 0;
+            return (
+              <p className="forecast-line" style={{ marginTop: 12 }}>
+                <ConceptIcon name="guide" size={14} /> インサイダー売買（90日）：
+                買い <span style={{ color: "#15a34a", fontWeight: 700 }}>{insider.buys}件（{fmtUsd(insider.buyValue)}）</span>
+                {" / "}売り <span style={{ color: "#dc2626", fontWeight: 700 }}>{insider.sells}件（{fmtUsd(insider.sellValue)}）</span>
+                {heavySell && <span style={{ marginLeft: 8, fontWeight: 700, color: "#d97706" }}>売りが目立つ（過熱・決算と合わせて要注意）</span>}
+                {domainId && <Link href={`/domain/${domainId}`} style={{ marginLeft: 8, fontSize: 12 }}>明細 →</Link>}
+              </p>
             );
           })()}
         </>
