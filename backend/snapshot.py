@@ -54,6 +54,10 @@ def main() -> int:
     args = ap.parse_args()
 
     metrics = metrics.sort_values("trade_date")
+    dup = metrics.duplicated(subset=["domain_id", "trade_date"], keep="last")
+    if dup.any():
+        log.warning("daily_metrics に重複行 %d 件（domain_id, trade_date）。後勝ちで除外。", int(dup.sum()))
+        metrics = metrics[~dup]
     latest_date = metrics["trade_date"].max()
 
     def record(dates: list[str]):

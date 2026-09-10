@@ -143,7 +143,7 @@ AIBA-project/
 └── .github/workflows/{daily,weekly,test}.yml
 ```
 
-日次ジョブの流れ：`run_daily → predict → portfolio_job → fundamentals_job → benchmark → backtest → snapshot → check_data → notify`（timeout 45分）。  
+日次ジョブの流れ：`run_daily → predict → portfolio_job → fundamentals_job → benchmark → backtest → snapshot → check_data → notify`（timeout 75分）。  
 週次ジョブ：`candidates_job`（新興テーマ候補の熱量）／`ic_monthly_job`（月次IC）／`news_tone_job`（テーマ別ニュース論調＝GDELT平均トーン）。
 
 ### セキュリティ：パスワード保護
