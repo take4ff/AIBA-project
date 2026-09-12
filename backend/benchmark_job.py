@@ -46,8 +46,9 @@ def main() -> int:
         log.info("[%s] %d 日分", tk, len(close))
 
     if rows:
+        from aiba.db import upsert_with_retry
         for i in range(0, len(rows), 500):
-            client.table("benchmark_prices").upsert(rows[i:i + 500], on_conflict="trade_date,ticker").execute()
+            upsert_with_retry(client, "benchmark_prices", rows[i:i + 500], on_conflict="trade_date,ticker")
     log.info("完了: %d 行を保存しました。", len(rows))
     return 0
 

@@ -121,7 +121,8 @@ def main() -> int:
             for d, pv, sc in score_series(daily)
         ]
         if rows:
-            client.table("theme_attention").upsert(rows, on_conflict="theme_id,obs_date").execute()
+            from aiba.db import upsert_with_retry
+            upsert_with_retry(client, "theme_attention", rows, on_conflict="theme_id,obs_date")
             log.info("[%s] %d日分を保存（最新 %s = %.1f）", tid, len(rows), rows[-1]["obs_date"], rows[-1]["attention_score"])
             total_rows += len(rows)
         else:

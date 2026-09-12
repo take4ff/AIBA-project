@@ -16,6 +16,7 @@ from typing import Any
 import pandas as pd
 
 from aiba.config import settings
+from aiba.db import upsert_with_retry
 
 log = logging.getLogger("aiba.snapshot")
 BUY = 60.0
@@ -71,7 +72,7 @@ def main() -> int:
                     "close_price": None if pd.isna(r.close_price) else float(r.close_price),
                 })
         if rec:
-            client.table("score_snapshots").upsert(rec, on_conflict="snapshot_date,domain_id").execute()
+            upsert_with_retry(client, "score_snapshots", rec, on_conflict="snapshot_date,domain_id")
         log.info("スナップショット記録: %d日分 / %d 行", len(dates), len(rec))
 
     snaps = pd.DataFrame(_fetch_all(client, "score_snapshots",
@@ -130,7 +131,7 @@ def main() -> int:
             updates.append({"snapshot_date": s.snapshot_date, "domain_id": s.domain_id, **patch})
 
     if updates:
-        client.table("score_snapshots").upsert(updates, on_conflict="snapshot_date,domain_id").execute()
+        upsert_with_retry(client, "score_snapshots", updates, on_conflict="snapshot_date,domain_id")
     log.info("評価更新: %d 行", len(updates))
     return 0
 

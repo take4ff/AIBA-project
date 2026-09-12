@@ -45,7 +45,8 @@ def main() -> int:
         })
 
     if rows:
-        client.table("ic_monthly").upsert(rows, on_conflict="month").execute()
+        from aiba.db import upsert_with_retry
+        upsert_with_retry(client, "ic_monthly", rows, on_conflict="month")
     log.info("完了: %d ヶ月分のICを保存しました。", len(rows))
     return 0
 

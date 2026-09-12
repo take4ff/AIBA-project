@@ -43,7 +43,8 @@ def main() -> int:
             "heat_score": round(heat, 2), "updated_at": now,
         })
 
-    client.table("candidate_themes").upsert(rows, on_conflict="candidate_id").execute()
+    from aiba.db import upsert_with_retry
+    upsert_with_retry(client, "candidate_themes", rows, on_conflict="candidate_id")
     log.info("完了: %d 件の候補熱量を保存しました。", len(rows))
     return 0
 

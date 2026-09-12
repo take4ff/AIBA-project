@@ -35,7 +35,8 @@ def main() -> int:
         rows.append({"theme_id": tid, "tone": tone, "updated_at": now})
 
     if rows:
-        client.table("theme_news_tone").upsert(rows, on_conflict="theme_id").execute()
+        from aiba.db import upsert_with_retry
+        upsert_with_retry(client, "theme_news_tone", rows, on_conflict="theme_id")
     log.info("完了: %d テーマのトーンを保存しました。", len(rows))
     return 0
 

@@ -18,7 +18,7 @@ import pandas as pd
 import yfinance as yf
 
 from aiba.config import settings
-from aiba.db import _serialize
+from aiba.db import _serialize, upsert_with_retry
 from aiba.score import technical_score
 from aiba.technical import _snapshots_from_df
 
@@ -70,11 +70,11 @@ QUALITY_COLS = ("operating_margin", "roe", "debt_to_equity", "current_ratio", "f
 def upsert_fundamentals(client: Any, funds: list[dict[str, Any]]) -> None:
     """ticker_fundamentals へ upsert。品質カラム未マイグレーション時は既存カラムのみで再試行。"""
     try:
-        client.table("ticker_fundamentals").upsert(funds, on_conflict="ticker").execute()
+        upsert_with_retry(client, "ticker_fundamentals", funds, on_conflict="ticker")
     except Exception as e:  # noqa: BLE001
         if any(c in str(e) for c in QUALITY_COLS):
             stripped = [{k: v for k, v in f.items() if k not in QUALITY_COLS} for f in funds]
-            client.table("ticker_fundamentals").upsert(stripped, on_conflict="ticker").execute()
+            upsert_with_retry(client, "ticker_fundamentals", stripped, on_conflict="ticker")
             log.warning("品質カラム未適用のため既存カラムのみ保存。db/user_portfolio.sql を実行してください。")
         else:
             raise
@@ -166,8 +166,8 @@ def main() -> int:
     for t in tickers:
         rows = metrics_for(t)
         if rows:
-            client.table("ticker_metrics").upsert(
-                [_serialize(r) for r in rows], on_conflict="ticker,trade_date").execute()
+            upsert_with_retry(client, "ticker_metrics",
+                               [_serialize(r) for r in rows], on_conflict="ticker,trade_date")
             total += len(rows)
             oh = rows[-1]["overheat"]
             log.info("[%s] %d日分 / overheat=%s", t, len(rows),

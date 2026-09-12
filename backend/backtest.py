@@ -136,7 +136,8 @@ def main() -> int:
             "buy_avg_return": num(buy_avg), "overall_avg_return": num(overall_avg),
             "best_w_l1": num(bw[1][0]), "best_w_l2": num(bw[2][0]), "best_w_l3": num(bw[3][0]),
         }
-        client.table("backtest_runs").upsert(row, on_conflict="run_date,horizon").execute()
+        from aiba.db import upsert_with_retry
+        upsert_with_retry(client, "backtest_runs", row, on_conflict="run_date,horizon")
         log.info("\nbacktest_runs に保存しました（%s, H=%d）。", row["run_date"], args.horizon)
     return 0
 

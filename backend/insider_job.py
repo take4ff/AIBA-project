@@ -18,6 +18,7 @@ import requests
 from lxml import etree
 
 from aiba.config import load_domains, settings
+from aiba.db import upsert_with_retry
 
 log = logging.getLogger("aiba.insider")
 
@@ -140,7 +141,12 @@ def main() -> int:
                     "filed_at": f["filed"], **tr,
                 })
         if rows:
-            client.table("insider_trades").upsert(rows, on_conflict="accession_no,tx_seq").execute()
+            from postgrest.exceptions import APIError
+            try:
+                upsert_with_retry(client, "insider_trades", rows, on_conflict="accession_no,tx_seq")
+            except APIError as e:
+                log.warning("[%s] 保存失敗（リトライ後も失敗、スキップ）: %s", t, e)
+                continue
             log.info("[%s] %d 件の売買を保存（報告書 %d 本）", t, len(rows), len(filings))
             total += len(rows)
 

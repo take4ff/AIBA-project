@@ -156,8 +156,9 @@ def main() -> None:
     rows = build_sp500_rows(start, end) + build_topix_rows(start, end)
 
     print(f"upsert: {len(rows)}行...")
+    from aiba.db import upsert_with_retry
     for i in range(0, len(rows), 200):
-        client.table("market_monthly").upsert(rows[i : i + 200]).execute()
+        upsert_with_retry(client, "market_monthly", rows[i : i + 200])
 
     print("完了")
 

@@ -85,11 +85,9 @@ def main() -> None:
         sys.exit(0)
 
     print(f"\nupsert: {len(all_rows)}行...")
+    from aiba.db import upsert_with_retry
     for i in range(0, len(all_rows), 100):
-        client.table("hyperscaler_capex").upsert(
-            all_rows[i : i + 100],
-            on_conflict="ticker,quarter",
-        ).execute()
+        upsert_with_retry(client, "hyperscaler_capex", all_rows[i : i + 100], on_conflict="ticker,quarter")
 
     print("完了")
 

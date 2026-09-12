@@ -140,9 +140,10 @@ def predict_and_store(feat: pd.DataFrame) -> None:
             "model_version": "hgb-v1",
         })
 
+    from aiba.db import upsert_with_retry
     from supabase import create_client
     client = create_client(settings.supabase_url, settings.supabase_key)
-    client.table("predictions").upsert(records, on_conflict="domain_id,as_of_date").execute()
+    upsert_with_retry(client, "predictions", records, on_conflict="domain_id,as_of_date")
     log.info("predictions に %d 件を保存しました。", len(records))
     # サンプル表示
     top = latest.sort_values("buyzone_prob", ascending=False).head(5)

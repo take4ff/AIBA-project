@@ -7,13 +7,38 @@ Supabase未設定時はローカル JSON (backend/output/) へ書き出し、
 from __future__ import annotations
 
 import json
+import logging
+import time
 from datetime import date
 from pathlib import Path
 from typing import Any
 
 from .config import ROOT_DIR, settings
 
+log = logging.getLogger("aiba.db")
 LOCAL_OUTPUT_DIR = ROOT_DIR / "backend" / "output"
+
+
+def upsert_with_retry(
+    client, table: str, rows: list[dict[str, Any]],
+    on_conflict: str | None = None, attempts: int = 3,
+) -> None:
+    """Supabase upsertを実行する。504等の一時的なエラーは指数バックオフでリトライする。"""
+    from postgrest.exceptions import APIError
+
+    delay = 3
+    for i in range(1, attempts + 1):
+        try:
+            q = client.table(table)
+            q = q.upsert(rows, on_conflict=on_conflict) if on_conflict else q.upsert(rows)
+            q.execute()
+            return
+        except APIError:
+            if i == attempts:
+                raise
+            log.warning("upsert失敗（%s, %d/%d回目）。%d秒後にリトライ", table, i, attempts, delay)
+            time.sleep(delay)
+            delay *= 2
 
 
 def _serialize(record: dict[str, Any]) -> dict[str, Any]:
@@ -32,11 +57,11 @@ def upsert_domains(domains: list[dict[str, Any]]) -> None:
 
     client = create_client(settings.supabase_url, settings.supabase_key)
     try:
-        client.table("domains").upsert(domains, on_conflict="id").execute()
+        upsert_with_retry(client, "domains", domains, on_conflict="id")
     except Exception as e:  # noqa: BLE001
         if "tags" in str(e):  # tags 列が未マイグレーションなら除外して再試行
             stripped = [{k: v for k, v in d.items() if k != "tags"} for d in domains]
-            client.table("domains").upsert(stripped, on_conflict="id").execute()
+            upsert_with_retry(client, "domains", stripped, on_conflict="id")
         else:
             raise
 
@@ -49,9 +74,7 @@ def write_metrics(records: list[dict[str, Any]]) -> str:
         from supabase import create_client
 
         client = create_client(settings.supabase_url, settings.supabase_key)
-        client.table("daily_metrics").upsert(
-            payload, on_conflict="domain_id,trade_date"
-        ).execute()
+        upsert_with_retry(client, "daily_metrics", payload, on_conflict="domain_id,trade_date")
         return f"Supabase: {len(payload)}件をupsertしました"
 
     # フォールバック: ローカルJSON
